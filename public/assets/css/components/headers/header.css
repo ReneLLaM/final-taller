@@ -1,0 +1,47 @@
+/* ============================================
+   ESTILOS DE HEADER
+   ============================================ */
+
+/* Header con logo USFX */
+.page-header {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #D9D9D9;
+    height: 84px;
+    display: flex;
+ 
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-bottom: 30px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    margin: 0 140px;
+}
+
+.header-logo {
+    width: 50px;
+    height: auto;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.asignacion {
+    color: #006FEE;
+}
+
+.aulas {
+    color: #E91919;
+}
+

@@ -50,7 +50,7 @@ async function handleRegister(event) {
             showMessage('Registro exitoso. Redirigiendo...', 'success');
             // Redirigir a login después de 2 segundos
             setTimeout(() => {
-                window.location.href = '/login.html';
+                window.location.href = '/pages/auth/login.html';
             }, 2000);
         } else {
             showMessage(data.message || 'Error al registrar usuario', 'error');
@@ -71,4 +71,20 @@ if (registerForm) {
 }
 
 // CU y carrera son opcionales, sin validación automática de formato
+
+// Función para toggle password
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const icon = input.nextElementSibling.querySelector('.eye-icon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('stroke', '#666');
+    } else {
+        input.type = 'password';
+        icon.setAttribute('stroke', '#D9D9D9');
+    }
+}
 

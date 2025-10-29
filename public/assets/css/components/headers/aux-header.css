@@ -1,0 +1,161 @@
+/* ============================================
+   ESTILOS DE HEADER PARA AUXILIAR
+   ============================================ */
+
+.aux-header {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #D9D9D9;
+    height: 84px;
+    display: flex;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.aux-header .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 140px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+}
+
+.header-logo { width: 50px; height: auto; }
+
+.header-title { font-size: 24px; font-weight: bold; margin: 0; pointer-events: none; }
+
+.asignacion { color: #006FEE; }
+.aulas { color: #E91919; }
+
+.header-right { display: flex; align-items: center; gap: 30px; justify-content: flex-end; }
+
+.header-link { color: #006FEE; text-decoration: none; font-size: 16px; font-weight: 500; transition: color 0.3s ease; }
+.header-link:hover { color: #0052cc; text-decoration: underline; }
+
+.user-icon-btn { background: transparent; border: none; cursor: pointer; padding: 0; transition: opacity 0.3s ease; }
+.user-icon-btn:hover { opacity: 0.8; }
+.user-icon { width: 32px; height: 32px; color: #006FEE; }
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablets y pantallas medianas (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+    .aux-header .header-content {
+        margin: 0 60px;
+    }
+    
+    .header-right {
+        gap: 20px;
+    }
+    
+    .header-link {
+        font-size: 15px;
+    }
+}
+
+/* Tablets pequeñas (600px - 768px) */
+@media screen and (max-width: 768px) {
+    .aux-header {
+        height: 70px;
+    }
+    
+    .aux-header .header-content {
+        margin: 0 20px;
+    }
+    
+    .header-logo {
+        width: 40px;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+    
+    .header-left {
+        gap: 15px;
+    }
+    
+    .header-right {
+        gap: 15px;
+    }
+    
+    .header-link {
+        font-size: 14px;
+    }
+    
+    .user-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Móviles (hasta 600px) */
+@media screen and (max-width: 600px) {
+    .aux-header {
+        height: 60px;
+    }
+    
+    .aux-header .header-content {
+        margin: 0 15px;
+    }
+    
+    .header-logo {
+        width: 35px;
+    }
+    
+    .header-title {
+        font-size: 16px;
+    }
+    
+    .header-left {
+        gap: 10px;
+    }
+    
+    .header-right {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .header-link {
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .user-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Móviles muy pequeños (hasta 375px) */
+@media screen and (max-width: 375px) {
+    .aux-header .header-content {
+        margin: 0 10px;
+    }
+    
+    .header-title {
+        font-size: 14px;
+    }
+    
+    .header-link {
+        font-size: 11px;
+    }
+    
+    .header-right {
+        gap: 8px;
+    }
+}

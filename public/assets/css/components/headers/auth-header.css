@@ -1,0 +1,92 @@
+/* ============================================
+   ESTILOS DE HEADER POST-AUTENTICACIÓN
+   ============================================ */
+
+.auth-header {
+    width: 100%;
+    background-color: #000000;
+    border-top: 1px solid #ffffff;
+    border-bottom: 1px solid #ffffff;
+    height: 84px;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.auth-header .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 140px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo {
+    width: 50px;
+    height: auto;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.asignacion {
+    color: #006FEE;
+}
+
+.aulas {
+    color: #E91919;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.header-link {
+    color: #006FEE;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.header-link:hover {
+    color: #0052cc;
+    text-decoration: underline;
+}
+
+.user-icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.user-icon-btn:hover {
+    opacity: 0.8;
+}
+
+.user-icon {
+    width: 32px;
+    height: 32px;
+    color: #006FEE;
+}
+

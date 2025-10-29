@@ -7,15 +7,19 @@ import {
     deleteUser, 
     updateUser,
  } from "../controllers/users.controller.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
+import { requireRole } from "../middleware/role.middleware.js";
 
-router.get("/usuarios", getAllUsers);
+// Solo usuarios autenticados pueden consultar; admin y auxiliar ven listas completas
+router.get("/usuarios", authMiddleware, requireRole(2,3), getAllUsers);
 
-router.get("/usuarios/:id", getUserById);
+router.get("/usuarios/:id", authMiddleware, getUserById);
 
-router.post("/usuarios", createUser);
+// Solo administrador puede crear, actualizar y eliminar usuarios
+router.post("/usuarios", authMiddleware, requireRole(3), createUser);
 
-router.delete("/usuarios/:id", deleteUser);
+router.delete("/usuarios/:id", authMiddleware, requireRole(3), deleteUser);
 
-router.put("/usuarios/:id", updateUser);
+router.put("/usuarios/:id", authMiddleware, requireRole(3), updateUser);
 
 export default router;

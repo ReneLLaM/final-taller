@@ -1,7 +1,19 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import { pool } from '../db.js';
 import { JWT_SECRET } from '../config.js';
+
+// Configuración de nodemailer
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER || 'tu-email@gmail.com',
+        pass: process.env.EMAIL_PASS || 'tu-app-password'
+    }
+});
 
 // Registrar usuario
 export const register = async (req, res) => {
@@ -227,6 +239,196 @@ export const getProtectedData = async (req, res) => {
         console.error('Error en protected:', error);
         res.status(500).json({ 
             message: 'Error al obtener datos protegidos',
+            error: error.message 
+        });
+    }
+};
+
+// Update profile (propio) - no permite cambiar rol
+export const updateMe = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'No autenticado' });
+        }
+
+        const userId = req.user.userId;
+        const { nombre_completo, carrera, cu, correo, contrasenia } = req.body;
+
+        if (!nombre_completo || !correo) {
+            return res.status(400).json({ message: 'Nombre y correo son requeridos' });
+        }
+
+        // Verificar unicidad de correo si cambia
+        const { rows: existingEmail } = await pool.query(
+            'SELECT id FROM usuarios WHERE correo = $1 AND id <> $2',
+            [correo, userId]
+        );
+        if (existingEmail.length > 0) {
+            return res.status(400).json({ message: 'El correo ya está registrado' });
+        }
+
+        // Verificar unicidad de CU si cambia y si se envió
+        if (cu) {
+            const { rows: existingCu } = await pool.query(
+                'SELECT id FROM usuarios WHERE cu = $1 AND id <> $2',
+                [cu, userId]
+            );
+            if (existingCu.length > 0) {
+                return res.status(400).json({ message: 'El CU ya está registrado' });
+            }
+        }
+
+        // Construir actualización dinámica
+        let query = 'UPDATE usuarios SET nombre_completo = $1, carrera = $2, cu = $3, correo = $4';
+        const params = [nombre_completo, carrera || null, cu || null, correo];
+
+        if (contrasenia && contrasenia.length >= 6) {
+            const hashed = await bcrypt.hash(contrasenia, 10);
+            query += ', contrasenia = $5 WHERE id = $6 RETURNING id, nombre_completo, carrera, cu, correo, rol_id';
+            params.push(hashed, userId);
+        } else {
+            query += ' WHERE id = $5 RETURNING id, nombre_completo, carrera, cu, correo, rol_id';
+            params.push(userId);
+        }
+
+        const { rows } = await pool.query(query, params);
+        res.json({ message: 'Perfil actualizado', user: rows[0] });
+    } catch (error) {
+        console.error('Error en updateMe:', error);
+        res.status(500).json({ message: 'Error al actualizar perfil', error: error.message });
+    }
+};
+
+// Forgot Password - Solicitar recuperación
+export const forgotPassword = async (req, res) => {
+    try {
+        const { correo } = req.body;
+
+        if (!correo) {
+            return res.status(400).json({ 
+                message: 'Correo es requerido' 
+            });
+        }
+
+        // Buscar usuario
+        const { rows } = await pool.query(
+            'SELECT * FROM usuarios WHERE correo = $1',
+            [correo]
+        );
+
+        // Siempre devolver éxito por seguridad (no revelar si el correo existe)
+        const responseMessage = 'Si el correo existe, se ha enviado un enlace de recuperación.';
+
+        if (rows.length === 0) {
+            return res.json({ 
+                message: responseMessage 
+            });
+        }
+
+        const user = rows[0];
+
+        // Generar token de recuperación (válido por 1 hora)
+        const resetToken = jwt.sign(
+            { 
+                userId: user.id, 
+                correo: user.correo 
+            },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // URL de reset (ajusta según tu dominio)
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/pages/auth/reset-password.html?token=${resetToken}`;
+
+        // Enviar correo
+        try {
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER || 'noreply@usfx.edu.bo',
+                to: correo,
+                subject: 'Recuperación de Contraseña - Asignación de Aulas',
+                html: `
+                    <h2>Recuperación de Contraseña</h2>
+                    <p>Hola ${user.nombre_completo},</p>
+                    <p>Has solicitado restablecer tu contraseña.</p>
+                    <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+                    <a href="${resetUrl}" style="background-color: #006FEE; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">
+                        Restablecer Contraseña
+                    </a>
+                    <p>Este enlace expirará en 1 hora.</p>
+                    <p>Si no solicitaste esto, ignora este correo.</p>
+                    <p>Atentamente,<br>Sistema de Asignación de Aulas</p>
+                `
+            });
+
+            console.log('Correo enviado a:', correo);
+        } catch (emailError) {
+            console.error('Error al enviar correo:', emailError);
+            // No fallar la petición si no se puede enviar el correo
+        }
+
+        res.json({ 
+            message: responseMessage 
+        });
+    } catch (error) {
+        console.error('Error en forgotPassword:', error);
+        res.status(500).json({ 
+            message: 'Error al procesar solicitud',
+            error: error.message 
+        });
+    }
+};
+
+// Reset Password - Cambiar contraseña con token
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, contrasenia } = req.body;
+
+        if (!token || !contrasenia) {
+            return res.status(400).json({ 
+                message: 'Token y contraseña son requeridos' 
+            });
+        }
+
+        // Validar token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, JWT_SECRET);
+        } catch (error) {
+            return res.status(400).json({ 
+                message: 'Token inválido o expirado' 
+            });
+        }
+
+        // Validar longitud de contraseña
+        if (contrasenia.length < 6) {
+            return res.status(400).json({ 
+                message: 'La contraseña debe tener al menos 6 caracteres' 
+            });
+        }
+
+        // Hash de la nueva contraseña
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(contrasenia, saltRounds);
+
+        // Actualizar contraseña en la base de datos
+        const { rowCount } = await pool.query(
+            'UPDATE usuarios SET contrasenia = $1 WHERE id = $2',
+            [hashedPassword, decoded.userId]
+        );
+
+        if (rowCount === 0) {
+            return res.status(404).json({ 
+                message: 'Usuario no encontrado' 
+            });
+        }
+
+        res.json({ 
+            message: 'Contraseña restablecida exitosamente' 
+        });
+    } catch (error) {
+        console.error('Error en resetPassword:', error);
+        res.status(500).json({ 
+            message: 'Error al restablecer contraseña',
             error: error.message 
         });
     }

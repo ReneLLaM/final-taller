@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignación de Aulas</title>
+    <link rel="stylesheet" href="../../assets/css/dashboard/principal.css">
+</head>
+<body>
+    <div id="header-container"></div>
+    <div class="breadcrumb-bar">
+        <div class="breadcrumb-inner with-border">
+            <div class="breadcrumb-path" id="breadcrumb-path">/Inicio</div>
+            <div class="breadcrumb-role" id="breadcrumb-role"></div>
+        </div>
+    </div>
+    <div class="dashboard-container">
+        <!-- Contenido del dashboard según el rol (horarios, etc.) -->
+    </div>
+
+    <!-- Modal editar perfil -->
+    <div class="modal" id="profileModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2>Editar Perfil</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <form id="profileForm" class="modal-body">
+                <div id="profileMessage" class="message" style="display:none;"></div>
+                <div class="form-row">
+                    <label for="p_nombre">Nombre Completo</label>
+                    <input id="p_nombre" name="nombre_completo" type="text" required>
+                </div>
+                <div class="form-row">
+                    <label for="p_carrera">Carrera</label>
+                    <input id="p_carrera" name="carrera" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="p_cu">CU</label>
+                    <input id="p_cu" name="cu" type="text">
+                </div>
+                <div class="form-row">
+                    <label for="p_correo">Correo</label>
+                    <input id="p_correo" name="correo" type="email" required>
+                </div>
+                <div class="form-row">
+                    <label for="p_pass">Nueva contraseña (opcional)</label>
+                    <input id="p_pass" name="contrasenia" type="password" placeholder="••••••••">
+                </div>
+                <div class="form-row">
+                    <label>Rol</label>
+                    <input id="p_rol" type="text" disabled>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../scripts/shared/load-header.js"></script>
+    <script src="../../scripts/dashboard/dashboard.js"></script>
+</body>
+</html>
+

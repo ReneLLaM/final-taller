@@ -1,0 +1,575 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Header con logo USFX */
+.page-header {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid #D9D9D9;
+    height: 84px;
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-bottom: 30px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    margin: 0 140px;
+}
+
+.header-logo {
+    width: 50px;
+    height: auto;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.asignacion {
+    color: #006FEE;
+}
+
+.aulas {
+    color: #E91919;
+}
+
+body.register-page {
+    background-color: #ffffff;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    animation: slideIn 0.5s ease-out;
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-card.login-size {
+    height: 341px;
+}
+
+.login-card.register-size {
+    height: 605px;
+}
+
+.login-card .login-form {
+    flex: 1;
+    overflow: hidden;
+}
+
+.login-card.register-size .login-form {
+    padding: 15px 30px;
+}
+
+.login-card.register-size .login-header {
+    padding: 30px 30px 15px;
+}
+
+.login-card.register-size .form-group {
+    margin-bottom: 12px;
+}
+
+.login-card.register-size .form-group label {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.login-card.register-size .form-group input {
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+.login-card.register-size .submit-btn {
+    padding: 12px;
+    font-size: 15px;
+}
+
+.login-card.register-size .login-footer {
+    padding: 10px 30px 15px;
+}
+
+.login-card.register-size .message {
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header {
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.login-header h1 {
+    font-size: 3.5em;
+    font-weight: 700;
+    color: black;
+    margin-bottom: 0;
+}
+
+.login-header h2 {
+    display: none;
+}
+
+.login-form {
+    padding: 30px;
+}
+
+.login-card.login-size .login-form {
+    padding: 20px 30px;
+}
+
+.login-card.login-size .form-group {
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    background-color: #f8f8f8;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input::placeholder {
+    color: #999;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background: #1a1a1a;
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.login-footer {
+    padding: 15px 30px 20px;
+    text-align: center;
+}
+
+.login-card.login-size .login-footer {
+    padding: 10px 30px 20px;
+}
+
+.login-footer p {
+    color: #666;
+    font-size: 14px;
+}
+
+.login-footer a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+.message {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablets y pantallas medianas (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+    .header-content {
+        margin: 0 60px;
+    }
+    
+    .login-card {
+        width: 100%;
+        max-width: 450px;
+    }
+}
+
+/* Tablets pequeñas (600px - 768px) */
+@media screen and (max-width: 768px) {
+    .page-header {
+        height: 70px;
+    }
+    
+    .header-content {
+        margin: 0 20px;
+    }
+    
+    .header-logo {
+        width: 40px;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+    
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+    }
+    
+    .login-card.login-size {
+        height: auto;
+        min-height: 320px;
+    }
+    
+    .login-card.register-size {
+        height: auto;
+        min-height: 550px;
+    }
+}
+
+/* Móviles (hasta 600px) */
+@media screen and (max-width: 600px) {
+    body {
+        padding: 15px;
+    }
+    
+    .page-header {
+        height: 60px;
+    }
+    
+    .header-content {
+        margin: 0 15px;
+        gap: 15px;
+    }
+    
+    .header-logo {
+        width: 35px;
+    }
+    
+    .header-title {
+        font-size: 16px;
+    }
+    
+    .login-card {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 12px;
+    }
+    
+    .login-card.login-size {
+        height: auto;
+        min-height: auto;
+    }
+    
+    .login-card.register-size {
+        height: auto;
+        min-height: auto;
+    }
+    
+    .login-header {
+        padding: 30px 20px;
+    }
+
+    .login-header h1 {
+        font-size: 2.5em;
+    }
+    
+    .login-card.register-size .login-header {
+        padding: 25px 20px 12px;
+    }
+
+    .login-form {
+        padding: 25px 20px;
+    }
+    
+    .login-card.login-size .login-form {
+        padding: 18px 20px;
+    }
+    
+    .login-card.register-size .login-form {
+        padding: 12px 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .login-card.login-size .form-group {
+        margin-bottom: 14px;
+    }
+    
+    .login-card.register-size .form-group {
+        margin-bottom: 10px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    
+    .login-card.register-size .form-group label {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    
+    .form-group input {
+        padding: 11px 14px;
+        font-size: 14px;
+    }
+    
+    .login-card.register-size .form-group input {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+    
+    .submit-btn {
+        padding: 13px;
+        font-size: 15px;
+    }
+    
+    .login-card.register-size .submit-btn {
+        padding: 11px;
+        font-size: 14px;
+    }
+
+    .login-footer {
+        padding: 12px 20px 18px;
+    }
+    
+    .login-card.login-size .login-footer {
+        padding: 8px 20px 16px;
+    }
+    
+    .login-card.register-size .login-footer {
+        padding: 8px 20px 16px;
+    }
+    
+    .login-footer p {
+        font-size: 13px;
+    }
+    
+    .message {
+        font-size: 13px;
+        padding: 10px;
+        margin-bottom: 16px;
+    }
+    
+    .login-card.register-size .message {
+        font-size: 12px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Móviles muy pequeños (hasta 375px) */
+@media screen and (max-width: 375px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header-content {
+        margin: 0 10px;
+        gap: 10px;
+    }
+    
+    .header-title {
+        font-size: 14px;
+    }
+    
+    .login-card {
+        border-radius: 10px;
+    }
+    
+    .login-header {
+        padding: 25px 15px;
+    }
+    
+    .login-header h1 {
+        font-size: 2.2em;
+    }
+    
+    .login-card.register-size .login-header {
+        padding: 20px 15px 10px;
+    }
+    
+    .login-card.register-size .login-header h1 {
+        font-size: 1.5em;
+    }
+    
+    .login-form {
+        padding: 20px 15px;
+    }
+    
+    .login-card.login-size .login-form {
+        padding: 15px;
+    }
+    
+    .login-card.register-size .login-form {
+        padding: 10px 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .login-card.login-size .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .login-card.register-size .form-group {
+        margin-bottom: 8px;
+    }
+    
+    .form-group label {
+        font-size: 12px;
+    }
+    
+    .login-card.register-size .form-group label {
+        font-size: 11px;
+    }
+    
+    .form-group input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .login-card.register-size .form-group input {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
+    .submit-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .login-card.register-size .submit-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .login-footer {
+        padding: 10px 15px 15px;
+    }
+    
+    .login-card.login-size .login-footer {
+        padding: 6px 15px 14px;
+    }
+    
+    .login-card.register-size .login-footer {
+        padding: 6px 15px 14px;
+    }
+    
+    .login-footer p {
+        font-size: 12px;
+    }
+    
+    .message {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
+    .login-card.register-size .message {
+        font-size: 11px;
+        padding: 7px;
+    }
+}

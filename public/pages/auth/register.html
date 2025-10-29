@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Taller de Especialidad</title>
-    <link rel="stylesheet" href="css/register.css">
+    <link rel="stylesheet" href="../../assets/css/auth/register.css">
 </head>
 <body class="register-page">
     <header class="page-header">
         <div class="header-content">
-            <img src="css/images/EMBLEMA-USFX-logo.png" alt="USFX" class="header-logo">
+            <img src="../../assets/images/EMBLEMA-USFX-logo.png" alt="USFX" class="header-logo">
             <h1 class="header-title">
                 <span class="asignacion">Asignación</span><span class="aulas"> de Aulas</span>
             </h1>
@@ -71,27 +71,43 @@
 
                 <div class="form-group">
                     <label for="contrasenia">Contraseña:</label>
-                    <input 
-                        type="password" 
-                        id="contrasenia" 
-                        name="contrasenia" 
-                        required 
-                        autocomplete="new-password"
-                        placeholder="••••••••"
-                        minlength="6"
-                    >
+                    <div class="password-input-container">
+                        <input 
+                            type="password" 
+                            id="contrasenia" 
+                            name="contrasenia" 
+                            required 
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                            minlength="6"
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('contrasenia')">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="contrasenia_confirm">Confirmar contraseña:</label>
-                    <input 
-                        type="password" 
-                        id="contrasenia_confirm" 
-                        name="contrasenia_confirm" 
-                        required 
-                        autocomplete="new-password"
-                        placeholder="••••••••"
-                    >
+                    <div class="password-input-container">
+                        <input 
+                            type="password" 
+                            id="contrasenia_confirm" 
+                            name="contrasenia_confirm" 
+                            required 
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('contrasenia_confirm')">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="submit-btn">Registrar</button>
@@ -103,8 +119,7 @@
         </div>
     </div>
 
-    <script src="js/auth.js"></script>
-    <script src="js/register.js"></script>
+    <script src="../../scripts/auth/register.js"></script>
 </body>
 </html>
 

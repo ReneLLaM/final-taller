@@ -23,9 +23,9 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use("/api", authRoutes);
 app.use("/api", usersRoutes);
 
-// Ruta raíz - servir el login
+// Ruta raíz - redirigir al login
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/login.html"));
+    res.redirect("/pages/auth/login.html");
 });
 
 app.listen(PORT);
