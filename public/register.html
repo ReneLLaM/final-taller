@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Taller de Especialidad</title>
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body class="register-page">
+    <header class="page-header">
+        <div class="header-content">
+            <img src="css/images/EMBLEMA-USFX-logo.png" alt="USFX" class="header-logo">
+            <h1 class="header-title">
+                <span class="asignacion">Asignación</span><span class="aulas"> de Aulas</span>
+            </h1>
+        </div>
+    </header>
+    <div class="container">
+        <div class="login-card register-size">
+            <div class="login-header">
+                <h1>Regístrate</h1>
+            </div>
+
+            <form id="registerForm" class="login-form">
+                <div id="message" class="message"></div>
+                
+                <div class="form-group">
+                    <label for="nombre_completo">Nombre completo:</label>
+                    <input 
+                        type="text" 
+                        id="nombre_completo" 
+                        name="nombre_completo" 
+                        required 
+                        autocomplete="name"
+                        placeholder="Ej: nombre apellidos"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="carrera">Carrera:</label>
+                    <input 
+                        type="text" 
+                        id="carrera" 
+                        name="carrera" 
+                        autocomplete="organization"
+                        placeholder="Ej: Ingeniería de Sistemas"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="cu">CU:</label>
+                    <input 
+                        type="text" 
+                        id="cu" 
+                        name="cu" 
+                        placeholder="Ej: 35-0000"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo:</label>
+                    <input 
+                        type="email" 
+                        id="correo" 
+                        name="correo" 
+                        required 
+                        autocomplete="email"
+                        placeholder="Ej: nombre@gmail.com"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasenia">Contraseña:</label>
+                    <input 
+                        type="password" 
+                        id="contrasenia" 
+                        name="contrasenia" 
+                        required 
+                        autocomplete="new-password"
+                        placeholder="••••••••"
+                        minlength="6"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasenia_confirm">Confirmar contraseña:</label>
+                    <input 
+                        type="password" 
+                        id="contrasenia_confirm" 
+                        name="contrasenia_confirm" 
+                        required 
+                        autocomplete="new-password"
+                        placeholder="••••••••"
+                    >
+                </div>
+
+                <button type="submit" class="submit-btn">Registrar</button>
+            </form>
+
+            <div class="login-footer">
+                <p>¿Usted ya tiene una cuenta? <a href="login.html">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/register.js"></script>
+</body>
+</html>
+
