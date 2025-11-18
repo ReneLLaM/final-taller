@@ -5,7 +5,67 @@
 
 \c taller_db;
 
--- 1. ELIMINAR TODO (en orden correcto)
+-- 0. TABLA DE CARRERAS (lista oficial) - NO toca usuarios
+CREATE TABLE IF NOT EXISTS carreras (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- 0.1 INSERTAR CARRERAS OFICIALES (solo si no existen)
+INSERT INTO carreras (nombre) VALUES
+('Derecho'),
+('Comunicación Social'),
+('Sociología'),
+('Historia'),
+('Ingeniería Química'),
+('Ingeniería Industrial'),
+('Ingeniería Ambiental'),
+('Ingeniería de Alimentos'),
+('Ingeniería Comercial'),
+('Economía'),
+('Administración de Empresas'),
+('Trabajo Social'),
+('Gerencia y Administración Pública'),
+('Química Farmacéutica'),
+('Bioquímica'),
+('Biología'),
+('Idiomas'),
+('Pedagogía'),
+('Psicología'),
+('Gastronomía (T.U.S.)'),
+('Turismo'),
+('Bioimagenología'),
+('Kinesiología y Fisioterapia'),
+('Laboratorio Clínico (T.U.S.)'),
+('Nutrición y Dietética'),
+('Enfermería'),
+('Medicina'),
+('Odontología'),
+('Ing. Petróleo y Gas Natural'),
+('Petróleo y Gas Natural (T.U.S.)'),
+('Ingeniería de Sistemas'),
+('Ingeniería en Telecomunicaciones'),
+('Ingeniería en Diseño y Animación Digital'),
+('Ingeniería en Tecnologías de la Información y Seguridad'),
+('Ingeniería en Ciencias de la Computación'),
+('T.U.S. Industrias de la Alimentación'),
+('T.U.S. Informática'),
+('Ingeniería Civil'),
+('Arquitectura'),
+('Carrera de Prótesis dental'),
+('Carrera Enfermería Obstetriz'),
+('Carrera de Mercadotecnia'),
+('Carrera de Química Industrial'),
+('Carrera de Mecánica Automotriz'),
+('Carrera de Mecánica Industrial'),
+('Carrera de Electricidad'),
+('Ingeniería en Biotecnología')
+ON CONFLICT (nombre) DO NOTHING;
+
+-- 0.2 AÑADIR COLUMNA carrera_id A USUARIOS (opcional, no borra datos)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS carrera_id INT;
+
+-- 1. ELIMINAR TODO (en orden correcto) PARA MATERIAS/HORARIO (NO usuarios)
 DROP TABLE IF EXISTS inscripciones CASCADE;
 DROP TABLE IF EXISTS clases CASCADE;
 DROP TABLE IF EXISTS materias CASCADE;

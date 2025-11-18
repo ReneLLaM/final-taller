@@ -100,6 +100,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarCeldasHorario();
     await loadUserInfo();
     await cargarMiHorario();
+    // Autocompletado de carrera en perfil
+    if (typeof window.initCarreraAutocomplete === 'function') {
+        window.initCarreraAutocomplete('p_carrera', 'profileCarrerasList');
+    }
 });
 
 // No llamar loadHeaderByRole() aquí porque load-header.js ya lo hace automáticamente

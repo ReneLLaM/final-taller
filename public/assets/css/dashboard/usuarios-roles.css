@@ -1,0 +1,624 @@
+/* ============================================
+   ESTILOS PARA USUARIOS Y ROLES (Admin)
+   Basado en el estilo del CRUD de materias
+   ============================================ */
+
+:root {
+  --brand: #006FEE;
+  --text: #0F172A;
+  --muted: #64748B;
+  --border: #E2E8F0;
+  --bg: #F8FAFC;
+}
+
+/* Contenedor principal */
+.admin-users-roles-section {
+  margin: 0 140px;
+  padding: 140px 0 20px 0; /* espacio para header + breadcrumb */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.users-panel {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Toolbar superior */
+.users-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.users-toolbar .filters {
+  flex: 1 1 240px;
+  min-width: 220px;
+}
+
+.users-toolbar .search {
+  flex: 2 1 320px;
+  min-width: 260px;
+  max-width: 70%;
+}
+
+.users-toolbar #btnNuevoUsuario {
+  margin-left: auto;
+  flex: 0 1 180px;
+  white-space: nowrap;
+}
+
+.users-toolbar #btnGestionCarreras {
+  flex: 0 1 160px;
+  white-space: nowrap;
+}
+
+/* Filtros (chips) */
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.filter-chip:hover {
+  background: #F8FAFC;
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.filter-chip.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 111, 238, 0.2);
+}
+
+/* Búsqueda */
+.search {
+  flex: 1 1 auto;
+  max-width: 70%;
+  min-width: 240px;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input-wrapper .icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+#usersSearchInput {
+  width: 80%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+  font-size: 13px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.2s ease;
+}
+
+#usersSearchInput:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 111, 238, 0.1);
+  background: #fff;
+}
+
+/* Botón Nuevo */
+.toolbar-btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: nowrap;
+}
+
+.toolbar-btn.primary {
+  background: #0B0B1A;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(11, 11, 26, 0.15);
+}
+
+.toolbar-btn.primary:hover {
+  background: #1a1a2e;
+  box-shadow: 0 6px 16px rgba(11, 11, 26, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Tabla de usuarios */
+.users-table-wrapper {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table thead th {
+  text-align: left;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 700;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.users-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #F0F2F7;
+  color: var(--text);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.users-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+/* Acciones */
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Items de carreras en modal admin */
+.carrera-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FAFBFC;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #F0F2F7;
+}
+
+.carrera-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.admin-users-roles-section .btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: nowrap;
+}
+
+.admin-users-roles-section .btn-primary {
+  background: #0B0B1A;
+  color: #fff;
+  border-color: #0B0B1A;
+  box-shadow: 0 2px 8px rgba(11, 11, 26, 0.15);
+}
+
+.admin-users-roles-section .btn-primary:hover {
+  background: #1a1a2e;
+  box-shadow: 0 4px 12px rgba(11, 11, 26, 0.25);
+  transform: translateY(-1px);
+}
+
+.admin-users-roles-section .btn-danger {
+  background: #FFFFFF;
+  color: #B00020;
+  border-color: #FECACA;
+}
+
+.admin-users-roles-section .btn-danger:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+/* Botón Nuevo: alineado a la derecha en desktop */
+#btnNuevoUsuario {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Pills de rol */
+.pill-role {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.pill-role.student {
+  background: #EEF2FF;
+  color: #312E81;
+  border: 1px solid #E0E7FF;
+}
+
+.pill-role.assistant {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.pill-role.admin {
+  background: #F3E8FF;
+  color: #6B21A8;
+  border: 1px solid #E9D5FF;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 20px 16px;
+  flex-wrap: wrap;
+}
+
+.pagination .page-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-width: 40px;
+  text-align: center;
+}
+
+.pagination .page-btn:hover:not(.active) {
+  background: #F8FAFC;
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.pagination .page-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 111, 238, 0.2);
+}
+
+.pagination .page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estilos de modales */
+.admin-users-roles-section .modal-dialog {
+  max-width: 520px;
+  width: 520px;
+}
+
+.admin-users-roles-section .modal-header h2 {
+  font-size: 1.75em;
+  font-weight: 700;
+}
+
+.admin-users-roles-section .modal-body {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.admin-users-roles-section .modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #F0F2F7;
+}
+
+.admin-users-roles-section .modal-footer.space-between {
+  justify-content: space-between;
+}
+
+.admin-users-roles-section .btn-save {
+  background: #0B0B1A;
+  color: #fff;
+  border: 1px solid #0B0B1A;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(11, 11, 26, 0.15);
+  transition: all 0.2s ease;
+}
+
+.admin-users-roles-section .btn-save:hover {
+  background: #1a1a2e;
+  box-shadow: 0 4px 12px rgba(11, 11, 26, 0.25);
+  transform: translateY(-1px);
+}
+
+.admin-users-roles-section .btn-cancel {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-users-roles-section .btn-cancel:hover {
+  background: #F8FAFC;
+  border-color: #D9D9D9;
+}
+
+.admin-users-roles-section .btn-delete {
+  background: #FFFFFF;
+  color: #B00020;
+  border: 1px solid #FECACA;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-users-roles-section .btn-delete:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+.admin-users-roles-section .message {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-bottom: 12px;
+  display: none;
+  font-weight: 500;
+}
+
+.admin-users-roles-section .message.success {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #D1FAE5;
+  display: block;
+}
+
+.admin-users-roles-section .message.error {
+  background: #FEF2F2;
+  color: #7F1D1D;
+  border: 1px solid #FECACA;
+  display: block;
+}
+
+.admin-users-roles-section .message.info {
+  background: #EFF6FF;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+  display: block;
+}
+
+/* Formularios */
+.admin-users-roles-section .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.admin-users-roles-section .form-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-users-roles-section .form-row input,
+.admin-users-roles-section .form-row select {
+  padding: 10px 12px;
+  border: 1px solid #E8EAEF;
+  border-radius: 8px;
+  font-size: 13px;
+  background-color: #FAFBFC;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.2s ease;
+}
+
+.admin-users-roles-section .form-row input:focus,
+.admin-users-roles-section .form-row select:focus {
+  outline: none;
+  background-color: #fff;
+  border-color: #006FEE;
+  box-shadow: 0 0 0 3px rgba(0, 111, 238, 0.1);
+}
+
+.admin-users-roles-section .form-row input::placeholder {
+  color: #999;
+}
+
+/* Confirmación de eliminación */
+.admin-users-roles-section .confirm-body {
+  padding: 24px;
+  font-size: 15px;
+  color: #475467;
+  line-height: 1.5;
+}
+
+.admin-users-roles-section .confirm-body p {
+  margin: 0 0 10px 0;
+}
+
+/* Responsive */
+@media screen and (max-width: 1024px) {
+  .admin-users-roles-section {
+    margin: 0 60px;
+    padding-top: 120px;
+  }
+
+  .users-toolbar {
+    gap: 10px;
+  }
+
+  .users-toolbar .toolbar-btn {
+    margin-left: 0;
+    flex: 1 1 100%;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .admin-users-roles-section {
+    margin: 0 16px;
+    padding-top: 120px;
+  }
+
+  .users-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .search {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .filters {
+    width: 100%;
+  }
+
+  .users-table {
+    font-size: 12px;
+  }
+
+  .users-table thead th,
+  .users-table tbody td {
+    padding: 10px 12px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .admin-users-roles-section {
+    margin: 0 12px;
+    padding-top: 90px;
+  }
+
+  /* Chips más pequeños */
+  .filter-chip {
+    padding: 4px 9px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
+
+  /* Toolbar en grid:
+     - fila 1: filtros
+     - fila 2: buscador
+     - fila 3: Nuevo | Carreras
+  */
+  .users-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "filters filters"
+      "search  search"
+      "btnNuevo btnCarreras";
+    row-gap: 8px;
+    column-gap: 8px;
+    align-items: stretch;
+    margin-top: 40px;
+  }
+
+  .users-toolbar .filters {
+    grid-area: filters;
+  }
+
+  .users-toolbar .search {
+    grid-area: search;
+  }
+
+  .users-toolbar #btnNuevoUsuario {
+    grid-area: btnNuevo;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .users-toolbar #btnGestionCarreras {
+    grid-area: btnCarreras;
+    width: 100%;
+  }
+
+  /* Botones más bajos/compactos solo en esta sección */
+  .admin-users-roles-section .toolbar-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  }
+
+  .users-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .users-table {
+    min-width: 600px;
+  }
+
+  .pagination .page-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 36px;
+  }
+}

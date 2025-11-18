@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Usuarios y Roles</title>
+    <link rel="stylesheet" href="/assets/css/components/headers/admin-header.css" />
+    <link rel="stylesheet" href="/assets/css/dashboard/usuarios-roles.css" />
+  </head>
+  <body>
+    <header class="admin-header">
+      <div class="container">
+        <div class="brand">Asignación de Aulas</div>
+        <nav class="nav">
+          <a href="/pages/dashboard/horarios.html" class="header-link">Aulas</a>
+          <a href="/pages/dashboard/usuarios-roles.html" class="header-link active">Usuarios y Roles</a>
+          <a href="/pages/dashboard/horarios.html" class="header-link">Horarios</a>
+          <a href="/pages/dashboard/subir-horario.html" class="header-link">Subir horario</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="breadcrumb">/Usuarios y Roles</div>
+
+      <section class="users-panel">
+        <div class="users-toolbar">
+          <div class="filters">
+            <button class="filter-chip active" data-role="all">Todos</button>
+            <button class="filter-chip" data-role="student">Estudiantes</button>
+            <button class="filter-chip" data-role="assistant">Auxiliares</button>
+            <button class="filter-chip" data-role="admin">Administradores</button>
+          </div>
+          <div class="search">
+            <div class="search-input-wrapper">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M21 21l-4.3-4.3m1.8-4.5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input id="usersSearchInput" type="text" placeholder="Buscar usuarios..." />
+            </div>
+          </div>
+          <button id="btnNuevoUsuario" class="btn btn-primary">Nuevo</button>
+        </div>
+
+        <div class="users-table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Carrera</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+
+        <div id="usersPagination" class="pagination"></div>
+      </section>
+    </main>
+
+    <!-- Modal: Crear/Editar Usuario -->
+    <div id="userFormModal" class="modal" hidden>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="userFormTitle">Nuevo usuario</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="userForm">
+            <input type="hidden" id="userId" />
+            <div class="form-row">
+              <label>Nombre</label>
+              <input id="nombre" type="text" required />
+            </div>
+            <div class="form-row">
+              <label>Correo</label>
+              <input id="correo" type="email" required />
+            </div>
+            <div class="form-row">
+              <label>Carrera</label>
+              <input id="carrera" type="text" />
+            </div>
+            <div class="form-row">
+              <label>Rol</label>
+              <select id="rol" required>
+                <option value="student">Estudiante</option>
+                <option value="assistant">Auxiliar</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="btn btn-primary">Guardar</button>
+              <button type="button" class="btn" data-close>Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Eliminar Usuario -->
+    <div id="confirmDeleteUserModal" class="modal" hidden>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Eliminar usuario</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>¿Seguro que deseas eliminar este usuario?</p>
+          <div class="modal-actions">
+            <button id="btnConfirmDeleteUser" class="btn btn-danger">Eliminar</button>
+            <button class="btn" data-close>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/assets/js/dashboard/usuarios-roles.js"></script>
+  </body>
+  </html>

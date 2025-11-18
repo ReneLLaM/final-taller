@@ -64,11 +64,19 @@ async function handleRegister(event) {
     }
 }
 
-// Agregar event listener al formulario de registro
-const registerForm = document.getElementById('registerForm');
-if (registerForm) {
-    registerForm.addEventListener('submit', handleRegister);
-}
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    // Autocompletado de carrera (lista oficial)
+    if (typeof window.initCarreraAutocomplete === 'function') {
+        window.initCarreraAutocomplete('carrera', 'carrerasList');
+    }
+
+    // Agregar event listener al formulario de registro
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+});
 
 // CU y carrera son opcionales, sin validación automática de formato
 

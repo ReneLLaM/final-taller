@@ -67,14 +67,33 @@ export const register = async (req, res) => {
 
         const rol_id = rolRows[0].id;
 
+        // Resolver carrera contra la tabla de carreras (opcional)
+        let carreraLimpia = carrera ? carrera.trim() : null;
+        let carreraId = null;
+
+        if (carreraLimpia) {
+            try {
+                const { rows: carreraRows } = await pool.query(
+                    'SELECT id, nombre FROM carreras WHERE LOWER(nombre) = LOWER($1)',
+                    [carreraLimpia]
+                );
+                if (carreraRows.length > 0) {
+                    carreraId = carreraRows[0].id;
+                    carreraLimpia = carreraRows[0].nombre; // usar nombre oficial
+                }
+            } catch (e) {
+                console.warn('No se pudo resolver carrera en register:', e.message);
+            }
+        }
+
         // Hash de la contraseña
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(contrasenia, saltRounds);
 
         // Insertar usuario
         const { rows } = await pool.query(
-            'INSERT INTO usuarios (nombre_completo, carrera, cu, correo, contrasenia, rol_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre_completo, carrera, cu, correo, rol_id',
-            [nombre_completo, carrera, cu, correo, hashedPassword, rol_id]
+            'INSERT INTO usuarios (nombre_completo, carrera, carrera_id, cu, correo, contrasenia, rol_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, nombre_completo, carrera, carrera_id, cu, correo, rol_id',
+            [nombre_completo, carreraLimpia, carreraId, cu, correo, hashedPassword, rol_id]
         );
 
         // Generar token JWT
@@ -102,6 +121,7 @@ export const register = async (req, res) => {
                 id: rows[0].id,
                 nombre_completo: rows[0].nombre_completo,
                 carrera: rows[0].carrera,
+                carrera_id: rows[0].carrera_id,
                 cu: rows[0].cu,
                 correo: rows[0].correo,
                 rol_id: rows[0].rol_id
@@ -221,7 +241,7 @@ export const getProtectedData = async (req, res) => {
 
         // Obtener datos completos del usuario
         const { rows } = await pool.query(
-            'SELECT id, nombre_completo, carrera, cu, correo, rol_id FROM usuarios WHERE id = $1',
+            'SELECT id, nombre_completo, carrera, carrera_id, cu, correo, rol_id FROM usuarios WHERE id = $1',
             [req.user.userId]
         );
 
@@ -278,16 +298,35 @@ export const updateMe = async (req, res) => {
             }
         }
 
+        // Resolver carrera contra tabla carreras (opcional)
+        let carreraLimpia = carrera ? carrera.trim() : null;
+        let carreraId = null;
+
+        if (carreraLimpia) {
+            try {
+                const { rows: carreraRows } = await pool.query(
+                    'SELECT id, nombre FROM carreras WHERE LOWER(nombre) = LOWER($1)',
+                    [carreraLimpia]
+                );
+                if (carreraRows.length > 0) {
+                    carreraId = carreraRows[0].id;
+                    carreraLimpia = carreraRows[0].nombre;
+                }
+            } catch (e) {
+                console.warn('No se pudo resolver carrera en updateMe:', e.message);
+            }
+        }
+
         // Construir actualización dinámica
-        let query = 'UPDATE usuarios SET nombre_completo = $1, carrera = $2, cu = $3, correo = $4';
-        const params = [nombre_completo, carrera || null, cu || null, correo];
+        let query = 'UPDATE usuarios SET nombre_completo = $1, carrera = $2, carrera_id = $3, cu = $4, correo = $5';
+        const params = [nombre_completo, carreraLimpia, carreraId, cu || null, correo];
 
         if (contrasenia && contrasenia.length >= 6) {
             const hashed = await bcrypt.hash(contrasenia, 10);
-            query += ', contrasenia = $5 WHERE id = $6 RETURNING id, nombre_completo, carrera, cu, correo, rol_id';
+            query += ', contrasenia = $6 WHERE id = $7 RETURNING id, nombre_completo, carrera, carrera_id, cu, correo, rol_id';
             params.push(hashed, userId);
         } else {
-            query += ' WHERE id = $5 RETURNING id, nombre_completo, carrera, cu, correo, rol_id';
+            query += ' WHERE id = $6 RETURNING id, nombre_completo, carrera, carrera_id, cu, correo, rol_id';
             params.push(userId);
         }
 

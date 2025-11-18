@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asignación de Aulas</title>
     <link rel="stylesheet" href="../../assets/css/dashboard/principal.css">
+    <link rel="stylesheet" href="../../assets/css/dashboard/usuarios-roles.css">
 </head>
 <body>
     <div id="header-container"></div>
@@ -14,6 +15,48 @@
             <div class="breadcrumb-role" id="breadcrumb-role"></div>
         </div>
     </div>
+
+    <!-- Sección: Usuarios y Roles (Admin) -->
+    <section id="adminUsersRolesSection" class="admin-users-roles-section" hidden>
+        <div class="users-panel">
+            <div class="users-toolbar">
+                <div class="filters">
+                    <button class="filter-chip active" data-role="all">Todos</button>
+                    <button class="filter-chip" data-role="student">Estudiantes</button>
+                    <button class="filter-chip" data-role="assistant">Auxiliares</button>
+                    <button class="filter-chip" data-role="admin">Administradores</button>
+                </div>
+                <div class="search">
+                    <div class="search-input-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M21 21l-4.3-4.3m1.8-4.5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input id="usersSearchInput" type="text" placeholder="Buscar usuarios..." />
+                    </div>
+                </div>
+                <button id="btnNuevoUsuario" class="toolbar-btn primary">Nuevo</button>
+                <button id="btnGestionCarreras" class="toolbar-btn secondary">Carreras</button>
+            </div>
+
+            <div class="users-table-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Carrera</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="usersPagination" class="pagination"></div>
+        </div>
+    </section>
     <div class="dashboard-container">
         <div class="dashboard-summary" id="dashboardSummary">
             <div class="summary-cards-grid">
@@ -346,6 +389,138 @@
         </div>
     </div>
 
+    <!-- Modal lista de carreras -->
+    <div class="modal modal-carreras-list" id="carrerasListModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Carreras</h2>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" id="btnNuevaCarreraModal">Nueva carrera</button>
+                    <button class="modal-close" data-close-modal>&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="materias-list-header">
+                    <span>Carrera</span>
+                    <span>Acciones</span>
+                </div>
+                <div id="carrerasList" class="materias-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal formulario de carrera -->
+    <div class="modal modal-carrera" id="carreraFormModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Nueva carrera</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="carreraMessage" class="message" style="display:none;"></div>
+                <form id="carreraForm" class="materia-form">
+                    <input type="hidden" id="carrera_id">
+                    <div class="form-row">
+                        <label for="carrera_nombre">Nombre de la carrera</label>
+                        <input id="carrera_nombre" type="text" placeholder="Ej: Ingeniería de Sistemas" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación de carrera -->
+    <div class="modal modal-confirm" id="confirmDeleteCarreraModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Eliminar carrera</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteCarreraText">¿Deseas eliminar esta carrera?</p>
+                <div id="confirmDeleteCarreraMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteCarrera">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear/Editar Usuario (estilo de modales existentes) -->
+    <div class="modal modal-user-form" id="userFormModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="userFormTitle">Nuevo usuario</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <form id="userForm" class="modal-body">
+                <div id="userFormMessage" class="message" style="display:none;"></div>
+                <input type="hidden" id="userId" />
+                <div class="form-row">
+                    <label>Nombre</label>
+                    <input id="nombre" type="text" required />
+                </div>
+                <div class="form-row">
+                    <label>Correo</label>
+                    <input id="correo" type="email" required />
+                </div>
+                <div class="form-row">
+                    <label>Carrera</label>
+                    <input id="carrera" type="text" list="adminCarrerasList" />
+                    <datalist id="adminCarrerasList"></datalist>
+                </div>
+                <div class="form-row">
+                    <label>CU</label>
+                    <input id="cu" type="text" />
+                </div>
+                <div class="form-row">
+                    <label>Rol</label>
+                    <select id="rol" required>
+                        <option value="student">Estudiante</option>
+                        <option value="assistant">Auxiliar</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="password">Contraseña (dejar en blanco para mantener la actual)</label>
+                    <input id="password" type="password" placeholder="••••••••" />
+                </div>
+                <div class="modal-footer space-between">
+                    <button type="button" class="btn-cancel" data-close-modal>Cancelar</button>
+                    <button type="submit" class="btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Eliminar Usuario -->
+    <div class="modal modal-confirm" id="confirmDeleteUserModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2>Eliminar usuario</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="confirm-body modal-body">
+                <p>¿Seguro que deseas eliminar este usuario?</p>
+                <div id="confirmDeleteUserMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" data-close-modal>Cancelar</button>
+                <button id="btnConfirmDeleteUser" class="btn-delete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal detalle de clase -->
     <div class="modal" id="classDetailModal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
@@ -390,7 +565,8 @@
                 </div>
                 <div class="form-row">
                     <label for="p_carrera">Carrera</label>
-                    <input id="p_carrera" name="carrera" type="text">
+                    <input id="p_carrera" name="carrera" type="text" list="profileCarrerasList">
+                    <datalist id="profileCarrerasList"></datalist>
                 </div>
                 <div class="form-row">
                     <label for="p_cu">CU</label>
@@ -483,7 +659,9 @@
     </div>
 
     <script src="../../scripts/shared/load-header.js"></script>
+    <script src="../../scripts/shared/carreras-autocomplete.js"></script>
     <script src="../../scripts/dashboard/dashboard.js"></script>
+    <script src="../../scripts/dashboard/usuarios-roles-section.js"></script>
 </body>
 </html>
 

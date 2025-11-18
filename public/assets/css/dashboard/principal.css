@@ -159,7 +159,7 @@
     display: none;
     justify-content: flex-end;
     gap: 12px;
-    margin-bottom: 16px;
+    margin: 16px;
 }
 
 .horario-toolbar.active {
@@ -195,6 +195,15 @@
 }
 
 .toolbar-btn.secondary:hover {
+    background: #F8F9FA;
+    border-color: #B0B0B0;
+}
+.btn-cancel {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #D9D9D9;
+}
+.btn-cancel:hover {
     background: #F8F9FA;
     border-color: #B0B0B0;
 }
@@ -765,6 +774,17 @@
     cursor: pointer; 
     transition: all 0.3s ease; 
 }
+
+/* Refuerzo de estilo para botones dentro de modales (por si otros CSS redefinen .btn) */
+.modal .btn,
+.modal .btn-save,
+.modal .btn-cancel,
+.modal .btn-primary,
+.modal .btn-secondary {
+    padding: 11px 22px;
+    font-size: 14px;
+    border-radius: 8px;
+}
 .btn-secondary { 
     background: #FFFFFF; 
     color: #0F172A; 
@@ -814,7 +834,7 @@
     max-height: 92vh;
 }
 .modal-dialog.modal-sm {
-    width: 400px;
+    width: 600px;
 }
 .modal-dialog.modal-detail {
     width: 420px;
@@ -891,6 +911,7 @@
 }
 .form-row input,
 .form-group input,
+.form-row select,
 .form-group select { 
     padding: 10px 13px; 
     border: 1px solid #E8EAEF; 
@@ -902,6 +923,7 @@
 }
 .form-row input:focus,
 .form-group input:focus,
+.form-row select:focus,
 .form-group select:focus { 
     outline: none; 
     background-color: #fff;
