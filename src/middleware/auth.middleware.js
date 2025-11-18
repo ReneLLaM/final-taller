@@ -16,6 +16,8 @@ export const authMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
 
         // Agregar la información del usuario al request
+        // Soporta tokens con 'userId' o con 'id'
+        req.userId = decoded.userId ?? decoded.id;
         req.user = decoded;
 
         next();
@@ -37,4 +39,7 @@ export const authMiddleware = (req, res, next) => {
         });
     }
 };
+
+// Alias para verifyToken
+export const verifyToken = authMiddleware;
 

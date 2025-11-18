@@ -1,31 +1,13 @@
-
-
-CREATE TABLE roles(
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255)
-);
-
-CREATE TABLE usuarios (
-    id SERIAL PRIMARY KEY,
-    nombre_completo VARCHAR(255),
-    carrera VARCHAR(255),
-    cu varchar(8),
-    correo VARCHAR(255),
-    contrasenia VARCHAR(255),
-    rol_id INT,
-    FOREIGN KEY (rol_id) REFERENCES roles(id)
-);
-
-
--- INSERT INTO roles (nombre) VALUES ('estudiante'),('auxiliar'),('administrador');
-
--- INSERT INTO usuarios (nombre_completo,carrera,cu,correo,contrasenia,rol_id) VALUES ('Rene Llanos','Ingeniería de Sistemas','35-5051','rene.llanos@gmail.com','123456',1);
-
-
 -- =======================================
--- CREACIÓN DE TABLAS
+-- MIGRACIÓN DE LA TABLA CLASES
 -- =======================================
+-- Este script actualiza la tabla clases para incluir 
+-- día de la semana y hora de inicio
 
+-- 1. Eliminar la tabla clases existente (si existe)
+
+
+-- 2. Recrear la tabla con la nueva estructura
 CREATE TABLE materias (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -51,7 +33,9 @@ CREATE TABLE clases (
     FOREIGN KEY (id_materia) REFERENCES materias(id)
 );
 
--- Tabla de inscripciones (relación muchos a muchos entre usuarios y clases)
+-- 2.1. Crear tabla de inscripciones
+
+
 CREATE TABLE inscripciones (
     id SERIAL PRIMARY KEY,
     id_usuario INT,
@@ -62,11 +46,7 @@ CREATE TABLE inscripciones (
     UNIQUE(id_usuario, id_clase) -- Evitar duplicados
 );
 
--- =======================================
--- INSERCIÓN DE DATOS
--- =======================================
-
--- MATERIAS
+-- 3. Insertar los datos de ejemplo
 INSERT INTO materias (nombre, sigla, color, usuario_id) VALUES
 ('Programación Intermedia', 'SIS101', '#FF1744', 4),
 ('Física Básica III', 'FIS200', '#2196F3', 4),
@@ -75,7 +55,6 @@ INSERT INTO materias (nombre, sigla, color, usuario_id) VALUES
 ('Álgebra II', 'MAT103', '#8BC34A', 4),
 ('Cálculo II', 'MAT102', '#FF9800', 4);
 
--- CLASES
 INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, hora_fin, tipo_clase, aula)
 VALUES
 -- PROGRAMACIÓN INTERMEDIA (Lunes y Viernes)
@@ -101,14 +80,7 @@ VALUES
 (6, 'MAT102', 'O.VELASCO', 'G8', 1, '16:00', '18:00', 1, 'C003'),
 (6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003');
 
--- =======================================
--- INSCRIPCIONES - Vincular usuario con id 4 a las clases
--- =======================================
--- NOTA: Asegúrate de que el usuario con id 4 exista antes de ejecutar esto
--- Puedes modificar el id_usuario según necesites
-
--- Inscribir al usuario 4 en todas las clases
--- (Ajusta los IDs de clase según los generados en tu base de datos)
+-- 4. Insertar inscripciones para el usuario con id 4
 INSERT INTO inscripciones (id_usuario, id_clase) VALUES
 (4, 1),  -- PROGRAMACIÓN INTERMEDIA - Lunes
 (4, 2),  -- PROGRAMACIÓN INTERMEDIA - Viernes
@@ -127,3 +99,18 @@ INSERT INTO inscripciones (id_usuario, id_clase) VALUES
 (4, 15), -- CÁLCULO II - Lunes
 (4, 16); -- CÁLCULO II - Jueves
 
+-- 5. Verificar los datos insertados
+SELECT 
+    c.id,
+    m.nombre as materia,
+    c.sigla,
+    c.docente,
+    c.grupo,
+    c.dia_semana,
+    c.hora_inicio,
+    c.hora_fin,
+    c.tipo_clase,
+    c.aula
+FROM clases c
+INNER JOIN materias m ON c.id_materia = m.id
+ORDER BY c.dia_semana, c.hora_inicio;

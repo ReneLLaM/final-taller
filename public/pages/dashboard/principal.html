@@ -15,7 +15,338 @@
         </div>
     </div>
     <div class="dashboard-container">
-        <!-- Contenido del dashboard según el rol (horarios, etc.) -->
+        <div class="dashboard-summary" id="dashboardSummary">
+            <div class="summary-cards-grid">
+                <div class="summary-card summary-materias">
+                    <div class="summary-title">Materias Inscritas</div>
+                    <div class="summary-count" id="summaryMaterias">0</div>
+                </div>
+                <div class="summary-card summary-auxiliaturas">
+                    <div class="summary-title">Auxiliaturas Inscritas</div>
+                    <div class="summary-count" id="summaryAuxiliaturas">0</div>
+                </div>
+                <div class="summary-card summary-notificaciones">
+                    <div class="summary-title">Notificaciones / Alertas</div>
+                    <div class="summary-count" id="summaryNotificaciones">0</div>
+                </div>
+                <div class="summary-card summary-choques">
+                    <div class="summary-title">Choques de Horario</div>
+                    <div class="summary-count" id="summaryChoques">0</div>
+                </div>
+            </div>
+        </div>
+        <!-- Horario del usuario -->
+        <div class="horario-section">
+            <div class="horario-toolbar">
+                <button type="button" class="toolbar-btn primary" id="btnNuevaClase">+ Nueva clase</button>
+                <button type="button" class="toolbar-btn secondary" id="btnGestionMaterias">Gestionar materias</button>
+            </div>
+            <div class="horario-wrapper">
+                <div class="horario-grid">
+                    <!-- Encabezado con días de la semana -->
+                    <div class="time-column header-cell">
+                        <button type="button" class="edit-toggle-button" id="btnToggleEdicionHorario">Editar</button>
+                    </div>
+                    <div class="day-header">Lunes</div>
+                    <div class="day-header">Martes</div>
+                    <div class="day-header">Miércoles</div>
+                    <div class="day-header">Jueves</div>
+                    <div class="day-header">Viernes</div>
+                    <div class="day-header">Sábado</div>
+
+                    <!-- Franjas horarias de 7:00 a 22:00 -->
+                    <div class="time-slot">07:00 - 08:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="07:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="07:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="07:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="07:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="07:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="07:00"></div>
+
+                    <div class="time-slot">08:00 - 09:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="08:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="08:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="08:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="08:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="08:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="08:00"></div>
+
+                    <div class="time-slot">09:00 - 10:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="09:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="09:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="09:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="09:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="09:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="09:00"></div>
+
+                    <div class="time-slot">10:00 - 11:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="10:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="10:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="10:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="10:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="10:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="10:00"></div>
+
+                    <div class="time-slot">11:00 - 12:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="11:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="11:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="11:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="11:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="11:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="11:00"></div>
+
+                    <div class="time-slot">12:00 - 13:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="12:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="12:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="12:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="12:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="12:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="12:00"></div>
+
+                    <div class="time-slot">13:00 - 14:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="13:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="13:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="13:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="13:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="13:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="13:00"></div>
+
+                    <div class="time-slot">14:00 - 15:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="14:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="14:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="14:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="14:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="14:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="14:00"></div>
+
+                    <div class="time-slot">15:00 - 16:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="15:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="15:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="15:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="15:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="15:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="15:00"></div>
+
+                    <div class="time-slot">16:00 - 17:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="16:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="16:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="16:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="16:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="16:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="16:00"></div>
+
+                    <div class="time-slot">17:00 - 18:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="17:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="17:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="17:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="17:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="17:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="17:00"></div>
+
+                    <div class="time-slot">18:00 - 19:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="18:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="18:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="18:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="18:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="18:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="18:00"></div>
+
+                    <div class="time-slot">19:00 - 20:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="19:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="19:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="19:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="19:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="19:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="19:00"></div>
+
+                    <div class="time-slot">20:00 - 21:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="20:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="20:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="20:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="20:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="20:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="20:00"></div>
+
+                    <div class="time-slot">21:00 - 22:00</div>
+                    <div class="schedule-cell" data-dia="1" data-hora="21:00"></div>
+                    <div class="schedule-cell" data-dia="2" data-hora="21:00"></div>
+                    <div class="schedule-cell" data-dia="3" data-hora="21:00"></div>
+                    <div class="schedule-cell" data-dia="4" data-hora="21:00"></div>
+                    <div class="schedule-cell" data-dia="5" data-hora="21:00"></div>
+                    <div class="schedule-cell" data-dia="6" data-hora="21:00"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal agregar clase -->
+    <div class="modal modal-add-class" id="addClassModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="addClassTitle">Agregar clase</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <form id="addClassForm" class="modal-body">
+                <div id="addClassMessage" class="message" style="display:none;"></div>
+                <input type="hidden" id="clase_id">
+                <input type="hidden" id="dia_semana">
+                <input type="hidden" id="hora_slot">
+
+                <div class="form-group slot-summary">
+                    <label>Bloque seleccionado</label>
+                    <div id="slotResumen" class="slot-tag">Selecciona un bloque en el horario</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="materia">Materia</label>
+                    <div class="inline-field">
+                        <select id="materia" name="id_materia" required>
+                            <option value="">Seleccionar materia</option>
+                        </select>
+                        <button type="button" class="btn-link" id="btnNuevaMateria">Nueva materia</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dia_select">Día</label>
+                    <select id="dia_select" name="dia_semana">
+                        <option value="1">Lunes</option>
+                        <option value="2">Martes</option>
+                        <option value="3">Miércoles</option>
+                        <option value="4">Jueves</option>
+                        <option value="5">Viernes</option>
+                        <option value="6">Sábado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sigla">Sigla:</label>
+                    <input id="sigla" name="sigla" type="text" placeholder="Ej: FIS100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="docente">Docente:</label>
+                    <input id="docente" name="docente" type="text" placeholder="Ej: R.GUTIERREZ" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="grupo">Grupo:</label>
+                    <input id="grupo" name="grupo" type="text" placeholder="Ej: G1" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="time-inputs">
+                        <div>
+                            <label for="hora_inicio">Hora Inicio</label>
+                            <input id="hora_inicio" name="hora_inicio" type="time" required>
+                        </div>
+                        <div>
+                            <label for="hora_fin">Hora Fin</label>
+                            <input id="hora_fin" name="hora_fin" type="time" required>
+                        </div>
+                    </div>
+                    <div class="duration-info">
+                        <strong>Duración:</strong> <span id="duration">2h</span><br>
+                        <small>La clase se ajustará automáticamente en el horario</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="aula">Aula:</label>
+                    <input id="aula" name="aula" type="text" placeholder="Ej: C101" required>
+                </div>
+
+                <div class="modal-footer space-between">
+                    <button type="button" class="btn btn-delete" id="deleteClassBtn" style="display:none;">Eliminar</button>
+                    <button type="button" class="btn btn-cancel" data-close-modal>Cancelar</button>
+                    <button type="submit" class="btn btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal gestionar materias -->
+    <div class="modal modal-materia" id="materiaModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Materias</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="materiaMessage" class="message" style="display:none;"></div>
+                <form id="materiaForm" class="materia-form">
+                    <input type="hidden" id="materia_id">
+                    <div class="form-row split-row">
+                        <div class="form-control">
+                            <label for="materia_nombre">Nombre de la materia</label>
+                            <input id="materia_nombre" type="text" placeholder="Ej: Programación Intermedia" required>
+                        </div>
+                        <div class="form-control sigla-control">
+                            <label for="materia_sigla">Sigla</label>
+                            <input id="materia_sigla" type="text" placeholder="Ej: FIS100" maxlength="12" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label>Color de la materia</label>
+                        <div class="color-selector" id="materiaColorSelector" data-input-target="materia_color">
+                            <div class="color-option selected" data-color="#2196F3" style="background:#2196F3;"></div>
+                            <div class="color-option" data-color="#F44336" style="background:#F44336;"></div>
+                            <div class="color-option" data-color="#4CAF50" style="background:#4CAF50;"></div>
+                            <div class="color-option" data-color="#FF9800" style="background:#FF9800;"></div>
+                            <div class="color-option" data-color="#9C27B0" style="background:#9C27B0;"></div>
+                            <div class="color-option" data-color="#00BCD4" style="background:#00BCD4;"></div>
+                            <div class="color-option" data-color="#FF5722" style="background:#FF5722;"></div>
+                            <div class="color-option" data-color="#8BC34A" style="background:#8BC34A;"></div>
+                        </div>
+                        <div class="color-picker-row">
+                            <label for="materia_color">Personalizar color</label>
+                            <input type="color" id="materia_color" value="#2196F3">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="materiaSaveBtn">Guardar</button>
+                    </div>
+                </form>
+
+                <div class="materias-list-header">
+                    <span>Materia</span>
+                    <span>Sigla</span>
+                    <span>Acciones</span>
+                </div>
+                <div id="materiasList" class="materias-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal detalle de clase -->
+    <div class="modal" id="classDetailModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-detail">
+            <div class="class-detail-card">
+                <span class="detail-close" data-close-modal>&times;</span>
+                <div class="detail-content">
+                    <div class="detail-header">
+                        <div class="detail-color-bar" id="detailColorBar"></div>
+                        <h2 id="detailMateria">Materia</h2>
+                    </div>
+                    <ul class="detail-list">
+                        <li><span class="detail-label">Sigla:</span> <span id="detailSigla"></span></li>
+                        <li><span class="detail-label">Docente:</span> <span id="detailDocente"></span></li>
+                        <li><span class="detail-label">Grupo:</span> <span id="detailGrupo"></span></li>
+                    </ul>
+                    <div class="detail-tag">
+                        <span class="detail-label">Aula:</span>
+                        <span id="detailAula" class="detail-badge"></span>
+                    </div>
+                    <div class="detail-footer">
+                        <span id="detailHorario"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal editar perfil -->
@@ -57,6 +388,72 @@
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal acciones de clase -->
+    <div class="modal modal-class-actions" id="classActionsModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2>Gestionar clase</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body class-actions-body">
+                <div class="class-actions-header">
+                    <div class="class-actions-color" id="classActionsColor"></div>
+                    <div>
+                        <h3 id="classActionsMateria">Materia</h3>
+                        <div class="class-actions-meta">
+                            <div><span id="classActionsDocente">Docente</span> • <span id="classActionsGrupo">G1</span></div>
+                            <div id="classActionsHorario">Lunes · 09:00 - 11:00</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-actions-buttons">
+                    <button type="button" class="btn btn-outline" id="classActionAdd">+ Añadir otra clase</button>
+                    <button type="button" class="btn btn-save" id="classActionEdit">Editar clase</button>
+                    <button type="button" class="btn btn-delete" id="classActionDelete">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación de clase -->
+    <div class="modal modal-confirm" id="confirmDeleteClassModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Eliminar clase</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteClassText">¿Deseas eliminar esta clase?</p>
+                <div id="confirmDeleteClassMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteClass">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación de materia -->
+    <div class="modal modal-confirm" id="confirmDeleteMateriaModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Eliminar materia</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteMateriaText">¿Deseas eliminar esta materia?</p>
+                <div id="confirmDeleteMateriaMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteMateria">Eliminar</button>
+            </div>
         </div>
     </div>
 

@@ -6,16 +6,16 @@
 .page-header {
     width: 100%;
     background-color: #ffffff;
-    border-bottom: 1px solid #D9D9D9;
+    border-bottom: 1px solid #E8EAEF;
     height: 84px;
     display: flex;
- 
+    align-items: center;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .header-content {

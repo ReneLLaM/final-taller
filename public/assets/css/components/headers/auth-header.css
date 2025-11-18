@@ -4,9 +4,8 @@
 
 .auth-header {
     width: 100%;
-    background-color: #000000;
-    border-top: 1px solid #ffffff;
-    border-bottom: 1px solid #ffffff;
+    background-color: #0B0B1A;
+    border-bottom: 1px solid #1a1a2e;
     height: 84px;
     display: flex;
     align-items: center;
@@ -15,6 +14,7 @@
     left: 0;
     right: 0;
     z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .auth-header .header-content {

@@ -5,7 +5,7 @@
 .admin-header {
     width: 100%;
     background-color: #ffffff;
-    border-bottom: 1px solid #D9D9D9;
+    border-bottom: 1px solid #E8EAEF;
     height: 84px;
     display: flex;
     align-items: center;
@@ -15,6 +15,7 @@
     left: 0;
     right: 0;
     z-index: 1000;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .admin-header .header-content {

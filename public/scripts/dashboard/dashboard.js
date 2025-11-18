@@ -13,6 +13,7 @@ async function loadUserInfo() {
         const data = await response.json();
 
         if (data.user) {
+            rolUsuarioActual = data.user.rol_id;
             // Obtener nombre del rol
             let rolNombre = 'Usuario';
             switch(data.user.rol_id) {
@@ -24,6 +25,7 @@ async function loadUserInfo() {
             // Guard de secciones por rol
             const params = new URLSearchParams(window.location.search);
             const section = params.get('section');
+            seccionActual = section;
             const allowedByRole = {
                 1: ['horario','auxiliaturas','votacion', null],
                 2: ['panel-auxiliar','horario','auxiliaturas','votacion', null],
@@ -41,7 +43,7 @@ async function loadUserInfo() {
 
             // Breadcrumb izquierdo: sección
             const sectionLabels = {
-                'horario': '/Editar horario',
+                'horario': '/Mi disponibilidad',
                 'auxiliaturas': '/Mis auxiliaturas',
                 'votacion': '/Votación/Inscripción',
                 'panel-auxiliar': '/Panel auxiliar',
@@ -60,6 +62,14 @@ async function loadUserInfo() {
             if (roleEl) {
                 roleEl.innerHTML = `<span class="role-text">${rolNombre}:</span> <span class="name-text">${data.user.nombre_completo}</span>`;
             }
+
+            const toolbar = document.querySelector('.horario-toolbar');
+            if (toolbar) {
+                toolbar.classList.toggle('active', puedeGestionarHorario(section));
+            }
+
+            // Inicializar botón de toggle de edición del horario
+            inicializarToggleEdicionHorario();
         }
     } catch (error) {
         console.error('Error al cargar información:', error);
@@ -85,8 +95,12 @@ async function handleLogout() {
     }
 }
 
-// Cargar información al cargar la página
-loadUserInfo();
+// Cargar información y horario cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', async () => {
+    inicializarCeldasHorario();
+    await loadUserInfo();
+    await cargarMiHorario();
+});
 
 // No llamar loadHeaderByRole() aquí porque load-header.js ya lo hace automáticamente
 
@@ -183,3 +197,1198 @@ if (profileForm) {
     });
 }
 
+// ============================================
+// FUNCIONES PARA EL HORARIO
+// ============================================
+
+// Variable global para almacenar el filtro actual
+const SLOT_HEIGHT = (() => {
+    try {
+        const raw = getComputedStyle(document.documentElement).getPropertyValue('--slot-height');
+        const parsed = parseInt(raw, 10);
+        return Number.isNaN(parsed) ? 56 : parsed;
+    } catch {
+        return 56;
+    }
+})();
+const DEFAULT_DURATION_HOURS = 2;
+let filtroTipoClase = null; // null = todas, 1 = normales, 2 = auxiliaturas
+let diaSeleccionado = null;
+let horaSeleccionada = null;
+let claseSeleccionada = null;
+let materiasCache = [];
+let materiaEditando = null;
+let rolUsuarioActual = null;
+let seccionActual = new URLSearchParams(window.location.search).get('section');
+let scheduleCellsInitialized = false;
+let modoEdicionHorario = false;
+
+function puedeGestionarHorario(sectionParam) {
+    const section = sectionParam ?? seccionActual;
+    if (!rolUsuarioActual) return false;
+    // Solo estudiantes y auxiliares pueden gestionar
+    if (rolUsuarioActual !== 1 && rolUsuarioActual !== 2) return false;
+    // El horario solo se puede gestionar cuando el toggle de edición está activo
+    return !!modoEdicionHorario;
+}
+
+function puedeVerDisponibilidad(sectionParam) {
+    const section = sectionParam ?? seccionActual;
+    if (!rolUsuarioActual) return false;
+    if (rolUsuarioActual !== 1 && rolUsuarioActual !== 2) return false;
+    // La vista de disponibilidad se muestra en la sección 'horario'
+    return section === 'horario';
+}
+
+function inicializarCeldasHorario() {
+    if (scheduleCellsInitialized) return;
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.addEventListener('click', (event) => {
+            if (!puedeGestionarHorario()) return;
+            if (event.target.closest('.clase-card')) return;
+            const dia = cell.getAttribute('data-dia');
+            const hora = cell.getAttribute('data-hora');
+            abrirModalAgregarClase(dia, hora);
+        });
+    });
+    scheduleCellsInitialized = true;
+}
+
+function actualizarCeldasEditables(activo) {
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.classList.toggle('editable', !!activo);
+    });
+}
+
+// Función para cargar el horario del usuario autenticado
+async function cargarMiHorario() {
+    console.log('=== INICIANDO CARGA DE HORARIO ===');
+    
+    try {
+        // Detectar la sección actual
+        const params = new URLSearchParams(window.location.search);
+        const section = params.get('section');
+        seccionActual = section;
+        
+        console.log('Sección actual:', section || 'inicio (sin parámetro)');
+        
+        // Establecer el filtro según la sección
+        if (section === 'horario') {
+            // Vista "Mi disponibilidad": solo clases normales
+            filtroTipoClase = 1;
+            console.log('Filtro activado: SOLO CLASES NORMALES (tipo_clase = 1)');
+        } else if (section === 'auxiliaturas') {
+            filtroTipoClase = 2; // Solo auxiliaturas
+            console.log('Filtro activado: SOLO AUXILIATURAS (tipo_clase = 2)');
+        } else {
+            filtroTipoClase = null; // Todas las clases
+            console.log('Filtro: TODAS LAS CLASES');
+        }
+        
+        console.log('Llamando a /api/mis-clases...');
+        const response = await fetch('/api/mis-clases', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        console.log('Respuesta recibida:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            console.error('Error al cargar el horario:', response.status);
+            const errorText = await response.text();
+            console.error('Detalle del error:', errorText);
+            return;
+        }
+        
+        const clases = await response.json();
+        console.log('Clases obtenidas de la API:', clases.length);
+        console.log('Primera clase:', clases[0]);
+        
+        // Filtrar clases según el tipo
+        let clasesFiltradas = clases;
+        if (filtroTipoClase !== null) {
+            clasesFiltradas = clases.filter(c => c.tipo_clase === filtroTipoClase);
+            console.log(`Después de filtrar (tipo=${filtroTipoClase}):`, clasesFiltradas.length, 'clases');
+        }
+        
+        // Renderizar las clases en el horario
+        console.log('Llamando a renderizarClases con', clasesFiltradas.length, 'clases');
+        renderizarClases(clasesFiltradas);
+        
+        console.log('=== CARGA DE HORARIO COMPLETADA ===');
+    } catch (error) {
+        console.error('=== ERROR EN CARGA DE HORARIO ===');
+        console.error('Error:', error);
+        console.error('Stack:', error.stack);
+    }
+}
+
+// Función para renderizar las clases en el grid
+function renderizarClases(clases) {
+    console.log('Renderizando clases:', clases.length);
+    
+    // Limpiar todas las celdas primero
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.innerHTML = '';
+    });
+    
+    if (!clases || clases.length === 0) {
+        console.log('No hay clases para renderizar');
+        // Actualizar resumen superior con ceros cuando no hay clases
+        actualizarDashboardSummary([], []);
+        renderConflictos([]);
+        aplicarLayoutConflictos();
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    const puedeEditar = puedeGestionarHorario(section);
+    const conflictos = detectarConflictos(clases);
+    actualizarCeldasEditables(puedeEditar);
+    
+    // Renderizar cada clase
+    clases.forEach((clase, index) => {
+        console.log(`Clase ${index + 1}:`, clase);
+        
+        // Extraer hora_inicio y hora_fin (puede venir como "HH:MM:SS" o objeto)
+        let horaInicio = typeof clase.hora_inicio === 'string' 
+            ? clase.hora_inicio.substring(0, 5) 
+            : clase.hora_inicio;
+        let horaFin = typeof clase.hora_fin === 'string' 
+            ? clase.hora_fin.substring(0, 5) 
+            : clase.hora_fin;
+            
+        const dia = parseInt(clase.dia_semana);
+        
+        console.log(`Procesando: ${clase.materia_nombre} - Día ${dia}, ${horaInicio} - ${horaFin}`);
+        
+        // Extraer la hora de inicio (sin minutos para buscar la celda)
+        const [horaInicioHH, horaInicioMM] = horaInicio.split(':').map(Number);
+        const [horaFinHH, horaFinMM] = horaFin.split(':').map(Number);
+        
+        // Calcular duración en minutos
+        const minutosInicio = horaInicioHH * 60 + horaInicioMM;
+        const minutosFin = horaFinHH * 60 + horaFinMM;
+        const duracionMinutos = minutosFin - minutosInicio;
+        
+        // Buscar la celda correspondiente (basada en la hora de inicio)
+        const horaFormateada = `${String(horaInicioHH).padStart(2, '0')}:00`;
+        const cell = document.querySelector(`.schedule-cell[data-dia="${dia}"][data-hora="${horaFormateada}"]`);
+        
+        console.log(`Buscando celda: dia=${dia}, hora=${horaFormateada}`, cell ? 'ENCONTRADA' : 'NO ENCONTRADA');
+        
+        if (cell) {
+            // Calcular el offset dentro de la celda si no empieza en punto
+            const offsetMinutos = horaInicioMM;
+            const offsetPixels = (offsetMinutos / 60) * SLOT_HEIGHT;
+            
+            // Calcular altura en píxeles (proporcional a la duración)
+            const alturaPixels = (duracionMinutos / 60) * SLOT_HEIGHT;
+            
+            console.log(`Creando tarjeta: altura=${alturaPixels}px, offset=${offsetPixels}px`);
+            
+            const claseCard = crearClaseCard(clase, alturaPixels, offsetPixels, conflictos.ids);
+            cell.appendChild(claseCard);
+        }
+    });
+    
+    console.log('Renderizado completo');
+    // Actualizar tarjetas resumen (solo en vista de inicio)
+    actualizarDashboardSummary(clases, conflictos.lista);
+    aplicarLayoutConflictos();
+}
+
+// Inicializa el botón que activa/desactiva el modo edición del horario
+function inicializarToggleEdicionHorario() {
+    const btnToggle = document.getElementById('btnToggleEdicionHorario');
+    if (!btnToggle) return;
+
+    // El botón solo tiene efecto si el usuario puede ver la sección de disponibilidad
+    if (!puedeVerDisponibilidad()) {
+        btnToggle.style.display = 'none';
+        return;
+    }
+
+    btnToggle.style.display = 'inline-flex';
+    btnToggle.textContent = 'Editar';
+    btnToggle.classList.remove('active');
+    modoEdicionHorario = false;
+    actualizarCeldasEditables(false);
+    const toolbar = document.querySelector('.horario-toolbar');
+    if (toolbar) toolbar.classList.toggle('active', false);
+
+    btnToggle.addEventListener('click', () => {
+        modoEdicionHorario = !modoEdicionHorario;
+        btnToggle.classList.toggle('active', modoEdicionHorario);
+        btnToggle.textContent = modoEdicionHorario ? 'Dejar de editar' : 'Editar';
+        actualizarCeldasEditables(modoEdicionHorario);
+        const toolbarInner = document.querySelector('.horario-toolbar');
+        if (toolbarInner) toolbarInner.classList.toggle('active', modoEdicionHorario);
+    });
+}
+
+// Función para crear la tarjeta de clase
+function crearClaseCard(clase, altura, offset, conflictosIds) {
+    const card = document.createElement('div');
+    card.className = `clase-card ${clase.tipo_clase === 1 ? 'normal' : 'auxiliatura'}`;
+    
+    // Establecer el color del borde
+    card.style.borderColor = clase.color || '#2196F3';
+    
+    // Establecer altura y posición (una altura por bloque horario)
+    const alturaFinal = Math.max(altura, SLOT_HEIGHT);
+    card.style.height = `${alturaFinal}px`;
+    card.style.top = `${offset}px`;
+    // Modo compacto/tall según altura
+    if (alturaFinal <= SLOT_HEIGHT * 1.5) {
+        // Tarjetas muy bajas: mostrar solo el título de la materia
+        card.classList.add('compact');
+    } else if (alturaFinal >= SLOT_HEIGHT * 2) {
+        // Tarjetas que ocupan claramente más de una grilla: distribuir contenido
+        card.classList.add('tall');
+    }
+    
+    // Formatear el horario
+    let horaInicio = typeof clase.hora_inicio === 'string' 
+        ? clase.hora_inicio.substring(0, 5) 
+        : clase.hora_inicio;
+    let horaFin = typeof clase.hora_fin === 'string' 
+        ? clase.hora_fin.substring(0, 5) 
+        : clase.hora_fin;
+    
+    card.innerHTML = `
+        <div class="clase-nombre">${clase.materia_nombre}</div>
+        <div class="clase-info">
+            <span class="clase-docente">${clase.docente}</span>
+            <span>
+                <span class="clase-codigo">${clase.sigla}</span>
+                <span class="clase-grupo">${clase.grupo}</span>
+            </span>
+        </div>
+        <div class="clase-badges">
+            <span class="badge">${clase.aula}</span>
+            <span class="badge">${horaInicio} - ${horaFin}</span>
+        </div>
+    `;
+
+    if (conflictosIds && conflictosIds.has(clase.id)) {
+        card.classList.add('conflict');
+        card.dataset.conflict = 'true';
+    }
+    
+    // Comportamiento dinámico según modo de edición:
+    // - Modo visualización: abre detalle de clase
+    // - Modo edición: abre acciones de clase (editar/eliminar)
+    card.addEventListener('click', (event) => {
+        if (puedeGestionarHorario()) {
+            event.stopPropagation();
+            abrirAccionesClase(clase);
+        } else {
+            abrirDetalleClase(clase);
+        }
+    });
+    
+    return card;
+}
+
+// ============================================
+// FUNCIONES PARA EL HORARIO Y LAS CLASES
+// ============================================
+
+const addClassModal = document.getElementById('addClassModal');
+const addClassTitle = document.getElementById('addClassTitle');
+const addClassMessage = document.getElementById('addClassMessage');
+const slotResumen = document.getElementById('slotResumen');
+const diaHidden = document.getElementById('dia_semana');
+const horaHidden = document.getElementById('hora_slot');
+const deleteClassBtn = document.getElementById('deleteClassBtn');
+const btnNuevaClase = document.getElementById('btnNuevaClase');
+const btnGestionMaterias = document.getElementById('btnGestionMaterias');
+const btnNuevaMateria = document.getElementById('btnNuevaMateria');
+const materiaSelect = document.getElementById('materia');
+const diaSelect = document.getElementById('dia_select');
+const confirmDeleteClassModal = document.getElementById('confirmDeleteClassModal');
+const confirmDeleteClassText = document.getElementById('confirmDeleteClassText');
+const confirmDeleteClassMessage = document.getElementById('confirmDeleteClassMessage');
+const btnConfirmDeleteClass = document.getElementById('btnConfirmDeleteClass');
+const confirmDeleteMateriaModal = document.getElementById('confirmDeleteMateriaModal');
+const confirmDeleteMateriaText = document.getElementById('confirmDeleteMateriaText');
+const confirmDeleteMateriaMessage = document.getElementById('confirmDeleteMateriaMessage');
+const btnConfirmDeleteMateria = document.getElementById('btnConfirmDeleteMateria');
+
+const materiaModal = document.getElementById('materiaModal');
+const materiaForm = document.getElementById('materiaForm');
+const materiaMessage = document.getElementById('materiaMessage');
+const materiasListEl = document.getElementById('materiasList');
+const materiaNombreInput = document.getElementById('materia_nombre');
+const materiaSiglaInput = document.getElementById('materia_sigla');
+const materiaIdInput = document.getElementById('materia_id');
+const materiaSaveBtn = document.getElementById('materiaSaveBtn');
+const materiaColorSelector = document.getElementById('materiaColorSelector');
+const materiaColorInput = document.getElementById('materia_color');
+const DEFAULT_MATERIA_COLOR = '#2196F3';
+const claseSiglaInput = document.getElementById('sigla');
+const classDetailModal = document.getElementById('classDetailModal');
+const detailColorBar = document.getElementById('detailColorBar');
+const detailMateria = document.getElementById('detailMateria');
+const detailSigla = document.getElementById('detailSigla');
+const detailDocente = document.getElementById('detailDocente');
+const detailGrupo = document.getElementById('detailGrupo');
+const detailAula = document.getElementById('detailAula');
+const detailHorario = document.getElementById('detailHorario');
+const classActionsModal = document.getElementById('classActionsModal');
+const classActionsColor = document.getElementById('classActionsColor');
+const classActionsMateria = document.getElementById('classActionsMateria');
+const classActionsDocente = document.getElementById('classActionsDocente');
+const classActionsGrupo = document.getElementById('classActionsGrupo');
+const classActionsHorario = document.getElementById('classActionsHorario');
+const classActionAddBtn = document.getElementById('classActionAdd');
+const classActionEditBtn = document.getElementById('classActionEdit');
+const classActionDeleteBtn = document.getElementById('classActionDelete');
+let materiaPendienteEliminarId = null;
+
+function nombreDia(dia) {
+    const nombres = [null, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return nombres[dia] || 'Día';
+}
+
+function sincronizarSelectorColor(selector, color) {
+    if (!selector) return;
+    selector.querySelectorAll('.color-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.getAttribute('data-color') === color);
+    });
+}
+
+function setMateriaColor(color = DEFAULT_MATERIA_COLOR) {
+    if (materiaColorInput) materiaColorInput.value = color;
+    sincronizarSelectorColor(materiaColorSelector, color);
+}
+
+function sumarHoras(hora = '07:00', horas = DEFAULT_DURATION_HOURS) {
+    const [h, m] = hora.split(':').map(Number);
+    const date = new Date();
+    date.setHours(h, m);
+    date.setMinutes(date.getMinutes() + (horas * 60));
+    return date.toTimeString().substring(0, 5);
+}
+
+function actualizarDuracionLabel(inicio, fin) {
+    const durationEl = document.getElementById('duration');
+    if (!durationEl || !inicio || !fin) return;
+    const [hI, mI] = inicio.split(':').map(Number);
+    const [hF, mF] = fin.split(':').map(Number);
+    const minutosInicio = hI * 60 + (mI || 0);
+    const minutosFin = hF * 60 + (mF || 0);
+    const diferencia = minutosFin - minutosInicio;
+    if (diferencia <= 0) return;
+    const horas = Math.floor(diferencia / 60);
+    const minutos = diferencia % 60;
+    const partes = [];
+    if (horas > 0) partes.push(`${horas}h`);
+    if (minutos > 0) partes.push(`${minutos}min`);
+    durationEl.textContent = partes.join(' ') || '—';
+}
+
+function establecerSlot(dia, hora) {
+    diaSeleccionado = dia ? parseInt(dia) : null;
+    horaSeleccionada = hora || null;
+
+    if (diaHidden) diaHidden.value = diaSeleccionado ?? '';
+    if (horaHidden) horaHidden.value = horaSeleccionada ?? '';
+    if (diaSelect && diaSeleccionado) diaSelect.value = String(diaSeleccionado);
+
+    if (slotResumen) {
+        if (diaSeleccionado && horaSeleccionada) {
+            slotResumen.textContent = `${nombreDia(diaSeleccionado)} • ${horaSeleccionada}`;
+        } else {
+            slotResumen.textContent = 'Selecciona un bloque en el horario';
+        }
+    }
+}
+
+function mostrarModal(modalEl) {
+    if (!modalEl) return;
+    modalEl.classList.add('show');
+    modalEl.setAttribute('aria-hidden', 'false');
+}
+
+function cerrarModal(modalEl) {
+    if (!modalEl) return;
+    modalEl.classList.remove('show');
+    modalEl.setAttribute('aria-hidden', 'true');
+}
+
+function mostrarMensaje(element, type, text) {
+    if (!element) return;
+    element.className = `message ${type}`;
+    element.textContent = text;
+    element.style.display = 'block';
+}
+
+function ocultarMensaje(element) {
+    if (!element) return;
+    element.style.display = 'none';
+}
+
+function abrirDetalleClase(clase) {
+    if (!classDetailModal) return;
+    if (detailColorBar) detailColorBar.style.background = clase.color || '#2563EB';
+    if (detailMateria) detailMateria.textContent = clase.materia_nombre || 'Materia';
+    if (detailSigla) detailSigla.textContent = clase.sigla || '—';
+    if (detailDocente) detailDocente.textContent = clase.docente || '—';
+    if (detailGrupo) detailGrupo.textContent = clase.grupo || '—';
+    if (detailAula) detailAula.textContent = clase.aula || '—';
+    const horaInicio = typeof clase.hora_inicio === 'string' ? clase.hora_inicio.substring(0,5) : clase.hora_inicio;
+    const horaFin = typeof clase.hora_fin === 'string' ? clase.hora_fin.substring(0,5) : clase.hora_fin;
+    if (detailHorario) detailHorario.textContent = `${horaInicio || '--:--'} - ${horaFin || '--:--'}`;
+    mostrarModal(classDetailModal);
+}
+
+function abrirAccionesClase(clase) {
+    claseSeleccionada = clase;
+    if (!classActionsModal) {
+        abrirModalEditarClase(clase);
+        return;
+    }
+    if (classActionsColor) classActionsColor.style.background = clase.color || '#2563EB';
+    if (classActionsMateria) classActionsMateria.textContent = clase.materia_nombre || 'Materia';
+    if (classActionsDocente) classActionsDocente.textContent = clase.docente || 'Docente';
+    if (classActionsGrupo) classActionsGrupo.textContent = clase.grupo ? `Grupo ${clase.grupo}` : '';
+    const horaInicio = typeof clase.hora_inicio === 'string' ? clase.hora_inicio.substring(0,5) : clase.hora_inicio;
+    const horaFin = typeof clase.hora_fin === 'string' ? clase.hora_fin.substring(0,5) : clase.hora_fin;
+    if (classActionsHorario) classActionsHorario.textContent = `${nombreDia(parseInt(clase.dia_semana))} · ${horaInicio} - ${horaFin}`;
+    mostrarModal(classActionsModal);
+}
+
+async function cargarMaterias(force = false) {
+    if (!force && materiasCache.length) {
+        poblarSelectMaterias(materiasCache);
+        return materiasCache;
+    }
+
+    try {
+        const response = await fetch('/api/materias', { credentials: 'include' });
+        if (!response.ok) throw new Error('No se pudo cargar materias');
+        const materias = await response.json();
+        materiasCache = materias;
+        poblarSelectMaterias(materias);
+        return materias;
+    } catch (error) {
+        console.error('Error al cargar materias:', error);
+        mostrarMensaje(materiaMessage, 'error', 'Error al cargar materias');
+        return [];
+    }
+}
+
+function poblarSelectMaterias(materias) {
+    if (!materiaSelect) return;
+    materiaSelect.innerHTML = '<option value="">Seleccionar materia</option>';
+    materias.forEach(materia => {
+        const option = document.createElement('option');
+        option.value = materia.id;
+        option.textContent = materia.sigla 
+            ? `${materia.sigla} · ${materia.nombre}` 
+            : materia.nombre;
+        materiaSelect.appendChild(option);
+    });
+
+    sincronizarSiglaConMateria();
+}
+
+async function abrirModalAgregarClase(dia = null, hora = null) {
+    if (!puedeGestionarHorario()) return;
+    claseSeleccionada = null;
+    if (classActionsModal) cerrarModal(classActionsModal);
+    if (addClassTitle) addClassTitle.textContent = 'Agregar clase';
+    if (deleteClassBtn) deleteClassBtn.style.display = 'none';
+
+    await cargarMaterias();
+
+    if (addClassForm) addClassForm.reset();
+    if (claseSiglaInput) {
+        claseSiglaInput.dataset.autofill = '0';
+    }
+
+    const horaBase = hora || '07:00';
+    establecerSlot(dia || 1, horaBase);
+
+    const horaInicioInput = document.getElementById('hora_inicio');
+    const horaFinInput = document.getElementById('hora_fin');
+    if (horaInicioInput) horaInicioInput.value = horaBase;
+    if (horaFinInput) horaFinInput.value = sumarHoras(horaBase, DEFAULT_DURATION_HOURS);
+    actualizarDuracionLabel(
+        horaInicioInput ? horaInicioInput.value : horaBase,
+        horaFinInput ? horaFinInput.value : sumarHoras(horaBase, DEFAULT_DURATION_HOURS)
+    );
+
+    ocultarMensaje(addClassMessage);
+    mostrarModal(addClassModal);
+}
+
+async function abrirModalEditarClase(clase) {
+    if (!puedeGestionarHorario()) return;
+    claseSeleccionada = clase;
+    if (classActionsModal) cerrarModal(classActionsModal);
+    if (addClassTitle) addClassTitle.textContent = 'Editar clase';
+    if (deleteClassBtn) deleteClassBtn.style.display = 'inline-flex';
+
+    await cargarMaterias();
+
+    if (materiaSelect && clase.id_materia) materiaSelect.value = String(clase.id_materia);
+    if (claseSiglaInput) {
+        claseSiglaInput.value = clase.sigla || '';
+        claseSiglaInput.dataset.autofill = '0';
+    }
+    if (document.getElementById('docente')) document.getElementById('docente').value = clase.docente || '';
+    if (document.getElementById('grupo')) document.getElementById('grupo').value = clase.grupo || '';
+    if (document.getElementById('aula')) document.getElementById('aula').value = clase.aula || '';
+
+    const horaInicio = typeof clase.hora_inicio === 'string' ? clase.hora_inicio.substring(0, 5) : clase.hora_inicio;
+    const horaFin = typeof clase.hora_fin === 'string' ? clase.hora_fin.substring(0, 5) : clase.hora_fin;
+
+    if (document.getElementById('hora_inicio')) document.getElementById('hora_inicio').value = horaInicio || '';
+    if (document.getElementById('hora_fin')) document.getElementById('hora_fin').value = horaFin || '';
+    actualizarDuracionLabel(horaInicio, horaFin);
+
+    establecerSlot(clase.dia_semana, horaInicio);
+    ocultarMensaje(addClassMessage);
+    mostrarModal(addClassModal);
+}
+
+function cerrarTodosLosModales() {
+    document.querySelectorAll('.modal').forEach(modal => cerrarModal(modal));
+}
+
+function enMinutos(hora) {
+    if (typeof hora !== 'string') return 0;
+    const [h, m] = hora.split(':').map(Number);
+    return h * 60 + (m || 0);
+}
+
+function minutosAHora(min) {
+    const horas = Math.floor(min / 60);
+    const minutos = min % 60;
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+}
+
+function detectarConflictos(clases) {
+    const conflictosMapa = new Map();
+    const idsConflicto = new Set();
+    const porDia = {};
+
+    clases.forEach(clase => {
+        const dia = parseInt(clase.dia_semana);
+        if (!porDia[dia]) porDia[dia] = [];
+        const horaInicio = typeof clase.hora_inicio === 'string' ? clase.hora_inicio.substring(0,5) : clase.hora_inicio;
+        const horaFin = typeof clase.hora_fin === 'string' ? clase.hora_fin.substring(0,5) : clase.hora_fin;
+        porDia[dia].push({
+            ...clase,
+            _inicioMin: enMinutos(horaInicio),
+            _finMin: enMinutos(horaFin),
+            _horaInicio: horaInicio,
+            _horaFin: horaFin
+        });
+    });
+
+    Object.entries(porDia).forEach(([dia, lista]) => {
+        lista.sort((a, b) => a._inicioMin - b._inicioMin);
+        const activos = [];
+
+        lista.forEach(clase => {
+            // quitar los que ya terminaron
+            for (let i = activos.length - 1; i >= 0; i--) {
+                if (activos[i]._finMin <= clase._inicioMin) {
+                    activos.splice(i, 1);
+                }
+            }
+
+            activos.forEach(activo => {
+                const overlapInicio = Math.max(activo._inicioMin, clase._inicioMin);
+                const overlapFin = Math.min(activo._finMin, clase._finMin);
+                if (overlapInicio < overlapFin) {
+                    const key = `${dia}-${overlapInicio}-${overlapFin}`;
+                    let conflicto = conflictosMapa.get(key);
+                    if (!conflicto) {
+                        conflicto = {
+                            dia: parseInt(dia),
+                            horaInicio: minutosAHora(overlapInicio),
+                            horaFin: minutosAHora(overlapFin),
+                            clases: []
+                        };
+                        conflictosMapa.set(key, conflicto);
+                    }
+
+                    const agregarClase = (c) => {
+                        if (!conflicto.clases.some(item => item.id === c.id)) {
+                            conflicto.clases.push({
+                                id: c.id,
+                                materia: c.materia_nombre,
+                                sigla: c.sigla,
+                                grupo: c.grupo
+                            });
+                        }
+                        idsConflicto.add(c.id);
+                    };
+
+                    agregarClase(activo);
+                    agregarClase(clase);
+                }
+            });
+
+            activos.push(clase);
+        });
+    });
+
+    const lista = Array.from(conflictosMapa.values()).map(item => ({
+        dia: item.dia,
+        diaNombre: nombreDia(item.dia),
+        horaInicio: item.horaInicio,
+        horaFin: item.horaFin,
+        clases: item.clases
+    }));
+
+    return { ids: idsConflicto, lista };
+}
+
+// Actualiza las tarjetas resumen de la parte superior del dashboard
+function actualizarDashboardSummary(clases, conflictosLista) {
+    const summaryContainer = document.getElementById('dashboardSummary');
+    if (!summaryContainer) return;
+
+    // Mostrar solo en la vista principal (sin parámetro section)
+    const esInicio = !seccionActual;
+    summaryContainer.style.display = esInicio ? 'block' : 'none';
+    if (!esInicio) return;
+
+    const listaClases = Array.isArray(clases) ? clases : [];
+    const listaConflictos = Array.isArray(conflictosLista) ? conflictosLista : [];
+
+    // Materias inscritas: contar materias distintas
+    const materiasSet = new Set();
+    listaClases.forEach(c => {
+        if (c.id_materia != null) {
+            materiasSet.add(c.id_materia);
+        } else if (c.materia_nombre) {
+            materiasSet.add(c.materia_nombre);
+        }
+    });
+    const totalMaterias = materiasSet.size;
+
+    // Auxiliaturas inscritas: clases tipo 2
+    const totalAuxiliaturas = listaClases.filter(c => c.tipo_clase === 2).length;
+
+    // Choques de horario: cantidad de bloques en conflicto detectados
+    const totalChoques = listaConflictos.length;
+
+    // Notificaciones/alertas: por ahora 0 hasta tener endpoint dedicado
+    const totalNotificaciones = 0;
+
+    const elMaterias = document.getElementById('summaryMaterias');
+    const elAux = document.getElementById('summaryAuxiliaturas');
+    const elNotif = document.getElementById('summaryNotificaciones');
+    const elChoques = document.getElementById('summaryChoques');
+
+    if (elMaterias) elMaterias.textContent = String(totalMaterias);
+    if (elAux) elAux.textContent = String(totalAuxiliaturas);
+    if (elNotif) elNotif.textContent = String(totalNotificaciones);
+    if (elChoques) elChoques.textContent = String(totalChoques);
+}
+
+function renderConflictos(conflictos) {
+    const container = document.getElementById('horarioConflicts');
+    if (!container) return;
+
+    if (!conflictos || conflictos.length === 0) {
+        container.style.display = 'none';
+        container.classList.remove('show');
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = `
+        <h3>Conflictos detectados</h3>
+        <p>Revisa las clases que se superponen en el mismo horario:</p>
+    `;
+
+    conflictos.forEach(conflicto => {
+        const item = document.createElement('div');
+        item.className = 'conflict-item';
+        item.innerHTML = `
+            <span class="conflict-time">${conflicto.diaNombre} · ${conflicto.horaInicio} - ${conflicto.horaFin}</span>
+            <div class="conflict-classes">
+                ${conflicto.clases.map(cls => `
+                    <span class="conflict-chip">${cls.sigla || ''} ${cls.grupo ? `(${cls.grupo})` : ''} · ${cls.materia}</span>
+                `).join('')}
+            </div>
+        `;
+        container.appendChild(item);
+    });
+
+    const modal = document.getElementById('conflictsModal');
+    if (modal) {
+        container.dataset.hasContent = '1';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function aplicarLayoutConflictos() {
+    const cells = document.querySelectorAll('.schedule-cell');
+    cells.forEach(cell => {
+        const conflictCards = Array.from(cell.querySelectorAll('.clase-card.conflict'));
+        const total = conflictCards.length;
+
+        conflictCards.forEach(card => {
+            card.style.width = '';
+            card.style.left = '';
+            card.style.right = '';
+        });
+
+        if (total > 1) {
+            const widthPercent = 100 / total;
+            conflictCards.forEach((card, index) => {
+                card.style.width = `calc(${widthPercent}% - 6px)`;
+                card.style.left = `calc(${widthPercent * index}% + 2px)`;
+                card.style.right = 'auto';
+            });
+        }
+    });
+}
+
+if (deleteClassBtn) {
+    deleteClassBtn.addEventListener('click', () => {
+        if (!claseSeleccionada) return;
+        abrirConfirmacionEliminarClase();
+    });
+}
+
+if (btnNuevaClase) {
+    btnNuevaClase.addEventListener('click', () => {
+        if (!puedeGestionarHorario()) return;
+        abrirModalAgregarClase();
+    });
+}
+
+if (btnGestionMaterias) {
+    btnGestionMaterias.addEventListener('click', () => {
+        if (!puedeGestionarHorario()) return;
+        abrirMateriaModal();
+    });
+}
+
+if (btnNuevaMateria) {
+    btnNuevaMateria.addEventListener('click', () => {
+        if (!puedeGestionarHorario()) return;
+        abrirMateriaModal();
+    });
+}
+
+if (classActionAddBtn) {
+    classActionAddBtn.addEventListener('click', () => {
+        if (!claseSeleccionada) return;
+        const horaBase = typeof claseSeleccionada.hora_inicio === 'string'
+            ? claseSeleccionada.hora_inicio.substring(0,5)
+            : claseSeleccionada.hora_inicio;
+        cerrarModal(classActionsModal);
+        abrirModalAgregarClase(claseSeleccionada.dia_semana, horaBase);
+    });
+}
+
+if (classActionEditBtn) {
+    classActionEditBtn.addEventListener('click', () => {
+        if (!claseSeleccionada) return;
+        cerrarModal(classActionsModal);
+        abrirModalEditarClase(claseSeleccionada);
+    });
+}
+
+if (classActionDeleteBtn) {
+    classActionDeleteBtn.addEventListener('click', () => {
+        if (!claseSeleccionada) return;
+        cerrarModal(classActionsModal);
+        abrirConfirmacionEliminarClase();
+    });
+}
+
+if (btnConfirmDeleteClass) {
+    btnConfirmDeleteClass.addEventListener('click', eliminarClaseActual);
+}
+
+if (diaSelect) {
+    diaSelect.addEventListener('change', (event) => {
+        const nuevoDia = parseInt(event.target.value);
+        const horaInicioActual = document.getElementById('hora_inicio')?.value || horaSeleccionada;
+        establecerSlot(nuevoDia, horaInicioActual);
+    });
+}
+
+function sincronizarSiglaConMateria() {
+    if (!materiaSelect || !claseSiglaInput) return;
+    const materiaId = parseInt(materiaSelect.value);
+    if (!materiaId) return;
+    const materia = materiasCache.find(item => item.id === materiaId);
+    if (!materia || !materia.sigla) return;
+    const shouldAutofill = !claseSiglaInput.value || claseSiglaInput.dataset.autofill === '1';
+    if (shouldAutofill) {
+        claseSiglaInput.value = materia.sigla;
+        claseSiglaInput.dataset.autofill = '1';
+    }
+}
+
+if (claseSiglaInput) {
+    claseSiglaInput.addEventListener('input', () => {
+        claseSiglaInput.dataset.autofill = '0';
+    });
+}
+
+if (materiaSelect) {
+    materiaSelect.addEventListener('change', () => {
+        sincronizarSiglaConMateria();
+    });
+}
+
+// Selector de color
+document.addEventListener('click', (e) => {
+    const option = e.target.closest('.color-option');
+    if (!option) return;
+    const selector = option.closest('.color-selector');
+    if (!selector) return;
+
+    selector.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+    option.classList.add('selected');
+
+    const inputId = selector.getAttribute('data-input-target');
+    if (inputId) {
+        const targetInput = document.getElementById(inputId);
+        if (targetInput) {
+            targetInput.value = option.getAttribute('data-color');
+        }
+    }
+});
+
+if (materiaColorInput) {
+    materiaColorInput.addEventListener('input', (event) => {
+        sincronizarSelectorColor(materiaColorSelector, event.target.value);
+    });
+}
+
+// Calcular duración
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'hora_inicio' || e.target.id === 'hora_fin') {
+        const inicio = document.getElementById('hora_inicio').value;
+        const fin = document.getElementById('hora_fin').value;
+
+        if (e.target.id === 'hora_inicio') {
+            const diaActual = diaSelect ? parseInt(diaSelect.value) : diaSeleccionado;
+            establecerSlot(diaActual, inicio);
+        }
+        
+        if (inicio && fin) {
+            actualizarDuracionLabel(inicio, fin);
+        }
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.matches('[data-close-modal]')) {
+        const modal = e.target.closest('.modal');
+        if (modal) cerrarModal(modal);
+        ocultarMensaje(addClassMessage);
+        ocultarMensaje(materiaMessage);
+    }
+});
+
+const addClassForm = document.getElementById('addClassForm');
+if (addClassForm) {
+    addClassForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        ocultarMensaje(addClassMessage);
+
+        if (!diaSeleccionado || !horaSeleccionada) {
+            mostrarMensaje(addClassMessage, 'error', 'Selecciona un bloque del horario.');
+            return;
+        }
+
+        const diaSeleccionadoFormulario = diaSelect ? parseInt(diaSelect.value) : diaSeleccionado;
+        const tipoClase = claseSeleccionada?.tipo_clase ?? 1;
+        const formData = {
+            id_materia: parseInt(document.getElementById('materia').value),
+            sigla: document.getElementById('sigla').value.trim(),
+            docente: document.getElementById('docente').value.trim(),
+            grupo: document.getElementById('grupo').value.trim(),
+            dia_semana: diaSeleccionadoFormulario,
+            hora_inicio: document.getElementById('hora_inicio').value,
+            hora_fin: document.getElementById('hora_fin').value,
+            tipo_clase: tipoClase,
+            aula: document.getElementById('aula').value.trim()
+        };
+
+        if (!formData.id_materia) {
+            mostrarMensaje(addClassMessage, 'error', 'Selecciona una materia.');
+            return;
+        }
+        if (!formData.hora_inicio || !formData.hora_fin) {
+            mostrarMensaje(addClassMessage, 'error', 'Selecciona las horas de inicio y fin.');
+            return;
+        }
+        if (!diaSeleccionadoFormulario) {
+            mostrarMensaje(addClassMessage, 'error', 'Selecciona el día.');
+            return;
+        }
+        if (formData.hora_fin <= formData.hora_inicio) {
+            mostrarMensaje(addClassMessage, 'error', 'La hora de fin debe ser mayor que la de inicio.');
+            return;
+        }
+        diaSeleccionado = diaSeleccionadoFormulario;
+
+        try {
+            if (!claseSeleccionada) {
+                // Crear nueva clase
+                const response = await fetch('/api/clases', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    mostrarMensaje(addClassMessage, 'error', data.message || 'Error al crear la clase');
+                    return;
+                }
+
+                // Inscribir al usuario en la clase recién creada
+                await fetch('/api/inscripciones', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_clase: data.clase.id })
+                });
+
+                mostrarMensaje(addClassMessage, 'success', 'Clase agregada correctamente');
+            } else {
+                // Editar clase existente
+                const response = await fetch(`/api/clases/${claseSeleccionada.id}`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    mostrarMensaje(addClassMessage, 'error', data.message || 'Error al actualizar la clase');
+                    return;
+                }
+
+                mostrarMensaje(addClassMessage, 'success', 'Clase actualizada correctamente');
+            }
+
+            setTimeout(() => {
+                cerrarModal(addClassModal);
+                ocultarMensaje(addClassMessage);
+                cargarMiHorario();
+            }, 900);
+        } catch (err) {
+            console.error(err);
+            mostrarMensaje(addClassMessage, 'error', 'Error de conexión');
+        }
+    });
+}
+
+async function eliminarClaseActual() {
+    if (!claseSeleccionada) return;
+
+    try {
+        const response = await fetch(`/api/clases/${claseSeleccionada.id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            mostrarMensaje(confirmDeleteClassMessage || addClassMessage, 'error', data.message || 'No se pudo eliminar la clase');
+            return;
+        }
+        mostrarMensaje(confirmDeleteClassMessage, 'success', 'Clase eliminada');
+        await cargarMiHorario();
+        setTimeout(() => {
+            cerrarModal(confirmDeleteClassModal);
+            cerrarModal(addClassModal);
+            ocultarMensaje(confirmDeleteClassMessage);
+        }, 600);
+    } catch (error) {
+        console.error(error);
+        mostrarMensaje(confirmDeleteClassMessage || addClassMessage, 'error', 'Error de conexión');
+    }
+}
+
+function abrirConfirmacionEliminarClase() {
+    if (!claseSeleccionada || !confirmDeleteClassModal) return;
+    if (confirmDeleteClassText) {
+        const horaInicio = typeof claseSeleccionada.hora_inicio === 'string'
+            ? claseSeleccionada.hora_inicio.substring(0,5)
+            : claseSeleccionada.hora_inicio;
+        const horaFin = typeof claseSeleccionada.hora_fin === 'string'
+            ? claseSeleccionada.hora_fin.substring(0,5)
+            : claseSeleccionada.hora_fin;
+        confirmDeleteClassText.textContent = `¿Eliminar ${claseSeleccionada.materia_nombre || 'la clase'} (${claseSeleccionada.sigla || ''}) el ${nombreDia(claseSeleccionada.dia_semana)} · ${horaInicio} - ${horaFin}?`;
+    }
+    ocultarMensaje(confirmDeleteClassMessage);
+    mostrarModal(confirmDeleteClassModal);
+}
+
+function abrirMateriaModal() {
+    materiaEditando = null;
+    if (materiaForm) materiaForm.reset();
+    setMateriaColor(DEFAULT_MATERIA_COLOR);
+    if (materiaMessage) ocultarMensaje(materiaMessage);
+    if (materiaSaveBtn) materiaSaveBtn.textContent = 'Guardar';
+    mostrarModal(materiaModal);
+    cargarMaterias(true).then(renderMateriasList);
+}
+
+function renderMateriasList(materias = materiasCache) {
+    if (!materiasListEl) return;
+    materiasListEl.innerHTML = '';
+    if (!materias || materias.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'materia-item';
+        empty.innerHTML = '<span>No hay materias registradas.</span>';
+        materiasListEl.appendChild(empty);
+        return;
+    }
+
+    materias.forEach(materia => {
+        const item = document.createElement('div');
+        item.className = 'materia-item';
+        item.innerHTML = `
+            <div class="materia-info">
+                <span class="materia-color-dot" style="background:${materia.color || DEFAULT_MATERIA_COLOR};"></span>
+                <div>
+                    <span class="materia-nombre">${materia.nombre}</span>
+                    <span class="materia-meta">${materia.color || DEFAULT_MATERIA_COLOR}</span>
+                </div>
+            </div>
+            <div class="materia-sigla">
+                <span class="sigla-pill">${materia.sigla || '—'}</span>
+            </div>
+            <div class="materia-actions">
+                <button type="button" class="materia-edit" data-id="${materia.id}">Editar</button>
+                <button type="button" class="materia-delete delete" data-id="${materia.id}">Eliminar</button>
+            </div>
+        `;
+        materiasListEl.appendChild(item);
+    });
+}
+
+if (materiaForm) {
+    materiaForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = materiaNombreInput.value.trim();
+        const sigla = materiaSiglaInput.value.trim().toUpperCase();
+        const color = materiaColorInput?.value || DEFAULT_MATERIA_COLOR;
+        if (!nombre) {
+            mostrarMensaje(materiaMessage, 'error', 'Ingresa el nombre de la materia.');
+            return;
+        }
+        if (!sigla) {
+            mostrarMensaje(materiaMessage, 'error', 'Ingresa la sigla de la materia.');
+            return;
+        }
+
+        const id = materiaIdInput.value;
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/materias/${id}` : '/api/materias';
+
+        try {
+            const response = await fetch(url, {
+                method,
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, sigla, color })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                mostrarMensaje(materiaMessage, 'error', data.message || 'Error al guardar materia');
+                return;
+            }
+
+            mostrarMensaje(materiaMessage, 'success', 'Materia guardada');
+            const materias = await cargarMaterias(true);
+            renderMateriasList(materias);
+            await cargarMiHorario();
+
+            // Resetear estado del formulario y cerrar modal para ver el cambio en el horario
+            materiaForm.reset();
+            setMateriaColor(DEFAULT_MATERIA_COLOR);
+            materiaIdInput.value = '';
+            if (materiaSiglaInput) materiaSiglaInput.value = '';
+            materiaEditando = null;
+            if (materiaSaveBtn) materiaSaveBtn.textContent = 'Guardar';
+
+            setTimeout(() => {
+                cerrarModal(materiaModal);
+                ocultarMensaje(materiaMessage);
+            }, 600);
+        } catch (error) {
+            console.error(error);
+            mostrarMensaje(materiaMessage, 'error', 'Error de conexión');
+        }
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.matches('.materia-edit')) {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        const materia = materiasCache.find(m => m.id === id);
+        if (!materia) return;
+        materiaEditando = materia;
+        materiaIdInput.value = materia.id;
+        materiaNombreInput.value = materia.nombre;
+        if (materiaSiglaInput) materiaSiglaInput.value = materia.sigla || '';
+        setMateriaColor(materia.color || DEFAULT_MATERIA_COLOR);
+        if (materiaSaveBtn) materiaSaveBtn.textContent = 'Actualizar';
+        mostrarMensaje(materiaMessage, 'info', 'Editando materia');
+    }
+
+    if (e.target.matches('.materia-delete')) {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        abrirConfirmacionEliminarMateria(id);
+    }
+});
+
+async function eliminarMateria(id) {
+    try {
+        const response = await fetch(`/api/materias/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            mostrarMensaje(materiaMessage, 'error', data.message || 'No se pudo eliminar la materia');
+            return;
+        }
+        mostrarMensaje(materiaMessage, 'success', 'Materia eliminada');
+        const materias = await cargarMaterias(true);
+        renderMateriasList(materias);
+        await cargarMiHorario();
+        setTimeout(() => {
+            cerrarModal(materiaModal);
+            ocultarMensaje(materiaMessage);
+        }, 600);
+    } catch (error) {
+        console.error(error);
+        mostrarMensaje(materiaMessage, 'error', 'Error de conexión');
+    }
+}
+
+function abrirConfirmacionEliminarMateria(id) {
+    if (!confirmDeleteMateriaModal) return;
+    if (confirmDeleteMateriaText) {
+        const materia = materiasCache.find(m => m.id === id);
+        confirmDeleteMateriaText.textContent = `¿Eliminar ${materia.nombre || 'la materia'} (${materia.sigla || ''})?`;
+    }
+    ocultarMensaje(confirmDeleteMateriaMessage);
+    mostrarModal(confirmDeleteMateriaModal);
+}
