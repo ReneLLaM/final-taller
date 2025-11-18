@@ -230,8 +230,8 @@ function puedeGestionarHorario(sectionParam) {
     if (!rolUsuarioActual) return false;
     // Solo estudiantes y auxiliares pueden gestionar
     if (rolUsuarioActual !== 1 && rolUsuarioActual !== 2) return false;
-    // El horario solo se puede gestionar cuando el toggle de edición está activo
-    return !!modoEdicionHorario;
+    // Solo en la sección 'horario' y cuando el toggle de edición está activo
+    return section === 'horario' && !!modoEdicionHorario;
 }
 
 function puedeVerDisponibilidad(sectionParam) {
@@ -338,6 +338,8 @@ function navigateToSection(section) {
         }
         window.history.pushState({}, '', url);
         seccionActual = section;
+        // Asegurar desactivación de edición al cambiar de sección
+        desactivarEdicionHorario();
         inicializarToggleEdicionHorario();
         cargarMiHorario();
         if (typeof window.markActiveHeaderLink === 'function') {
@@ -443,23 +445,42 @@ window.addEventListener('resize', () => {
 });
 
 // Inicializa el botón que activa/desactiva el modo edición del horario
-function inicializarToggleEdicionHorario() {
+function desactivarEdicionHorario() {
+    modoEdicionHorario = false;
+    actualizarCeldasEditables(false);
+    const toolbar = document.querySelector('.horario-toolbar');
+    if (toolbar) toolbar.classList.toggle('active', false);
     const btnToggle = document.getElementById('btnToggleEdicionHorario');
+    if (btnToggle) {
+        btnToggle.classList.remove('active');
+        btnToggle.textContent = 'Editar';
+    }
+}
+
+// Inicializa el botón que activa/desactiva el modo edición del horario
+function inicializarToggleEdicionHorario() {
+    let btnToggle = document.getElementById('btnToggleEdicionHorario');
     if (!btnToggle) return;
 
-    // El botón solo tiene efecto si el usuario puede ver la sección de disponibilidad
+    // Siempre desactivar edición al (re)inicializar
+    desactivarEdicionHorario();
+
+    // Limpiar posibles listeners anteriores para evitar duplicados
+    const btnClean = btnToggle.cloneNode(true);
+    btnToggle.parentNode.replaceChild(btnClean, btnToggle);
+    btnToggle = btnClean;
+
+    // Mostrar/ocultar el botón según la sección actual
     if (!puedeVerDisponibilidad()) {
         btnToggle.style.display = 'none';
+        btnToggle.classList.remove('active');
+        btnToggle.textContent = 'Editar';
         return;
     }
 
     btnToggle.style.display = 'inline-flex';
     btnToggle.textContent = 'Editar';
     btnToggle.classList.remove('active');
-    modoEdicionHorario = false;
-    actualizarCeldasEditables(false);
-    const toolbar = document.querySelector('.horario-toolbar');
-    if (toolbar) toolbar.classList.toggle('active', false);
 
     btnToggle.addEventListener('click', () => {
         modoEdicionHorario = !modoEdicionHorario;
