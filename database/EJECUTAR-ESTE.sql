@@ -15,6 +15,8 @@ CREATE TABLE materias (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
     sigla VARCHAR(50) NOT NULL,
+    docente VARCHAR(255),
+    grupo VARCHAR(50),
     color VARCHAR(7) NOT NULL,
     usuario_id INT NOT NULL,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -49,13 +51,13 @@ CREATE TABLE inscripciones (
 );
 
 -- 5. INSERTAR MATERIAS
-INSERT INTO materias (nombre, sigla, color, usuario_id) VALUES
-('PROGRAMACIÓN INTERMEDIA', 'SIS101', '#FF1744', 4),
-('FÍSICA BÁSICA III', 'FIS200', '#2196F3', 4),
-('TEORÍA DE SISTEMAS', 'SIS308', '#4CAF50', 4),
-('SISTEMAS ADMINISTRATIVOS Y ECONÓMICOS', 'SIS310', '#9C27B0', 4),
-('ÁLGEBRA II', 'MAT103', '#8BC34A', 4),
-('CÁLCULO II', 'MAT102', '#FF9800', 4);
+INSERT INTO materias (nombre, sigla, docente, grupo, color, usuario_id) VALUES
+('PROGRAMACIÓN INTERMEDIA', 'SIS101', 'H.PEÑARANDA', 'G3', '#FF1744', 4),
+('FÍSICA BÁSICA III', 'FIS200', 'R.GUTIERREZ', 'G1', '#2196F3', 4),
+('TEORÍA DE SISTEMAS', 'SIS308', 'E.ESPINOZA', 'G2', '#4CAF50', 4),
+('SISTEMAS ADMINISTRATIVOS Y ECONÓMICOS', 'SIS310', 'M.RAMIREZ', 'G6', '#9C27B0', 4),
+('ÁLGEBRA II', 'MAT103', 'E.ZAMBRANA', 'G6', '#8BC34A', 4),
+('CÁLCULO II', 'MAT102', 'O.VELASCO', 'G8', '#FF9800', 4);
 
 -- 6. INSERTAR CLASES
 INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, hora_fin, tipo_clase, aula) VALUES

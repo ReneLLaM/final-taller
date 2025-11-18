@@ -45,6 +45,24 @@
 .header-link { color: #006FEE; text-decoration: none; font-size: 16px; font-weight: 500; transition: color 0.3s ease; }
 .header-link:hover { color: #0052cc; text-decoration: underline; }
 
+.header-link.active {
+    color: #006FEE;
+    font-weight: 700;
+    position: relative;
+    text-decoration: none;
+}
+
+.header-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 3px;
+    background: #006FEE;
+    border-radius: 2px;
+}
+
 .user-icon-btn { background: transparent; border: none; cursor: pointer; padding: 0; transition: opacity 0.3s ease; }
 .user-icon-btn:hover { opacity: 0.8; }
 .user-icon { width: 32px; height: 32px; color: #006FEE; }

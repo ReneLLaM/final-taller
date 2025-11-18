@@ -201,8 +201,8 @@ if (profileForm) {
 // FUNCIONES PARA EL HORARIO
 // ============================================
 
-// Variable global para almacenar el filtro actual
-const SLOT_HEIGHT = (() => {
+// Variable global para altura de cada bloque horario (responsiva)
+function getSlotHeight() {
     try {
         const raw = getComputedStyle(document.documentElement).getPropertyValue('--slot-height');
         const parsed = parseInt(raw, 10);
@@ -210,7 +210,8 @@ const SLOT_HEIGHT = (() => {
     } catch {
         return 56;
     }
-})();
+}
+let SLOT_HEIGHT = getSlotHeight();
 const DEFAULT_DURATION_HOURS = 2;
 let filtroTipoClase = null; // null = todas, 1 = normales, 2 = auxiliaturas
 let diaSeleccionado = null;
@@ -218,6 +219,7 @@ let horaSeleccionada = null;
 let claseSeleccionada = null;
 let materiasCache = [];
 let materiaEditando = null;
+let clasesRenderizadas = [];
 let rolUsuarioActual = null;
 let seccionActual = new URLSearchParams(window.location.search).get('section');
 let scheduleCellsInitialized = false;
@@ -323,9 +325,40 @@ async function cargarMiHorario() {
     }
 }
 
+// Exponer para sincronización desde el header y navegación SPA
+window.cargarMiHorario = cargarMiHorario;
+
+function navigateToSection(section) {
+    try {
+        const url = new URL(window.location.href);
+        if (section) {
+            url.searchParams.set('section', section);
+        } else {
+            url.searchParams.delete('section');
+        }
+        window.history.pushState({}, '', url);
+        seccionActual = section;
+        inicializarToggleEdicionHorario();
+        cargarMiHorario();
+        if (typeof window.markActiveHeaderLink === 'function') {
+            window.markActiveHeaderLink();
+        }
+    } catch (e) {
+        console.warn('No se pudo navegar a la sección sin recargar:', e);
+        // Fallback
+        const href = section ? `principal.html?section=${section}` : 'principal.html';
+        window.location.href = href;
+    }
+}
+
+// Exponer la navegación SPA para el header
+window.navigateToSection = navigateToSection;
+
 // Función para renderizar las clases en el grid
 function renderizarClases(clases) {
     console.log('Renderizando clases:', clases.length);
+    // Mantener referencia para re-render en cambios de viewport
+    clasesRenderizadas = Array.isArray(clases) ? clases : [];
     
     // Limpiar todas las celdas primero
     document.querySelectorAll('.schedule-cell').forEach(cell => {
@@ -398,6 +431,16 @@ function renderizarClases(clases) {
     actualizarDashboardSummary(clases, conflictos.lista);
     aplicarLayoutConflictos();
 }
+
+// Recalcular SLOT_HEIGHT al cambiar el viewport y re-renderizar
+window.addEventListener('resize', () => {
+    const nuevaAltura = getSlotHeight();
+    if (nuevaAltura !== SLOT_HEIGHT) {
+        SLOT_HEIGHT = nuevaAltura;
+        console.log('[RESPONSIVE] SLOT_HEIGHT actualizado:', SLOT_HEIGHT);
+        renderizarClases(clasesRenderizadas);
+    }
+});
 
 // Inicializa el botón que activa/desactiva el modo edición del horario
 function inicializarToggleEdicionHorario() {
@@ -517,7 +560,9 @@ const confirmDeleteMateriaText = document.getElementById('confirmDeleteMateriaTe
 const confirmDeleteMateriaMessage = document.getElementById('confirmDeleteMateriaMessage');
 const btnConfirmDeleteMateria = document.getElementById('btnConfirmDeleteMateria');
 
-const materiaModal = document.getElementById('materiaModal');
+const materiasListModal = document.getElementById('materiasListModal');
+const materiaFormModal = document.getElementById('materiaFormModal');
+const btnNuevaMateriaModal = document.getElementById('btnNuevaMateriaModal');
 const materiaForm = document.getElementById('materiaForm');
 const materiaMessage = document.getElementById('materiaMessage');
 const materiasListEl = document.getElementById('materiasList');
@@ -529,6 +574,10 @@ const materiaColorSelector = document.getElementById('materiaColorSelector');
 const materiaColorInput = document.getElementById('materia_color');
 const DEFAULT_MATERIA_COLOR = '#2196F3';
 const claseSiglaInput = document.getElementById('sigla');
+const claseDocenteInput = document.getElementById('docente');
+const claseGrupoInput = document.getElementById('grupo');
+const materiaDocenteInput = document.getElementById('materia_docente');
+const materiaGrupoInput = document.getElementById('materia_grupo');
 const classDetailModal = document.getElementById('classDetailModal');
 const detailColorBar = document.getElementById('detailColorBar');
 const detailMateria = document.getElementById('detailMateria');
@@ -980,7 +1029,13 @@ if (btnGestionMaterias) {
 if (btnNuevaMateria) {
     btnNuevaMateria.addEventListener('click', () => {
         if (!puedeGestionarHorario()) return;
-        abrirMateriaModal();
+        abrirMateriaFormModal();
+    });
+}
+
+if (btnNuevaMateriaModal) {
+    btnNuevaMateriaModal.addEventListener('click', () => {
+        abrirMateriaFormModal();
     });
 }
 
@@ -1024,21 +1079,52 @@ if (diaSelect) {
 }
 
 function sincronizarSiglaConMateria() {
-    if (!materiaSelect || !claseSiglaInput) return;
+    if (!materiaSelect) return;
     const materiaId = parseInt(materiaSelect.value);
     if (!materiaId) return;
     const materia = materiasCache.find(item => item.id === materiaId);
-    if (!materia || !materia.sigla) return;
-    const shouldAutofill = !claseSiglaInput.value || claseSiglaInput.dataset.autofill === '1';
-    if (shouldAutofill) {
-        claseSiglaInput.value = materia.sigla;
-        claseSiglaInput.dataset.autofill = '1';
+    if (!materia) return;
+    // Sigla
+    if (claseSiglaInput && materia.sigla) {
+        const fillSigla = !claseSiglaInput.value || claseSiglaInput.dataset.autofill === '1';
+        if (fillSigla) {
+            claseSiglaInput.value = materia.sigla;
+            claseSiglaInput.dataset.autofill = '1';
+        }
+    }
+    // Docente
+    if (claseDocenteInput && materia.docente) {
+        const fillDoc = !claseDocenteInput.value || claseDocenteInput.dataset.autofill === '1';
+        if (fillDoc) {
+            claseDocenteInput.value = materia.docente;
+            claseDocenteInput.dataset.autofill = '1';
+        }
+    }
+    // Grupo
+    if (claseGrupoInput && materia.grupo) {
+        const fillGrupo = !claseGrupoInput.value || claseGrupoInput.dataset.autofill === '1';
+        if (fillGrupo) {
+            claseGrupoInput.value = materia.grupo;
+            claseGrupoInput.dataset.autofill = '1';
+        }
     }
 }
 
 if (claseSiglaInput) {
     claseSiglaInput.addEventListener('input', () => {
         claseSiglaInput.dataset.autofill = '0';
+    });
+}
+
+if (claseDocenteInput) {
+    claseDocenteInput.addEventListener('input', () => {
+        claseDocenteInput.dataset.autofill = '0';
+    });
+}
+
+if (claseGrupoInput) {
+    claseGrupoInput.addEventListener('input', () => {
+        claseGrupoInput.dataset.autofill = '0';
     });
 }
 
@@ -1239,13 +1325,17 @@ function abrirConfirmacionEliminarClase() {
 }
 
 function abrirMateriaModal() {
+    cargarMaterias(true).then(renderMateriasList);
+    if (materiasListModal) mostrarModal(materiasListModal);
+}
+
+function abrirMateriaFormModal() {
     materiaEditando = null;
     if (materiaForm) materiaForm.reset();
     setMateriaColor(DEFAULT_MATERIA_COLOR);
     if (materiaMessage) ocultarMensaje(materiaMessage);
     if (materiaSaveBtn) materiaSaveBtn.textContent = 'Guardar';
-    mostrarModal(materiaModal);
-    cargarMaterias(true).then(renderMateriasList);
+    if (materiaFormModal) mostrarModal(materiaFormModal);
 }
 
 function renderMateriasList(materias = materiasCache) {
@@ -1287,6 +1377,8 @@ if (materiaForm) {
         e.preventDefault();
         const nombre = materiaNombreInput.value.trim();
         const sigla = materiaSiglaInput.value.trim().toUpperCase();
+        const docente = materiaDocenteInput?.value.trim();
+        const grupo = materiaGrupoInput?.value.trim();
         const color = materiaColorInput?.value || DEFAULT_MATERIA_COLOR;
         if (!nombre) {
             mostrarMensaje(materiaMessage, 'error', 'Ingresa el nombre de la materia.');
@@ -1306,7 +1398,7 @@ if (materiaForm) {
                 method,
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, sigla, color })
+                body: JSON.stringify({ nombre, sigla, docente, grupo, color })
             });
             const data = await response.json();
             if (!response.ok) {
@@ -1324,11 +1416,13 @@ if (materiaForm) {
             setMateriaColor(DEFAULT_MATERIA_COLOR);
             materiaIdInput.value = '';
             if (materiaSiglaInput) materiaSiglaInput.value = '';
+            if (materiaDocenteInput) materiaDocenteInput.value = '';
+            if (materiaGrupoInput) materiaGrupoInput.value = '';
             materiaEditando = null;
             if (materiaSaveBtn) materiaSaveBtn.textContent = 'Guardar';
 
             setTimeout(() => {
-                cerrarModal(materiaModal);
+                cerrarModal(materiaFormModal);
                 ocultarMensaje(materiaMessage);
             }, 600);
         } catch (error) {
@@ -1347,9 +1441,12 @@ document.addEventListener('click', (e) => {
         materiaIdInput.value = materia.id;
         materiaNombreInput.value = materia.nombre;
         if (materiaSiglaInput) materiaSiglaInput.value = materia.sigla || '';
+        if (materiaDocenteInput) materiaDocenteInput.value = materia.docente || '';
+        if (materiaGrupoInput) materiaGrupoInput.value = materia.grupo || '';
         setMateriaColor(materia.color || DEFAULT_MATERIA_COLOR);
         if (materiaSaveBtn) materiaSaveBtn.textContent = 'Actualizar';
         mostrarMensaje(materiaMessage, 'info', 'Editando materia');
+        if (materiaFormModal) mostrarModal(materiaFormModal);
     }
 
     if (e.target.matches('.materia-delete')) {
@@ -1374,7 +1471,7 @@ async function eliminarMateria(id) {
         renderMateriasList(materias);
         await cargarMiHorario();
         setTimeout(() => {
-            cerrarModal(materiaModal);
+            cerrarModal(confirmDeleteMateriaModal);
             ocultarMensaje(materiaMessage);
         }, 600);
     } catch (error) {

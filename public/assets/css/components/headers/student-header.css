@@ -79,6 +79,24 @@
     text-decoration: underline;
 }
 
+.header-link.active {
+    color: #006FEE;
+    font-weight: 700;
+    position: relative;
+    text-decoration: none;
+}
+
+.header-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 3px;
+    background: #006FEE;
+    border-radius: 2px;
+}
+
 .user-icon-btn {
     background: transparent;
     border: none;

@@ -266,12 +266,34 @@
         </div>
     </div>
 
-    <!-- Modal gestionar materias -->
-    <div class="modal modal-materia" id="materiaModal" aria-hidden="true">
+    <!-- Modal lista de materias -->
+    <div class="modal modal-materias-list" id="materiasListModal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
         <div class="modal-dialog modal-sm">
             <div class="modal-header">
                 <h2>Materias</h2>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" id="btnNuevaMateriaModal">Nueva materia</button>
+                    <button class="modal-close" data-close-modal>&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="materias-list-header">
+                    <span>Materia</span>
+                    <span>Sigla</span>
+                    <span>Acciones</span>
+                </div>
+                <div id="materiasList" class="materias-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal formulario de materia -->
+    <div class="modal modal-materia" id="materiaFormModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Nueva materia</h2>
                 <button class="modal-close" data-close-modal>&times;</button>
             </div>
             <div class="modal-body">
@@ -286,6 +308,16 @@
                         <div class="form-control sigla-control">
                             <label for="materia_sigla">Sigla</label>
                             <input id="materia_sigla" type="text" placeholder="Ej: FIS100" maxlength="12" required>
+                        </div>
+                    </div>
+                    <div class="form-row split-row">
+                        <div class="form-control">
+                            <label for="materia_docente">Docente</label>
+                            <input id="materia_docente" type="text" placeholder="Ej: R.GUTIERREZ">
+                        </div>
+                        <div class="form-control">
+                            <label for="materia_grupo">Grupo</label>
+                            <input id="materia_grupo" type="text" placeholder="Ej: G1">
                         </div>
                     </div>
                     <div class="form-row">
@@ -310,13 +342,6 @@
                         <button type="submit" class="btn btn-primary" id="materiaSaveBtn">Guardar</button>
                     </div>
                 </form>
-
-                <div class="materias-list-header">
-                    <span>Materia</span>
-                    <span>Sigla</span>
-                    <span>Acciones</span>
-                </div>
-                <div id="materiasList" class="materias-list"></div>
             </div>
         </div>
     </div>

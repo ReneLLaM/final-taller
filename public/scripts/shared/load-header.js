@@ -157,7 +157,91 @@ function attachHeaderHandlers() {
             menu.style.display = 'none';
         }
     });
+
+    // Navegación sin recarga para secciones del dashboard
+    const headerLinks = document.querySelectorAll('.header-right .header-link');
+    headerLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            try {
+                const url = new URL(link.href, window.location.origin);
+                const targetSection = url.searchParams.get('section');
+                const isPrincipalTarget = url.pathname.includes('/pages/dashboard/principal.html') || url.pathname.endsWith('principal.html');
+                const isOnPrincipal = window.location.pathname.includes('/pages/dashboard/principal.html') || window.location.pathname.endsWith('principal.html');
+                // Si estamos en principal y el destino es principal, navegar sin recargar
+                if (isOnPrincipal && isPrincipalTarget) {
+                    e.preventDefault();
+                    if (typeof window.navigateToSection === 'function') {
+                        window.navigateToSection(targetSection);
+                    } else {
+                        // Fallback: actualizar URL y marcar activo
+                        window.history.pushState({}, '', url);
+                        markActiveHeaderLink();
+                    }
+                }
+            } catch (err) {
+                // Si algo falla, dejar que el navegador navegue normalmente
+            }
+        });
+    });
+
+    // Interceptar clic en "Inicio" (logo/título) para evitar recarga si ya estamos en principal
+    const headerLeftLink = document.querySelector('.header-left');
+    if (headerLeftLink && headerLeftLink.tagName === 'A') {
+        headerLeftLink.addEventListener('click', (e) => {
+            try {
+                const url = new URL(headerLeftLink.href, window.location.origin);
+                const isPrincipalTarget = url.pathname.includes('/pages/dashboard/principal.html') || url.pathname.endsWith('principal.html');
+                const isOnPrincipal = window.location.pathname.includes('/pages/dashboard/principal.html') || window.location.pathname.endsWith('principal.html');
+                if (isOnPrincipal && isPrincipalTarget) {
+                    e.preventDefault();
+                    if (typeof window.navigateToSection === 'function') {
+                        window.navigateToSection(null);
+                    } else {
+                        window.history.pushState({}, '', url.pathname); // limpiar sección
+                        markActiveHeaderLink();
+                        if (typeof window.cargarMiHorario === 'function') window.cargarMiHorario();
+                    }
+                }
+            } catch (err) {
+                // Fallback: permitir navegación normal
+            }
+        });
+    }
+
+    // Marcar enlace activo según la sección actual
+    markActiveHeaderLink();
 }
+
+function markActiveHeaderLink() {
+    try {
+        const currentSection = new URLSearchParams(window.location.search).get('section');
+        const links = document.querySelectorAll('.header-right .header-link');
+        links.forEach(link => {
+            link.classList.remove('active');
+            const hrefSection = new URL(link.href, window.location.origin).searchParams.get('section');
+            if (currentSection && hrefSection === currentSection) {
+                link.classList.add('active');
+            }
+        });
+    } catch (e) {
+        console.warn('No se pudo marcar enlace activo:', e);
+    }
+}
+
+// Exponer para uso desde otras partes del dashboard
+window.markActiveHeaderLink = markActiveHeaderLink;
+
+// Mantener header sincronizado al usar atrás/adelante del navegador
+window.addEventListener('popstate', () => {
+    try {
+        if (typeof window.cargarMiHorario === 'function') {
+            window.cargarMiHorario();
+        }
+        markActiveHeaderLink();
+    } catch (e) {
+        // Ignorar errores
+    }
+});
 
 // Cargar header de administrador
 function loadAdminHeader() {

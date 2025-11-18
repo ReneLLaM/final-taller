@@ -97,6 +97,23 @@
     gap: 16px;
 }
 
+/* Responsive: summary cards en 2 columnas y 1 columna */
+@media (max-width: 992px) {
+    .summary-cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .summary-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .summary-card {
+        min-height: 84px;
+    }
+}
+
 .summary-card {
     background: #FFFFFF;
     border-radius: 10px;
@@ -189,6 +206,83 @@
 .horario-section {
     max-width: 100%;
     overflow-x: auto;
+}
+
+/* =============================
+   RESPONSIVE: Horario-section
+   ============================= */
+
+/* Tablets grandes y laptops medianas */
+@media (max-width: 1200px) {
+    :root {
+        --slot-height: 30px;
+        --header-row-height: 28px;
+    }
+
+    .horario-wrapper {
+        min-width: 1000px;
+    }
+
+    .horario-grid {
+        grid-template-columns: 110px repeat(6, minmax(140px, 1fr));
+    }
+
+    .day-header { font-size: 11px; }
+    .time-slot { font-size: 9px; }
+}
+
+/* Tablets y pantallas medianas */
+@media (max-width: 992px) {
+    :root {
+        --slot-height: 26px;
+        --header-row-height: 26px;
+    }
+
+    .horario-wrapper {
+        min-width: 880px;
+    }
+
+    .horario-grid {
+        grid-template-columns: 100px repeat(6, minmax(130px, 1fr));
+    }
+
+    .clase-card { font-size: 0.82em; }
+}
+
+/* Móviles: prioridad a scroll horizontal y alturas compactas */
+@media (max-width: 768px) {
+    :root {
+        --slot-height: 24px;
+        --header-row-height: 24px;
+    }
+
+    .horario-section {
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+    }
+
+    .horario-wrapper {
+        min-width: 740px;
+    }
+
+    .horario-grid {
+        grid-template-columns: 80px repeat(6, minmax(120px, 1fr));
+    }
+
+    .day-header { font-size: 10px; }
+    .time-slot { font-size: 8.5px; }
+    .clase-card { font-size: 0.8em; }
+    .badge { font-size: 7.5px; }
+}
+
+/* Móviles pequeños */
+@media (max-width: 600px) {
+    :root {
+        --slot-height: 22px;
+        --header-row-height: 22px;
+    }
+    .horario-wrapper { min-width: 680px; }
+    .horario-grid { grid-template-columns: 72px repeat(6, minmax(110px, 1fr)); }
 }
 
 .modal-conflicts .modal-dialog {
@@ -616,8 +710,8 @@
 
 .modal-add-class .color-option.selected,
 .modal-materia .color-option.selected {
-    border-color: #0F172A;
-    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #0F172A;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 3px rgba(37, 99, 235, 0.9);
 }
 
 .modal-add-class .modal-footer {
@@ -979,7 +1073,7 @@
 }
 
 .materias-list {
-    max-height: 300px;
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
@@ -997,6 +1091,7 @@
     border: 1px solid #F0F2F7;
     gap: 8px;
     transition: all 0.2s ease;
+    min-width: 0; /* permitir elipsis dentro de columnas */
 }
 
 .materia-item:hover {
@@ -1012,6 +1107,10 @@
     min-width: 0;
 }
 
+.materia-info > div {
+    min-width: 0; /* permitir elipsis en nombre/meta */
+}
+
 .materia-nombre {
     display: block;
     font-size: 13px;
@@ -1020,6 +1119,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .materia-meta {
@@ -1028,6 +1128,9 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .materia-color-dot {
@@ -1040,8 +1143,9 @@
 
 .materia-sigla {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     min-width: 0;
+    overflow: hidden;
 }
 
 .sigla-pill {
@@ -1053,6 +1157,9 @@
     font-size: 11px;
     letter-spacing: 0.3px;
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .color-picker-row {
@@ -1104,6 +1211,18 @@
 .modal-materia .modal-dialog {
     width: 520px;
     max-width: calc(100% - 40px);
+}
+
+/* Modal lista de materias (separado del formulario) */
+.modal-materias-list .modal-dialog {
+    width: 520px;
+    max-width: calc(100% - 40px);
+}
+
+.modal-header .modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .modal-materia .modal-body {
@@ -1241,6 +1360,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+    min-width: 0;
 }
 
 .materia-actions button {
@@ -1278,7 +1398,7 @@
     padding: 24px 22px 18px;
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
     border: 1px solid #E8EAEF;
-    min-width: 360px;
+    min-width: 320px;
     max-width: 420px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }

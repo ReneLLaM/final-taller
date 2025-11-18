@@ -11,7 +11,7 @@ export const getMaterias = async (req, res) => {
 
         const { rows } = await pool.query(
             `
-                SELECT id, nombre, sigla, color, usuario_id 
+                SELECT id, nombre, sigla, docente, grupo, color, usuario_id 
                 FROM materias 
                 WHERE usuario_id = $1 
                 ORDER BY sigla, nombre
@@ -39,7 +39,7 @@ export const getMateriaById = async (req, res) => {
         }
 
         const { rows } = await pool.query(
-            'SELECT id, nombre, sigla, color, usuario_id FROM materias WHERE id = $1 AND usuario_id = $2',
+            'SELECT id, nombre, sigla, docente, grupo, color, usuario_id FROM materias WHERE id = $1 AND usuario_id = $2',
             [id, userId]
         );
         
@@ -60,7 +60,7 @@ export const getMateriaById = async (req, res) => {
 // Crear una nueva materia
 export const createMateria = async (req, res) => {
     try {
-        const { nombre, sigla, color } = req.body;
+        const { nombre, sigla, docente, grupo, color } = req.body;
         const userId = req.userId;
 
         if (!userId) {
@@ -69,14 +69,16 @@ export const createMateria = async (req, res) => {
 
         const nombreLimpio = nombre?.trim();
         const siglaLimpia = sigla?.trim().toUpperCase();
+        const docenteLimpio = docente?.trim() || null;
+        const grupoLimpio = grupo?.trim() || null;
 
         if (!nombreLimpio || !color || !siglaLimpia) {
             return res.status(400).json({ message: 'Nombre, sigla y color son obligatorios' });
         }
         
         const { rows } = await pool.query(
-            'INSERT INTO materias (nombre, sigla, color, usuario_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [nombreLimpio, siglaLimpia, color, userId]
+            'INSERT INTO materias (nombre, sigla, docente, grupo, color, usuario_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [nombreLimpio, siglaLimpia, docenteLimpio, grupoLimpio, color, userId]
         );
         
         res.status(201).json({
@@ -96,7 +98,7 @@ export const createMateria = async (req, res) => {
 export const updateMateria = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, sigla, color } = req.body;
+        const { nombre, sigla, docente, grupo, color } = req.body;
         const userId = req.userId;
 
         if (!userId) {
@@ -105,14 +107,16 @@ export const updateMateria = async (req, res) => {
 
         const nombreLimpio = nombre?.trim();
         const siglaLimpia = sigla?.trim().toUpperCase();
+        const docenteLimpio = docente?.trim() || null;
+        const grupoLimpio = grupo?.trim() || null;
 
         if (!nombreLimpio || !color || !siglaLimpia) {
             return res.status(400).json({ message: 'Nombre, sigla y color son obligatorios' });
         }
 
         const { rows } = await pool.query(
-            'UPDATE materias SET nombre = $1, sigla = $2, color = $3 WHERE id = $4 AND usuario_id = $5 RETURNING *',
-            [nombreLimpio, siglaLimpia, color, id, userId]
+            'UPDATE materias SET nombre = $1, sigla = $2, docente = $3, grupo = $4, color = $5 WHERE id = $6 AND usuario_id = $7 RETURNING *',
+            [nombreLimpio, siglaLimpia, docenteLimpio, grupoLimpio, color, id, userId]
         );
         
         if (rows.length === 0) {
