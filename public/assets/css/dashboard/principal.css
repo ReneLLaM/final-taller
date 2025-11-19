@@ -1386,15 +1386,220 @@
 }
 
 .materia-actions button {
-    border: 1px solid #E8EAEF;
-    background: #F8FAFC;
-    color: #0F172A;
-    border-radius: 8px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+  border: 1px solid #E8EAEF;
+  background: #F8FAFC;
+  color: #0F172A;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================
+   SECCIÓN: SUBIR HORARIO (ADMIN)
+   ============================================ */
+
+.upload-horario-section {
+  margin: 0 140px;
+  padding: 140px 0 40px 0; /* espacio para header + breadcrumb */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.upload-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.upload-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.upload-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.upload-description {
+  font-size: 14px;
+  color: #6B7280;
+  max-width: 620px;
+}
+
+.upload-dropzone {
+  margin-top: 6px;
+  border: 1px dashed #D4D4D8;
+  border-radius: 16px;
+  background: #F9FAFB;
+  padding: 26px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.drag-over {
+  background: #F3F4FF;
+  border-color: #006FEE;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+
+.upload-dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.upload-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.upload-icon-arrow {
+  font-size: 26px;
+  color: #006FEE;
+}
+
+.upload-drop-main {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.upload-drop-secondary {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.upload-select-btn {
+  margin-top: 4px;
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid #D4D4D8;
+}
+
+.upload-select-btn:hover {
+  background: #F9FAFB;
+  border-color: #A1A1AA;
+}
+
+.upload-files-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.upload-file-icon {
+  font-size: 20px;
+}
+
+.upload-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-file-meta {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.upload-file-remove {
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+}
+
+.upload-file-remove:hover {
+  color: #EF4444;
+}
+
+.upload-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.upload-submit-btn {
+  min-width: 220px;
+  justify-content: center;
+}
+
+.upload-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 1024px) {
+  .upload-horario-section {
+    margin: 0 60px;
+    padding-top: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .upload-horario-section {
+    margin: 0 20px;
+    padding-top: 120px;
+  }
+
+  .upload-panel {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .upload-horario-section {
+    margin: 0 16px;
+    padding-top: 110px;
+  }
+
+  .upload-dropzone {
+    padding: 20px 14px;
+  }
+
+  .upload-submit-btn {
+    width: 100%;
+  }
 }
 
 .materia-actions button:hover {

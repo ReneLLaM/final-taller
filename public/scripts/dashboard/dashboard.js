@@ -1,3 +1,21 @@
+const SECTION_LABELS = {
+    'horario': '/Mi disponibilidad',
+    'auxiliaturas': '/Mis auxiliaturas',
+    'votacion': '/Votación/Inscripción',
+    'panel-auxiliar': '/Panel auxiliar',
+    'aulas': '/Aulas',
+    'usuarios-roles': '/Usuarios y Roles',
+    'horarios': '/Horarios',
+    'subir-horario': '/Subir horario'
+};
+
+function updateBreadcrumbPath(section) {
+    const pathEl = document.getElementById('breadcrumb-path');
+    if (pathEl) {
+        pathEl.textContent = SECTION_LABELS[section] || '/Inicio';
+    }
+}
+
 // Cargar información del usuario
 async function loadUserInfo() {
     try {
@@ -42,20 +60,7 @@ async function loadUserInfo() {
             // if (dashboardContainer) { ... }
 
             // Breadcrumb izquierdo: sección
-            const sectionLabels = {
-                'horario': '/Mi disponibilidad',
-                'auxiliaturas': '/Mis auxiliaturas',
-                'votacion': '/Votación/Inscripción',
-                'panel-auxiliar': '/Panel auxiliar',
-                'aulas': '/Aulas',
-                'usuarios-roles': '/Usuarios y Roles',
-                'horarios': '/Horarios',
-                'subir-horario': '/Subir horario'
-            };
-            const pathEl = document.getElementById('breadcrumb-path');
-            if (pathEl) {
-                pathEl.textContent = sectionLabels[section] || '/Inicio';
-            }
+            updateBreadcrumbPath(section);
 
             // Breadcrumb derecho: Rol: Nombre
             const roleEl = document.getElementById('breadcrumb-role');
@@ -342,6 +347,7 @@ function navigateToSection(section) {
         }
         window.history.pushState({}, '', url);
         seccionActual = section;
+        updateBreadcrumbPath(section);
         // Asegurar desactivación de edición al cambiar de sección
         desactivarEdicionHorario();
         inicializarToggleEdicionHorario();
@@ -359,6 +365,14 @@ function navigateToSection(section) {
 
 // Exponer la navegación SPA para el header
 window.navigateToSection = navigateToSection;
+
+// Mantener breadcrumb sincronizado con atrás/adelante
+window.addEventListener('popstate', () => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    seccionActual = section;
+    updateBreadcrumbPath(section);
+});
 
 // Función para renderizar las clases en el grid
 function renderizarClases(clases) {

@@ -69,6 +69,7 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS carrera_id INT;
 DROP TABLE IF EXISTS inscripciones CASCADE;
 DROP TABLE IF EXISTS clases CASCADE;
 DROP TABLE IF EXISTS materias CASCADE;
+DROP TABLE IF EXISTS clases_horarios;
 
 -- 2. CREAR MATERIAS
 CREATE TABLE materias (
@@ -97,6 +98,21 @@ CREATE TABLE clases (
     tipo_clase INT NOT NULL DEFAULT 1,
     aula VARCHAR(50) NOT NULL,
     FOREIGN KEY (id_materia) REFERENCES materias(id) ON DELETE CASCADE
+);
+
+-- 3.1 CREAR TABLA PARA HORARIOS IMPORTADOS DESDE EXCEL
+CREATE TABLE clases_horarios (
+    id SERIAL PRIMARY KEY,
+    archivo VARCHAR(255),
+    hoja VARCHAR(255),
+    fila INTEGER,
+    dia_semana INT NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    aula VARCHAR(50),
+    materia VARCHAR(255),
+    docente VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. CREAR INSCRIPCIONES
@@ -147,3 +163,5 @@ INSERT INTO inscripciones (id_usuario, id_clase) VALUES
 SELECT COUNT(*) as total_materias FROM materias;
 SELECT COUNT(*) as total_clases FROM clases;
 SELECT COUNT(*) as total_inscripciones FROM inscripciones WHERE id_usuario = 4;
+
+

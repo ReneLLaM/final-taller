@@ -57,6 +57,40 @@
             <div id="usersPagination" class="pagination"></div>
         </div>
     </section>
+
+    <!-- Sección: Subir Horario (Admin) -->
+    <section id="uploadHorarioSection" class="upload-horario-section" hidden>
+        <div class="upload-panel">
+            <h2 class="upload-title">/Subir Horarios</h2>
+            <p class="upload-subtitle">Gestión 2-2025</p>
+            <p class="upload-description">
+                El administrador deberá subir uno o varios archivos JSON de horarios con la estructura indicada para generar los horarios desde cero para esta gestión.
+            </p>
+
+            <div class="upload-dropzone" id="uploadDropzone">
+                <div class="upload-dropzone-inner">
+                    <div class="upload-icon-circle">
+                        <span class="upload-icon-arrow">&#8593;</span>
+                    </div>
+                    <p class="upload-drop-main">Arrastra tus archivos JSON aquí</p>
+                    <p class="upload-drop-secondary">o</p>
+                    <button type="button" class="btn upload-select-btn" id="uploadSelectBtn">Seleccionar</button>
+                    <input type="file" id="uploadFileInput" accept=".json" multiple hidden>
+                </div>
+            </div>
+
+            <div id="uploadMessage" class="message" style="display:none;"></div>
+
+            <div class="upload-files-list" id="uploadFilesList"></div>
+
+            <div class="upload-actions">
+                <button type="button" class="btn btn-primary upload-submit-btn" id="uploadSubmitBtn" disabled>
+                    Actualizar Horarios
+                </button>
+            </div>
+        </div>
+    </section>
+
     <div class="dashboard-container">
         <div class="dashboard-summary" id="dashboardSummary">
             <div class="summary-cards-grid">
@@ -662,6 +696,7 @@
     <script src="../../scripts/shared/carreras-autocomplete.js"></script>
     <script src="../../scripts/dashboard/dashboard.js"></script>
     <script src="../../scripts/dashboard/usuarios-roles-section.js"></script>
+    <script src="../../scripts/dashboard/upload-horario-section.js"></script>
 </body>
 </html>
 
