@@ -2,16 +2,44 @@
 -- EJECUTA ESTE SCRIPT PARA RESETEAR TODO
 -- =======================================
 -- Copia y pega todo este contenido en pgAdmin o tu cliente PostgreSQL
+-- IMPORTANTE:
+--  - En pgAdmin: conéctate primero manualmente a la base de datos "taller_db" y luego ejecuta este script.
+--  - En psql: puedes descomentar la siguiente línea para cambiar de base de datos.
+-- \c taller_db;
 
-\c taller_db;
+-- 0. ELIMINAR TODAS LAS TABLAS DE DATOS (NO toca usuarios ni roles)
+DROP TABLE IF EXISTS inscripciones CASCADE;
+DROP TABLE IF EXISTS clases_horarios CASCADE;
+DROP TABLE IF EXISTS clases CASCADE;
+DROP TABLE IF EXISTS materias CASCADE;
+DROP TABLE IF EXISTS aulas CASCADE;
+DROP TABLE IF EXISTS materias_globales CASCADE;
+DROP TABLE IF EXISTS carreras CASCADE;
 
--- 0. TABLA DE CARRERAS (lista oficial) - NO toca usuarios
-CREATE TABLE IF NOT EXISTS carreras (
+-- 1. TABLA DE CARRERAS (lista oficial)
+CREATE TABLE carreras (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL UNIQUE
 );
 
--- 0.1 INSERTAR CARRERAS OFICIALES (solo si no existen)
+-- 1.0 TABLA DE MATERIAS GLOBALES (lista oficial de materias)
+CREATE TABLE materias_globales (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    sigla VARCHAR(50) NOT NULL,
+    color VARCHAR(7) NOT NULL,
+    CONSTRAINT materias_globales_nombre_unique UNIQUE (nombre),
+    CONSTRAINT materias_globales_sigla_unique UNIQUE (sigla)
+);
+
+-- 1.1 TABLA DE AULAS (lista oficial de aulas con capacidad)
+CREATE TABLE aulas (
+    id SERIAL PRIMARY KEY,
+    sigla VARCHAR(50) NOT NULL UNIQUE,
+    capacidad INT NOT NULL
+);
+
+-- 1.2 INSERTAR CARRERAS OFICIALES
 INSERT INTO carreras (nombre) VALUES
 ('Derecho'),
 ('Comunicación Social'),
@@ -62,14 +90,50 @@ INSERT INTO carreras (nombre) VALUES
 ('Ingeniería en Biotecnología')
 ON CONFLICT (nombre) DO NOTHING;
 
--- 0.2 AÑADIR COLUMNA carrera_id A USUARIOS (opcional, no borra datos)
+-- 1.3 AÑADIR COLUMNA carrera_id A USUARIOS (opcional, no borra datos)
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS carrera_id INT;
 
--- 1. ELIMINAR TODO (en orden correcto) PARA MATERIAS/HORARIO (NO usuarios)
-DROP TABLE IF EXISTS inscripciones CASCADE;
-DROP TABLE IF EXISTS clases CASCADE;
-DROP TABLE IF EXISTS materias CASCADE;
-DROP TABLE IF EXISTS clases_horarios;
+-- 1.4 INSERTAR AULAS OFICIALES
+INSERT INTO aulas (sigla, capacidad) VALUES
+('E101', 89),
+('E103', 97),
+('E201', 89),
+('E203', 96),
+('E301', 97),
+('E303', 90),
+('C001', 105),
+('C002', 114),
+('C003', 57),
+('C004', 70),
+('C005', 50),
+('C006', 62),
+('C101', 113),
+('C102', 95),
+('C103', 72),
+('C104', 62),
+('C105', 56),
+('C106', 67),
+('C201', 101),
+('C202', 109),
+('C203', 78),
+('C204', 66),
+('C205', 60),
+('C206', 78),
+('C301', 121),
+('F102', 60),
+('F103', 76),
+('F201', 21),
+('F202', 72),
+('B007', 50),
+('B008', 105),
+('D001', 80),
+('D002', 36),
+('D003', 56),
+('D101', 72),
+('D102', 41),
+('D103', 63),
+('DS03', 64)
+ON CONFLICT (sigla) DO NOTHING;
 
 -- 2. CREAR MATERIAS
 CREATE TABLE materias (

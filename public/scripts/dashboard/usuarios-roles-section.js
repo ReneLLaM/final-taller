@@ -39,20 +39,6 @@
     userFormTitle: document.getElementById('userFormTitle'),
     userFormMessage: document.getElementById('userFormMessage'),
     confirmDeleteMessage: document.getElementById('confirmDeleteUserMessage'),
-    // Carreras (admin)
-    btnGestionCarreras: document.getElementById('btnGestionCarreras'),
-    carrerasListModal: document.getElementById('carrerasListModal'),
-    carreraFormModal: document.getElementById('carreraFormModal'),
-    confirmDeleteCarreraModal: document.getElementById('confirmDeleteCarreraModal'),
-    carrerasList: document.getElementById('carrerasList'),
-    carreraForm: document.getElementById('carreraForm'),
-    carreraMessage: document.getElementById('carreraMessage'),
-    carreraNombre: document.getElementById('carrera_nombre'),
-    carreraId: document.getElementById('carrera_id'),
-    btnNuevaCarreraModal: document.getElementById('btnNuevaCarreraModal'),
-    btnConfirmDeleteCarrera: document.getElementById('btnConfirmDeleteCarrera'),
-    confirmDeleteCarreraText: document.getElementById('confirmDeleteCarreraText'),
-    confirmDeleteCarreraMessage: document.getElementById('confirmDeleteCarreraMessage'),
   };
 
   // Mostrar/ocultar sección según la URL (SPA con dashboard.js)
@@ -81,49 +67,6 @@
     }
   }
 
-  // ==========================
-  // Carreras (admin)
-  // ==========================
-
-  async function fetchCarrerasAdmin() {
-    try {
-      const res = await fetch('/api/carreras', { credentials: 'include' });
-      if (!res.ok) throw new Error('No se pudo obtener carreras');
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-      renderCarrerasList(list);
-      return list;
-    } catch (err) {
-      console.error('Error al cargar carreras:', err);
-      showMessage(els.carreraMessage, 'error', 'Error al cargar carreras');
-      if (els.carrerasList) {
-        els.carrerasList.innerHTML = '<div style="padding: 16px; color: var(--muted);">No se pudieron cargar las carreras</div>';
-      }
-      return [];
-    }
-  }
-
-  function renderCarrerasList(carreras) {
-    if (!els.carrerasList) return;
-    if (!Array.isArray(carreras) || carreras.length === 0) {
-      els.carrerasList.innerHTML = '<div style="padding: 16px; color: var(--muted);">No hay carreras registradas</div>';
-      return;
-    }
-    els.carrerasList.innerHTML = carreras
-      .map(
-        (c) => `
-        <div class="carrera-item">
-          <span class="carrera-nombre">${escapeHtml(c.nombre || '')}</span>
-          <div class="actions">
-            <button type="button" class="btn btn-primary" data-edit-carrera="${c.id}" data-nombre="${escapeHtml(c.nombre || '')}">Editar</button>
-            <button type="button" class="btn btn-delete" data-delete-carrera="${c.id}" data-nombre="${escapeHtml(c.nombre || '')}">Eliminar</button>
-          </div>
-        </div>
-      `
-      )
-      .join('');
-  }
-
   // Utilidades de modal
   function openModal(modal) {
     if (!modal) return;
@@ -143,9 +86,6 @@
   }
   wireClose(els.modalForm);
   wireClose(els.modalDelete);
-  wireClose(els.carrerasListModal);
-  wireClose(els.carreraFormModal);
-  wireClose(els.confirmDeleteCarreraModal);
 
   // Cargar usuarios
   async function fetchUsers() {
@@ -315,25 +255,6 @@
         if (els.nombre) els.nombre.focus();
       }, 100);
       openModal(els.modalForm);
-    });
-  }
-
-  // Abrir gestión de carreras
-  if (els.btnGestionCarreras && els.carrerasListModal) {
-    els.btnGestionCarreras.addEventListener('click', async () => {
-      clearMessage(els.carreraMessage);
-      openModal(els.carrerasListModal);
-      await fetchCarrerasAdmin();
-    });
-  }
-
-  // Botón "Nueva carrera" dentro de la lista
-  if (els.btnNuevaCarreraModal && els.carreraFormModal) {
-    els.btnNuevaCarreraModal.addEventListener('click', () => {
-      if (els.carreraId) els.carreraId.value = '';
-      if (els.carreraNombre) els.carreraNombre.value = '';
-      clearMessage(els.carreraMessage);
-      openModal(els.carreraFormModal);
     });
   }
 

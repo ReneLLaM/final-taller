@@ -18,7 +18,20 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.admin-materias-globales-section {
+  margin: 0 140px;
+  padding: 140px 0 20px 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .users-panel {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.materias-panel {
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -27,6 +40,14 @@
 
 /* Toolbar superior */
 .users-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.materias-toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -45,7 +66,25 @@
   max-width: 70%;
 }
 
+.materias-toolbar .search {
+  flex: 2 1 320px;
+  min-width: 260px;
+  max-width: 70%;
+}
+
+.materias-toolbar #btnNuevaMateriaGlobal {
+  margin-left: auto;
+  flex: 0 1 180px;
+  white-space: nowrap;
+}
+
 .users-toolbar #btnNuevoUsuario {
+  margin-left: auto;
+  flex: 0 1 180px;
+  white-space: nowrap;
+}
+
+.users-toolbar #btnNuevaCarreraModal {
   margin-left: auto;
   flex: 0 1 180px;
   white-space: nowrap;
@@ -111,7 +150,11 @@
   pointer-events: none;
 }
 
-#usersSearchInput {
+#usersSearchInput,
+#materiasSearchInput,
+#carrerasSearchInput,
+#materiasGlobalesSearchInput,
+#aulasSearchInput {
   width: 80%;
   padding: 10px 12px 10px 36px;
   border: 1px solid var(--border);
@@ -123,7 +166,11 @@
   transition: all 0.2s ease;
 }
 
-#usersSearchInput:focus {
+#usersSearchInput:focus,
+#materiasSearchInput:focus,
+#carrerasSearchInput:focus,
+#materiasGlobalesSearchInput:focus,
+#aulasSearchInput:focus {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(0, 111, 238, 0.1);
   background: #fff;
@@ -163,12 +210,61 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
 }
 
+.materias-table-wrapper {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
 .users-table {
   width: 100%;
   border-collapse: collapse;
 }
 
+.materias-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Fijar anchos estables en tablas simples (Carreras y Aulas) para evitar saltos al paginar */
+#adminCarrerasSection .users-table,
+#adminAulasSection .users-table {
+  table-layout: fixed;
+}
+
+#adminCarrerasSection .users-table th:nth-child(1),
+#adminCarrerasSection .users-table td:nth-child(1),
+#adminAulasSection .users-table th:nth-child(1),
+#adminAulasSection .users-table td:nth-child(1) {
+  width: 60px;
+  text-align: center;
+}
+
+#adminCarrerasSection .users-table th:nth-child(3),
+#adminCarrerasSection .users-table td:nth-child(3) {
+  width: 200px;
+}
+
+#adminAulasSection .users-table th:nth-child(4),
+#adminAulasSection .users-table td:nth-child(4) {
+  width: 220px;
+}
+
 .users-table thead th {
+  text-align: left;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 700;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.materias-table thead th {
   text-align: left;
   background: var(--bg);
   color: var(--muted);
@@ -188,11 +284,27 @@
   vertical-align: middle;
 }
 
+.materias-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #F0F2F7;
+  color: var(--text);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
 .users-table tbody tr:last-child td {
   border-bottom: none;
 }
 
+.materias-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .users-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.materias-table tbody tr:hover {
   background: #F8FAFC;
 }
 
@@ -233,7 +345,27 @@
   white-space: nowrap;
 }
 
+.admin-materias-globales-section .btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: nowrap;
+}
+
 .admin-users-roles-section .btn-primary {
+  background: #0B0B1A;
+  color: #fff;
+  border-color: #0B0B1A;
+  box-shadow: 0 2px 8px rgba(11, 11, 26, 0.15);
+}
+
+.admin-materias-globales-section .btn-primary {
   background: #0B0B1A;
   color: #fff;
   border-color: #0B0B1A;
@@ -247,6 +379,12 @@
 }
 
 .admin-users-roles-section .btn-danger {
+  background: #FFFFFF;
+  color: #B00020;
+  border-color: #FECACA;
+}
+
+.admin-materias-globales-section .btn-danger {
   background: #FFFFFF;
   color: #B00020;
   border-color: #FECACA;
@@ -340,7 +478,17 @@
   width: 520px;
 }
 
+.admin-materias-globales-section .modal-dialog {
+  max-width: 520px;
+  width: 520px;
+}
+
 .admin-users-roles-section .modal-header h2 {
+  font-size: 1.75em;
+  font-weight: 700;
+}
+
+.admin-materias-globales-section .modal-header h2 {
   font-size: 1.75em;
   font-weight: 700;
 }
@@ -350,7 +498,20 @@
   gap: 12px;
 }
 
+.admin-materias-globales-section .modal-body {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .admin-users-roles-section .modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #F0F2F7;
+}
+
+.admin-materias-globales-section .modal-footer {
   display: flex;
   gap: 10px;
   justify-content: flex-end;

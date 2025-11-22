@@ -4,6 +4,8 @@ const SECTION_LABELS = {
     'votacion': '/Votación/Inscripción',
     'panel-auxiliar': '/Panel auxiliar',
     'aulas': '/Aulas',
+    'carreras': '/Carreras',
+    'materias-globales': '/Materias',
     'usuarios-roles': '/Usuarios y Roles',
     'horarios': '/Horarios',
     'subir-horario': '/Subir horario'
@@ -32,6 +34,13 @@ async function loadUserInfo() {
 
         if (data.user) {
             rolUsuarioActual = data.user.rol_id;
+            // Marcar el body según el rol
+            if (typeof document !== 'undefined' && document.body) {
+                document.body.classList.remove('rol-estudiante', 'rol-auxiliar', 'rol-admin');
+                if (data.user.rol_id === 1) document.body.classList.add('rol-estudiante');
+                if (data.user.rol_id === 2) document.body.classList.add('rol-auxiliar');
+                if (data.user.rol_id === 3) document.body.classList.add('rol-admin');
+            }
             // Obtener nombre del rol
             let rolNombre = 'Usuario';
             switch(data.user.rol_id) {
@@ -47,7 +56,7 @@ async function loadUserInfo() {
             const allowedByRole = {
                 1: ['horario','auxiliaturas','votacion', null],
                 2: ['panel-auxiliar','horario','auxiliaturas','votacion', null],
-                3: ['aulas','usuarios-roles','horarios','subir-horario', null]
+                3: ['aulas','usuarios-roles','carreras','materias-globales','horarios','subir-horario', null]
             };
             const allowed = allowedByRole[data.user.rol_id] || [null];
             if (!allowed.includes(section)) {
@@ -73,8 +82,10 @@ async function loadUserInfo() {
                 toolbar.classList.toggle('active', puedeGestionarHorario(section));
             }
 
-            // Inicializar botón de toggle de edición del horario
-            inicializarToggleEdicionHorario();
+            // Inicializar botón de toggle de edición del horario (solo si no es admin)
+            if (rolUsuarioActual !== 3) {
+                inicializarToggleEdicionHorario();
+            }
         }
     } catch (error) {
         console.error('Error al cargar información:', error);

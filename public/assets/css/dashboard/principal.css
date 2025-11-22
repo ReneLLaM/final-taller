@@ -85,6 +85,11 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Ocultar completamente el dashboard de horario para administradores */
+body.rol-admin .dashboard-container {
+    display: none !important;
+}
+
 /* ============================================
    PANEL DEL AUXILIAR
    ============================================ */

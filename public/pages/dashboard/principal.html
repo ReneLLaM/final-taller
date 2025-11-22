@@ -16,6 +16,110 @@
         </div>
     </div>
 
+    <!-- Modal formulario de aula -->
+    <div class="modal modal-aula" id="aulaFormModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Nueva aula</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="aulaMessage" class="message" style="display:none;"></div>
+                <form id="aulaForm" class="materia-form">
+                    <input type="hidden" id="aula_id">
+                    <div class="form-row split-row">
+                        <div class="form-control sigla-control">
+                            <label for="aula_sigla">Sigla del aula</label>
+                            <input id="aula_sigla" type="text" placeholder="Ej: C101" maxlength="12" required>
+                        </div>
+                        <div class="form-control">
+                            <label for="aula_capacidad">Capacidad</label>
+                            <input id="aula_capacidad" type="number" min="1" step="1" placeholder="Ej: 80" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación de aula -->
+    <div class="modal modal-confirm" id="confirmDeleteAulaModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Eliminar aula</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteAulaText">¿Deseas eliminar esta aula?</p>
+                <div id="confirmDeleteAulaMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteAula">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal formulario de materia global -->
+    <div class="modal modal-materia" id="materiaGlobalFormModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Nueva materia</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="materiaGlobalMessage" class="message" style="display:none;"></div>
+                <form id="materiaGlobalForm" class="materia-form">
+                    <input type="hidden" id="materia_global_id">
+                    <div class="form-row split-row">
+                        <div class="form-control">
+                            <label for="materia_global_nombre">Nombre de la materia</label>
+                            <input id="materia_global_nombre" type="text" placeholder="Ej: Álgebra I" required>
+                        </div>
+                        <div class="form-control sigla-control">
+                            <label for="materia_global_sigla">Sigla</label>
+                            <input id="materia_global_sigla" type="text" placeholder="Ej: MAT101" maxlength="12" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label for="materia_global_color">Color</label>
+                        <input type="color" id="materia_global_color" value="#2196F3">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="materiaGlobalSaveBtn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar eliminación de materia global -->
+    <div class="modal modal-confirm" id="confirmDeleteMateriaGlobalModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Eliminar materia</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteMateriaGlobalText">¿Deseas eliminar esta materia?</p>
+                <div id="confirmDeleteMateriaGlobalMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteMateriaGlobal">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección: Usuarios y Roles (Admin) -->
     <section id="adminUsersRolesSection" class="admin-users-roles-section" hidden>
         <div class="users-panel">
@@ -35,7 +139,6 @@
                     </div>
                 </div>
                 <button id="btnNuevoUsuario" class="toolbar-btn primary">Nuevo</button>
-                <button id="btnGestionCarreras" class="toolbar-btn secondary">Carreras</button>
             </div>
 
             <div class="users-table-wrapper">
@@ -55,6 +158,108 @@
             </div>
 
             <div id="usersPagination" class="pagination"></div>
+        </div>
+    </section>
+
+    <!-- Sección: Aulas (Admin) -->
+    <section id="adminAulasSection" class="admin-users-roles-section" hidden>
+        <div class="users-panel">
+            <div class="users-toolbar">
+                <div class="search">
+                    <div class="search-input-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M21 21l-4.3-4.3m1.8-4.5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input id="aulasSearchInput" type="text" placeholder="Buscar aulas..." />
+                    </div>
+                </div>
+                <button id="btnNuevaAula" class="toolbar-btn primary">Nueva aula</button>
+            </div>
+
+            <div class="users-table-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Sigla</th>
+                            <th>Capacidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aulasTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="aulasInlineMessage" class="message" style="display:none;"></div>
+            <div id="aulasPagination" class="pagination"></div>
+        </div>
+    </section>
+
+    <!-- Sección: Carreras (Admin) -->
+    <section id="adminCarrerasSection" class="admin-users-roles-section" hidden>
+        <div class="users-panel">
+            <div class="users-toolbar">
+                <div class="search">
+                    <div class="search-input-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M21 21l-4.3-4.3m1.8-4.5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input id="carrerasSearchInput" type="text" placeholder="Buscar carreras..." />
+                    </div>
+                </div>
+                <button id="btnNuevaCarreraModal" class="toolbar-btn primary">Nueva carrera</button>
+            </div>
+
+            <div class="users-table-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Carrera</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carrerasList"></tbody>
+                </table>
+            </div>
+
+            <div id="carrerasInlineMessage" class="message" style="display:none;"></div>
+            <div id="carrerasPagination" class="pagination"></div>
+        </div>
+    </section>
+
+    <!-- Sección: Materias globales (Admin) -->
+    <section id="adminMateriasGlobalesSection" class="admin-materias-globales-section" hidden>
+        <div class="materias-panel">
+            <div class="materias-toolbar">
+                <div class="search">
+                    <div class="search-input-wrapper">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M21 21l-4.3-4.3m1.8-4.5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input id="materiasGlobalesSearchInput" type="text" placeholder="Buscar materias..." />
+                    </div>
+                </div>
+                <button id="btnNuevaMateriaGlobal" class="toolbar-btn primary">Nueva materia</button>
+            </div>
+
+            <div class="materias-table-wrapper">
+                <table class="materias-table">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Nombre</th>
+                            <th>Sigla</th>
+                            <th>Color</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materiasGlobalesTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="materiasGlobalesInlineMessage" class="message" style="display:none;"></div>
+            <div id="materiasGlobalesPagination" class="pagination"></div>
         </div>
     </section>
 
@@ -449,27 +654,6 @@
         </div>
     </div>
 
-    <!-- Modal lista de carreras -->
-    <div class="modal modal-carreras-list" id="carrerasListModal" aria-hidden="true">
-        <div class="modal-backdrop" data-close-modal></div>
-        <div class="modal-dialog modal-sm">
-            <div class="modal-header">
-                <h2>Carreras</h2>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-primary" id="btnNuevaCarreraModal">Nueva carrera</button>
-                    <button class="modal-close" data-close-modal>&times;</button>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="materias-list-header">
-                    <span>Carrera</span>
-                    <span>Acciones</span>
-                </div>
-                <div id="carrerasList" class="materias-list"></div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal formulario de carrera -->
     <div class="modal modal-carrera" id="carreraFormModal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
@@ -722,6 +906,9 @@
     <script src="../../scripts/shared/carreras-autocomplete.js"></script>
     <script src="../../scripts/dashboard/dashboard.js"></script>
     <script src="../../scripts/dashboard/usuarios-roles-section.js"></script>
+    <script src="../../scripts/dashboard/admin-aulas-section.js"></script>
+    <script src="../../scripts/dashboard/admin-carreras-section.js"></script>
+    <script src="../../scripts/dashboard/admin-materias-globales-section.js"></script>
     <script src="../../scripts/dashboard/panel-auxiliar-section.js"></script>
     <script src="../../scripts/dashboard/upload-horario-section.js"></script>
 </body>
