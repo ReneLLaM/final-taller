@@ -85,6 +85,336 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ============================================
+   PANEL DEL AUXILIAR
+   ============================================ */
+.aux-panel-section {
+    margin: 0 140px;
+    padding: 140px 0 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.aux-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.aux-panel-hero {
+    background: linear-gradient(135deg, #F8F1FF, #ECE4FF);
+    border: 1px solid #E0D0FF;
+    border-radius: 22px;
+    padding: 32px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    box-shadow: 0 20px 60px rgba(95, 64, 186, 0.18);
+}
+
+.aux-panel-path {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #7C3AED;
+    margin-bottom: 8px;
+}
+
+.aux-panel-hero h1 {
+    font-size: 36px;
+    margin: 0;
+    color: #2F2375;
+}
+
+.aux-panel-subtitle {
+    margin: 8px 0 0;
+    font-size: 18px;
+    color: #4C1D95;
+    font-weight: 600;
+}
+
+.aux-materias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+.aux-materia-card {
+    background: #F9F6FF;
+    border: 1px solid #E7D8FF;
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 14px 32px rgba(129, 92, 246, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.aux-materia-card h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #2F2375;
+}
+
+.aux-materia-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+    color: #5B4E8B;
+    font-weight: 600;
+}
+
+.aux-materia-badge {
+    background: #EDE7FF;
+    color: #4C1D95;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+}
+
+.aux-materia-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    color: #4F46E5;
+    font-weight: 600;
+}
+
+.aux-materia-times {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.aux-materia-card .aux-materia-btn {
+    margin-top: auto;
+    background: #120E32;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 0;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 6px 16px rgba(17, 14, 50, 0.4);
+}
+
+.aux-materia-card .aux-materia-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(17, 14, 50, 0.45);
+}
+
+.aux-empty-state {
+    text-align: center;
+    background: #FBFAFF;
+    border: 1px dashed #D9C8FF;
+    border-radius: 18px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #4C1D95;
+    box-shadow: 0 10px 24px rgba(129, 92, 246, 0.08);
+}
+
+.aux-empty-btn {
+    align-self: center;
+    background: #4C1D95;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(76, 29, 149, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aux-empty-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 26px rgba(76, 29, 149, 0.3);
+}
+
+.aux-panel-message {
+    padding: 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.aux-panel-message.error {
+    background: #FEF2F2;
+    color: #7F1D1D;
+    border: 1px solid #FCA5A5;
+}
+
+.aux-schedule-section {
+    background: #FFFFFF;
+    border: 1px solid #E7E3FF;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 16px 34px rgba(99, 102, 241, 0.14);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.aux-schedule-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #312E81;
+}
+
+.aux-schedule-header p {
+    margin: 4px 0 0;
+    color: #6B7280;
+    font-size: 14px;
+}
+
+.aux-schedule-grid {
+    overflow-x: auto;
+}
+
+.aux-schedule-grid-inner {
+    display: grid;
+    grid-template-columns: 120px repeat(6, minmax(150px, 1fr));
+    gap: 8px;
+    align-items: start;
+}
+
+.aux-time-header,
+.aux-day-header {
+    background: #F5F3FF;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #4C1D95;
+    font-size: 11px;
+}
+
+.aux-day-header {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aux-time-label {
+    background: #EFEAFD;
+    border-radius: 10px;
+    padding: 12px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4338CA;
+    text-align: center;
+}
+
+.aux-schedule-cell {
+    min-height: 80px;
+    border: 1px dashed #E4D7FF;
+    border-radius: 12px;
+    padding: 6px;
+    background: #FDFBFF;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aux-schedule-card {
+    background: #FFFFFF;
+    border-left: 4px solid #7C3AED;
+    border-radius: 10px;
+    padding: 8px 10px;
+    box-shadow: 0 10px 20px rgba(76, 29, 149, 0.12);
+    font-size: 12px;
+    color: #1F2937;
+}
+
+.aux-schedule-card strong {
+    display: block;
+    color: #4C1D95;
+    margin-bottom: 2px;
+}
+
+.aux-schedule-card span {
+    display: block;
+    color: #6B7280;
+    font-size: 11px;
+}
+
+.aux-schedule-card .aux-schedule-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.aux-schedule-badge {
+    background: #111827;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+    .aux-panel-section {
+        margin: 0 80px;
+        padding-top: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .aux-panel-section {
+        margin: 0 20px;
+        padding-top: 110px;
+    }
+
+    .aux-panel-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 28px;
+    }
+
+    .aux-schedule-grid-inner {
+        grid-template-columns: 100px repeat(6, minmax(130px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .aux-panel-section {
+        margin: 0 14px;
+        padding-top: 100px;
+    }
+
+    .aux-panel-hero h1 {
+        font-size: 28px;
+    }
+
+    .aux-materias-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aux-schedule-grid-inner {
+        grid-template-columns: 80px repeat(6, minmax(120px, 1fr));
+    }
+}
+
 /* Resumen superior (tarjetas tipo dashboard) */
 .dashboard-summary {
     margin-bottom: 20px;
@@ -392,7 +722,6 @@
     text-align: center;
     font-weight: 600;
     font-size: 12px;
-    border-radius: 8px;
     color: #0B0B1A;
     letter-spacing: 0.4px;
     text-transform: uppercase;
@@ -405,7 +734,6 @@
     text-align: center;
     font-size: 10px;
     font-weight: 600;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -413,6 +741,12 @@
     height: var(--slot-height);
     min-height: var(--slot-height);
     letter-spacing: 0.3px;
+}
+.reducir-separacion{
+    margin-top: -4px;
+}
+.centrar-separacion{
+    margin-top: -2px;
 }
 
 /* Celdas del horario */
@@ -518,22 +852,21 @@
 
 /* Nombre de la materia */
 .clase-nombre {
-    font-weight: 700;
+    font-weight: 900;
     font-size: 10px;
     text-transform: uppercase;
     margin-bottom: 2px;
-    line-height: 1;
-    color: #0F172A;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.1;
+    color: #006FEE;
+    white-space: normal;
+    word-break: break-word;
 }
 
 /* Información del docente y código */
 .clase-info {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     margin-bottom: 1px;
     gap: 3px;
 }
@@ -561,6 +894,8 @@
 
 .clase-grupo {
     margin-left: 4px;
+    font-weight: bold;
+    color: #000;
 }
 
 /* Badges (aula y horario) */
@@ -569,6 +904,8 @@
     gap: 3px;
     margin-top: 2px;
     flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .badge {
@@ -582,6 +919,16 @@
     letter-spacing: 0.3px;
     white-space: nowrap;
 }
+.badge-hora{
+    color: #475467;
+    font-size: 8px;
+    font-weight: 600;
+    display: inline-block;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+
+}
+
 
 /* Botón agregar clase */
 .add-class-btn {

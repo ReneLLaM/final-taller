@@ -152,12 +152,16 @@ INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, 
 (5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 2, 'E301'),
 (5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 2, 'E301'),
 (6, 'MAT102', 'O.VELASCO', 'G8', 1, '16:00', '18:00', 1, 'C003'),
-(6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003');
+(6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003'),
+-- Auxiliaturas que dicta el auxiliar (tipo 3)
+(2, 'MAT102', 'Rene Llanos', 'G3', 2, '09:00', '11:00', 3, 'C101'),
+(5, 'MAT103', 'Rene Llanos', 'G2', 3, '09:00', '11:00', 3, 'C101');
 
 -- 7. INSCRIBIR USUARIO 4
 INSERT INTO inscripciones (id_usuario, id_clase) VALUES
 (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8),
-(4, 9), (4, 10), (4, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16);
+(4, 9), (4, 10), (4, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16),
+(4, 17), (4, 18);
 
 -- 8. VERIFICAR
 SELECT COUNT(*) as total_materias FROM materias;

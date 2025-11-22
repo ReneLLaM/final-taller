@@ -541,6 +541,7 @@ function crearClaseCard(clase, altura, offset, conflictosIds) {
     
     card.innerHTML = `
         <div class="clase-nombre">${clase.materia_nombre}</div>
+        <div>                               
         <div class="clase-info">
             <span class="clase-docente">${clase.docente}</span>
             <span>
@@ -550,7 +551,8 @@ function crearClaseCard(clase, altura, offset, conflictosIds) {
         </div>
         <div class="clase-badges">
             <span class="badge">${clase.aula}</span>
-            <span class="badge">${horaInicio} - ${horaFin}</span>
+            <span class="badge-hora">${horaInicio} - ${horaFin}</span>
+        </div>
         </div>
     `;
 

@@ -58,6 +58,32 @@
         </div>
     </section>
 
+    <!-- Sección: Panel Auxiliar (solo rol auxiliar) -->
+    <section id="panelAuxiliarSection" class="aux-panel-section" hidden>
+        <div class="aux-panel-inner">
+            <div class="aux-panel-hero">
+                <p class="aux-panel-path">/Panel de Auxiliar</p>
+                <div>
+                    <h1>Panel de Auxiliar</h1>
+                    <p id="auxiliarStudentName" class="aux-panel-subtitle">Estudiante auxiliar: —</p>
+                </div>
+            </div>
+            <div id="auxMateriasGrid" class="aux-materias-grid"></div>
+            <div id="auxEmptyState" class="aux-empty-state" hidden>
+                <h3>No tienes auxiliaturas registradas aún</h3>
+                <p>Cuando registres materias con tipo 3, las verás listadas aquí y también en tu horario.</p>
+                <button type="button" class="btn aux-empty-btn" id="auxNavigateToAuxiliaturas">Ir a Mis Auxiliaturas</button>
+            </div>
+            <div class="aux-schedule-section">
+                <div class="aux-schedule-header">
+                    <h2>Horario en el que como auxiliar dictas clases</h2>
+                    <p>Visualiza únicamente las auxiliaturas que dictas (tipo 3).</p>
+                </div>
+                <div id="auxScheduleGrid" class="aux-schedule-grid"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- Sección: Subir Horario (Admin) -->
     <section id="uploadHorarioSection" class="upload-horario-section" hidden>
         <div class="upload-panel">
@@ -140,7 +166,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="07:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="07:00"></div>
 
-                    <div class="time-slot">08:00 - 09:00</div>
+                    <div class="time-slot reducir-separacion">08:00 - 09:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="08:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="08:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="08:00"></div>
@@ -156,7 +182,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="09:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="09:00"></div>
 
-                    <div class="time-slot">10:00 - 11:00</div>
+                    <div class="time-slot reducir-separacion">10:00 - 11:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="10:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="10:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="10:00"></div>
@@ -172,7 +198,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="11:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="11:00"></div>
 
-                    <div class="time-slot">12:00 - 13:00</div>
+                    <div class="time-slot reducir-separacion">12:00 - 13:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="12:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="12:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="12:00"></div>
@@ -180,7 +206,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="12:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="12:00"></div>
 
-                    <div class="time-slot">13:00 - 14:00</div>
+                    <div class="time-slot centrar-separacion">13:00 - 14:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="13:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="13:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="13:00"></div>
@@ -196,7 +222,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="14:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="14:00"></div>
 
-                    <div class="time-slot">15:00 - 16:00</div>
+                    <div class="time-slot reducir-separacion">15:00 - 16:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="15:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="15:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="15:00"></div>
@@ -212,7 +238,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="16:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="16:00"></div>
 
-                    <div class="time-slot">17:00 - 18:00</div>
+                    <div class="time-slot reducir-separacion">17:00 - 18:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="17:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="17:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="17:00"></div>
@@ -228,7 +254,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="18:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="18:00"></div>
 
-                    <div class="time-slot">19:00 - 20:00</div>
+                    <div class="time-slot reducir-separacion">19:00 - 20:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="19:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="19:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="19:00"></div>
@@ -244,7 +270,7 @@
                     <div class="schedule-cell" data-dia="5" data-hora="20:00"></div>
                     <div class="schedule-cell" data-dia="6" data-hora="20:00"></div>
 
-                    <div class="time-slot">21:00 - 22:00</div>
+                    <div class="time-slot reducir-separacion">21:00 - 22:00</div>
                     <div class="schedule-cell" data-dia="1" data-hora="21:00"></div>
                     <div class="schedule-cell" data-dia="2" data-hora="21:00"></div>
                     <div class="schedule-cell" data-dia="3" data-hora="21:00"></div>
@@ -696,6 +722,7 @@
     <script src="../../scripts/shared/carreras-autocomplete.js"></script>
     <script src="../../scripts/dashboard/dashboard.js"></script>
     <script src="../../scripts/dashboard/usuarios-roles-section.js"></script>
+    <script src="../../scripts/dashboard/panel-auxiliar-section.js"></script>
     <script src="../../scripts/dashboard/upload-horario-section.js"></script>
 </body>
 </html>
