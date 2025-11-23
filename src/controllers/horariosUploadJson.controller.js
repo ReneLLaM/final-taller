@@ -168,3 +168,139 @@ export const getAulasPorDia = async (req, res) => {
     return res.status(500).json({ message: 'Error al obtener aulas por día', error: error.message });
   }
 };
+
+// Listar registros de clases_horarios por día (solo para admin)
+export const getHorariosByDiaAdmin = async (req, res) => {
+  try {
+    const diaParam = req.params.dia ?? req.query.dia;
+    const dia = parseInt(diaParam, 10);
+
+    if (!dia || Number.isNaN(dia) || dia < 1 || dia > 6) {
+      return res.status(400).json({ message: 'Parámetro dia inválido. Debe estar entre 1 y 6.' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT id, dia_semana, hora_inicio, hora_fin, aula, materia, docente
+       FROM clases_horarios
+       WHERE dia_semana = $1
+       ORDER BY hora_inicio, aula, id`,
+      [dia],
+    );
+
+    return res.json(rows);
+  } catch (error) {
+    console.error('Error en getHorariosByDiaAdmin:', error);
+    return res.status(500).json({ message: 'Error al obtener horarios por día', error: error.message });
+  }
+};
+
+// Crear un nuevo registro manual en clases_horarios (admin)
+export const createHorarioAdmin = async (req, res) => {
+  try {
+    const { dia_semana, hora_inicio, hora_fin, aula, materia, docente } = req.body || {};
+
+    const dia = parseInt(dia_semana, 10);
+    if (!dia || Number.isNaN(dia) || dia < 1 || dia > 6) {
+      return res.status(400).json({ message: 'dia_semana inválido. Debe estar entre 1 y 6.' });
+    }
+
+    if (!hora_inicio || !hora_fin) {
+      return res.status(400).json({ message: 'hora_inicio y hora_fin son obligatorios.' });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO clases_horarios
+        (archivo, hoja, fila, dia_semana, hora_inicio, hora_fin, aula, materia, docente)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, dia_semana, hora_inicio, hora_fin, aula, materia, docente`,
+      [
+        'MANUAL',
+        'MANUAL',
+        0,
+        dia,
+        hora_inicio,
+        hora_fin,
+        aula ? String(aula).trim() : null,
+        materia ? String(materia).trim() : null,
+        docente ? String(docente).trim() : null,
+      ],
+    );
+
+    return res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Error en createHorarioAdmin:', error);
+    return res.status(500).json({ message: 'Error al crear horario', error: error.message });
+  }
+};
+
+// Actualizar un registro de clases_horarios (admin)
+export const updateHorarioAdmin = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ message: 'ID inválido' });
+    }
+
+    const { dia_semana, hora_inicio, hora_fin, aula, materia, docente } = req.body || {};
+    const dia = parseInt(dia_semana, 10);
+
+    if (!dia || Number.isNaN(dia) || dia < 1 || dia > 6) {
+      return res.status(400).json({ message: 'dia_semana inválido. Debe estar entre 1 y 6.' });
+    }
+
+    if (!hora_inicio || !hora_fin) {
+      return res.status(400).json({ message: 'hora_inicio y hora_fin son obligatorios.' });
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE clases_horarios
+         SET dia_semana = $2,
+             hora_inicio = $3,
+             hora_fin = $4,
+             aula = $5,
+             materia = $6,
+             docente = $7
+       WHERE id = $1
+       RETURNING id, dia_semana, hora_inicio, hora_fin, aula, materia, docente`,
+      [
+        id,
+        dia,
+        hora_inicio,
+        hora_fin,
+        aula ? String(aula).trim() : null,
+        materia ? String(materia).trim() : null,
+        docente ? String(docente).trim() : null,
+      ],
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Horario no encontrado' });
+    }
+
+    return res.json(rows[0]);
+  } catch (error) {
+    console.error('Error en updateHorarioAdmin:', error);
+    return res.status(500).json({ message: 'Error al actualizar horario', error: error.message });
+  }
+};
+
+// Eliminar un registro de clases_horarios (admin)
+export const deleteHorarioAdmin = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ message: 'ID inválido' });
+    }
+
+    const { rowCount } = await pool.query('DELETE FROM clases_horarios WHERE id = $1', [id]);
+
+    if (!rowCount) {
+      return res.status(404).json({ message: 'Horario no encontrado' });
+    }
+
+    return res.json({ message: 'Horario eliminado correctamente' });
+  } catch (error) {
+    console.error('Error en deleteHorarioAdmin:', error);
+    return res.status(500).json({ message: 'Error al eliminar horario', error: error.message });
+  }
+};

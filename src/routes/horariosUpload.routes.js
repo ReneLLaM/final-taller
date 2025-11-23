@@ -5,6 +5,10 @@ import {
   uploadHorariosMiddleware,
   uploadHorarios,
   getAulasPorDia,
+  getHorariosByDiaAdmin,
+  createHorarioAdmin,
+  updateHorarioAdmin,
+  deleteHorarioAdmin,
 } from '../controllers/horariosUploadJson.controller.js';
 
 const router = Router();
@@ -24,6 +28,38 @@ router.get(
   authMiddleware,
   requireRole(3),
   getAulasPorDia,
+);
+
+// Listar registros de clases_horarios por día (solo administradores)
+router.get(
+  '/horarios/dia/:dia',
+  authMiddleware,
+  requireRole(3),
+  getHorariosByDiaAdmin,
+);
+
+// Crear un nuevo registro de clases_horarios (solo administradores)
+router.post(
+  '/horarios',
+  authMiddleware,
+  requireRole(3),
+  createHorarioAdmin,
+);
+
+// Actualizar un registro de clases_horarios (solo administradores)
+router.put(
+  '/horarios/:id',
+  authMiddleware,
+  requireRole(3),
+  updateHorarioAdmin,
+);
+
+// Eliminar un registro de clases_horarios (solo administradores)
+router.delete(
+  '/horarios/:id',
+  authMiddleware,
+  requireRole(3),
+  deleteHorarioAdmin,
 );
 
 export default router;

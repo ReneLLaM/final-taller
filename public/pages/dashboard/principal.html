@@ -47,6 +47,72 @@
         </div>
     </div>
 
+    <!-- Modal Horarios (Admin - clases_horarios) -->
+    <div class="modal modal-add-class" id="adminHorarioModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="adminHorarioModalTitle">Editar horario de aula</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <form id="adminHorarioForm" class="modal-body">
+                <div id="adminHorarioMessage" class="message" style="display:none;"></div>
+                <input type="hidden" id="adminHorarioId">
+                <input type="hidden" id="adminHorarioDia">
+                <input type="hidden" id="adminHorarioSlotIndex">
+                <div class="form-group slot-summary">
+                    <label>Bloque seleccionado</label>
+                    <div id="adminHorarioResumen" class="slot-tag">Selecciona un bloque en el horario</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminHorarioDiaLabel">Día</label>
+                    <input id="adminHorarioDiaLabel" type="text" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminHorarioAula">Aula</label>
+                    <input id="adminHorarioAula" type="text" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminHorarioMateria">Materia</label>
+                    <input id="adminHorarioMateria" type="text" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminHorarioGrupo">Grupo / código</label>
+                    <input id="adminHorarioGrupo" type="text">
+                </div>
+
+                <div class="form-group">
+                    <label for="adminHorarioDocente">Docente</label>
+                    <input id="adminHorarioDocente" type="text" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="time-inputs">
+                        <div>
+                            <label for="adminHorarioHoraInicio">Hora Inicio</label>
+                            <input id="adminHorarioHoraInicio" type="time" required>
+                        </div>
+                        <div>
+                            <label for="adminHorarioHoraFin">Hora Fin</label>
+                            <input id="adminHorarioHoraFin" type="time" required>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer space-between">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-secondary" id="adminHorarioDeleteBtn" style="display:none;">Eliminar</button>
+                    <button type="submit" form="adminHorarioForm" class="btn btn-primary" id="adminHorarioSaveBtn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal modal-aux-materias" id="manageAuxMateriasModal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
         <div class="modal-dialog">
@@ -656,7 +722,7 @@
 
                 <div class="form-group">
                     <label for="aula">Aula:</label>
-                    <input id="aula" name="aula" type="text" placeholder="Ej: C101" required>
+                    <input id="aula" name="aula" type="text" placeholder="Ej: C001" required>
                 </div>
 
                 <div class="modal-footer space-between">

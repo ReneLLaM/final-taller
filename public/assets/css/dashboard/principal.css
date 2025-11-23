@@ -342,7 +342,7 @@ body.rol-admin .dashboard-container {
 
 .admin-horarios-columns {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 6px;
     min-height: 100%;
 }
@@ -359,11 +359,15 @@ body.rol-admin .dashboard-container {
 }
 
 .admin-horarios-cell {
-    min-height: var(--slot-height);
-    height: var(--slot-height);
-    border-radius: 8px;
+    min-height: 60px;
+    padding: 4px;
+    border-radius: 10px;
     border: 1px dashed #E5E7EB;
     background: #F9FAFB;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: visible;
 }
 
 .admin-horarios-empty {
@@ -373,6 +377,75 @@ body.rol-admin .dashboard-container {
     background: #F9FAFB;
     font-size: 14px;
     color: #475467;
+}
+
+.admin-horario-card {
+    background: #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.10);
+    padding: 6px 10px;
+    border-left: 3px solid #0B0B1A;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-horario-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+}
+
+.admin-horario-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0B0B1A;
+    margin-bottom: 1px;
+    text-transform: uppercase;
+}
+
+.admin-horario-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 10px;
+    color: #4B5563;
+}
+
+.admin-horario-label {
+    font-weight: 600;
+    color: #6B7280;
+}
+
+.admin-horario-docente {
+    flex: 1;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-horario-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #4B5563;
+}
+
+.admin-horario-sigla {
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #111827;
+    color: #FFFFFF;
+}
+
+.admin-horario-time {
+    margin-top: 2px;
+    font-size: 10px;
+    color: #6B7280;
 }
 
 .aux-panel-message.error {
