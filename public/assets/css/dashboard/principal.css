@@ -95,7 +95,9 @@ body.rol-admin .dashboard-container {
    ============================================ */
 .aux-panel-section {
     margin: 0 140px;
-    padding: 140px 0 60px;
+    /* Un poco menos de padding arriba y mucho menos abajo
+       para que el horario quede más cerca de las tarjetas */
+    padding: 120px 0 16px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -146,77 +148,84 @@ body.rol-admin .dashboard-container {
 }
 
 .aux-materia-card {
-    background: #F9F6FF;
-    border: 1px solid #E7D8FF;
-    border-radius: 18px;
-    padding: 22px;
-    box-shadow: 0 14px 32px rgba(129, 92, 246, 0.12);
+    background: #F3E8FF;
+    border: 1px solid #E9D5FF;
+    border-radius: 12px;
+    padding: 18px 18px 14px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
-.aux-materia-card h3 {
+.aux-materia-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.aux-materia-title {
     margin: 0;
-    font-size: 20px;
-    color: #2F2375;
+    font-size: 18px;
+    line-height: 1.15;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0B0B1A;
 }
 
-.aux-materia-meta {
+.aux-materia-sigla {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+}
+
+.aux-materia-grupo-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    font-size: 13px;
-    color: #5B4E8B;
-    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
 }
 
-.aux-materia-badge {
-    background: #EDE7FF;
-    color: #4C1D95;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+.aux-materia-grupo-label {
     font-weight: 700;
+    color: #0B0B1A;
 }
 
-.aux-materia-groups {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 12px;
-    color: #4F46E5;
+.aux-materia-grupo-value {
     font-weight: 600;
+    color: #4B5563;
 }
 
-.aux-materia-times {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.aux-materia-carga {
     font-size: 12px;
     color: #6B7280;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
 .aux-materia-card .aux-materia-btn {
     margin-top: auto;
-    background: #120E32;
+    width: 100%;
+    background: #0B0B1A;
     color: #FFFFFF;
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 10px 0;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 6px 16px rgba(17, 14, 50, 0.4);
+    box-shadow: 0 4px 12px rgba(11, 11, 26, 0.4);
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
 }
 
 .aux-materia-card .aux-materia-btn:hover {
+    background: #1a1a2e;
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(17, 14, 50, 0.45);
+    box-shadow: 0 6px 16px rgba(11, 11, 26, 0.5);
 }
 
 .aux-empty-state {
@@ -380,14 +389,14 @@ body.rol-admin .dashboard-container {
 @media (max-width: 1200px) {
     .aux-panel-section {
         margin: 0 80px;
-        padding-top: 120px;
+        padding: 120px 0 16px;
     }
 }
 
 @media (max-width: 768px) {
     .aux-panel-section {
         margin: 0 20px;
-        padding-top: 110px;
+        padding: 110px 0 16px;
     }
 
     .aux-panel-hero {
@@ -404,7 +413,7 @@ body.rol-admin .dashboard-container {
 @media (max-width: 600px) {
     .aux-panel-section {
         margin: 0 14px;
-        padding-top: 100px;
+        padding: 100px 0 12px;
     }
 
     .aux-panel-hero h1 {
@@ -844,6 +853,8 @@ body.rol-admin .dashboard-container {
 .clase-card.compact .clase-info,
 .clase-card.compact .clase-badges {
     display: none;
+    /* Color base de la materia (se puede sobreescribir vía --clase-color en inline style) */
+    --clase-color: #006FEE;
 }
 
 /* Colores de fondo según tipo de clase */
@@ -855,6 +866,11 @@ body.rol-admin .dashboard-container {
     background-color: #FFF8EB;
 }
 
+/* Auxiliaturas que dicta el auxiliar (tipo 3) */
+.clase-card.auxiliatura-dictada {
+    background-color: #E0D4FF;
+}
+
 /* Nombre de la materia */
 .clase-nombre {
     font-weight: 900;
@@ -862,7 +878,7 @@ body.rol-admin .dashboard-container {
     text-transform: uppercase;
     margin-bottom: 2px;
     line-height: 1.1;
-    color: #006FEE;
+    color: var(--clase-color, #006FEE);
     white-space: normal;
     word-break: break-word;
 }
@@ -1215,6 +1231,39 @@ body.rol-admin .dashboard-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+.modal-aux-materias .modal-dialog {
+    width: 720px;
+    max-width: calc(100% - 40px);
+}
+
+.modal-aux-materias .modal-body {
+    gap: 18px;
+}
+
+.modal-aux-materias .users-table-wrapper {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.modal-aux-materias .users-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.modal-aux-materias .users-table th:nth-child(1),
+.modal-aux-materias .users-table td:nth-child(1) {
+    width: 80px;
+}
+
+.modal-aux-materias .users-table th:nth-child(3),
+.modal-aux-materias .users-table td:nth-child(3) {
+    width: 80px;
+}
+
+.modal-aux-materias .users-table th:nth-child(5),
+.modal-aux-materias .users-table td:nth-child(5) {
+    width: 140px;
 }
 .modal-footer { 
     display: flex; 

@@ -47,6 +47,82 @@
         </div>
     </div>
 
+    <div class="modal modal-aux-materias" id="manageAuxMateriasModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="manageAuxMateriasTitle">Gestionar materias del auxiliar</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="manageAuxMateriasMessage" class="message" style="display:none;"></div>
+                <div class="users-table-wrapper" style="margin-bottom: 16px;">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Sigla</th>
+                                <th>Materia</th>
+                                <th>Grupo</th>
+                                <th>Carga</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manageAuxMateriasList"></tbody>
+                    </table>
+                </div>
+                <form id="auxMateriaForm" class="materia-form">
+                    <div class="form-row">
+                        <span id="auxMateriaFormMode" class="form-mode-label">Añadiendo nueva materia para el auxiliar</span>
+                    </div>
+                    <div class="form-row split-row">
+                        <div class="form-control">
+                            <label for="auxMateriaGlobalSelect">Materia global</label>
+                            <input id="auxMateriaGlobalSelect" type="text" list="auxMateriaGlobalList" placeholder="Ej: MAT103 - Álgebra II" required>
+                            <datalist id="auxMateriaGlobalList"></datalist>
+                        </div>
+                        <div class="form-control">
+                            <label for="auxMateriaGrupo">Grupo</label>
+                            <input id="auxMateriaGrupo" type="text" placeholder="Ej: G1" required>
+                        </div>
+                    </div>
+                    <div class="form-row split-row">
+                        <div class="form-control">
+                            <label for="auxMateriaVeces">Veces por semana</label>
+                            <input id="auxMateriaVeces" type="number" min="1" value="2">
+                        </div>
+                        <div class="form-control">
+                            <label for="auxMateriaHoras">Horas por clase</label>
+                            <input id="auxMateriaHoras" type="number" min="1" value="2">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="auxMateriaCancelBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="auxMateriaSubmitBtn">Guardar asignación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmar quitar materia de auxiliar -->
+    <div class="modal modal-confirm" id="confirmDeleteAuxMateriaModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Quitar materia del auxiliar</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmDeleteAuxMateriaText">¿Deseas quitar esta materia del auxiliar?</p>
+                <div id="confirmDeleteAuxMateriaMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmDeleteAuxMateria">Quitar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal confirmar eliminación de aula -->
     <div class="modal modal-confirm" id="confirmDeleteAulaModal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal></div>
@@ -265,27 +341,12 @@
 
     <!-- Sección: Panel Auxiliar (solo rol auxiliar) -->
     <section id="panelAuxiliarSection" class="aux-panel-section" hidden>
-        <div class="aux-panel-inner">
-            <div class="aux-panel-hero">
-                <p class="aux-panel-path">/Panel de Auxiliar</p>
-                <div>
-                    <h1>Panel de Auxiliar</h1>
-                    <p id="auxiliarStudentName" class="aux-panel-subtitle">Estudiante auxiliar: —</p>
-                </div>
+        <div class="aux-schedule-section">
+            <div class="aux-schedule-header">
+                <h2>Mis auxiliaturas (como auxiliar)</h2>
+                <p>Visualiza únicamente las auxiliaturas que dictas</p>
             </div>
             <div id="auxMateriasGrid" class="aux-materias-grid"></div>
-            <div id="auxEmptyState" class="aux-empty-state" hidden>
-                <h3>No tienes auxiliaturas registradas aún</h3>
-                <p>Cuando registres materias con tipo 3, las verás listadas aquí y también en tu horario.</p>
-                <button type="button" class="btn aux-empty-btn" id="auxNavigateToAuxiliaturas">Ir a Mis Auxiliaturas</button>
-            </div>
-            <div class="aux-schedule-section">
-                <div class="aux-schedule-header">
-                    <h2>Horario en el que como auxiliar dictas clases</h2>
-                    <p>Visualiza únicamente las auxiliaturas que dictas (tipo 3).</p>
-                </div>
-                <div id="auxScheduleGrid" class="aux-schedule-grid"></div>
-            </div>
         </div>
     </section>
 

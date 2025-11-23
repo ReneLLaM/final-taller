@@ -9,6 +9,7 @@
 
 -- 0. ELIMINAR TODAS LAS TABLAS DE DATOS (NO toca usuarios ni roles)
 DROP TABLE IF EXISTS inscripciones CASCADE;
+DROP TABLE IF EXISTS auxiliar_materias CASCADE;
 DROP TABLE IF EXISTS clases_horarios CASCADE;
 DROP TABLE IF EXISTS clases CASCADE;
 DROP TABLE IF EXISTS materias CASCADE;
@@ -91,7 +92,18 @@ INSERT INTO carreras (nombre) VALUES
 ON CONFLICT (nombre) DO NOTHING;
 
 -- 1.3 AÑADIR COLUMNA carrera_id A USUARIOS (opcional, no borra datos)
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS carrera_id INT;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'usuarios'
+          AND column_name = 'carrera_id'
+    ) THEN
+        ALTER TABLE usuarios ADD COLUMN carrera_id INT;
+    END IF;
+END;
+$$;
 
 -- 1.4 INSERTAR AULAS OFICIALES
 INSERT INTO aulas (sigla, capacidad) VALUES
@@ -164,6 +176,20 @@ CREATE TABLE clases (
     FOREIGN KEY (id_materia) REFERENCES materias(id) ON DELETE CASCADE
 );
 
+-- 3.1 TABLA DE ASIGNACIÓN DE MATERIAS A AUXILIARES
+--    Relaciona usuarios con rol auxiliar con materias globales que dictan
+CREATE TABLE auxiliar_materias (
+    id SERIAL PRIMARY KEY,
+    auxiliar_id INT NOT NULL,
+    materia_global_id INT NOT NULL,
+    grupo VARCHAR(50) NOT NULL,
+    veces_por_semana INT NOT NULL DEFAULT 2,
+    horas_por_clase INT NOT NULL DEFAULT 2,
+    FOREIGN KEY (auxiliar_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (materia_global_id) REFERENCES materias_globales(id) ON DELETE CASCADE,
+    UNIQUE(auxiliar_id, materia_global_id, grupo)
+);
+
 -- 3.1 CREAR TABLA PARA HORARIOS IMPORTADOS DESDE EXCEL
 CREATE TABLE clases_horarios (
     id SERIAL PRIMARY KEY,
@@ -218,18 +244,90 @@ INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, 
 (6, 'MAT102', 'O.VELASCO', 'G8', 1, '16:00', '18:00', 1, 'C003'),
 (6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003'),
 -- Auxiliaturas que dicta el auxiliar (tipo 3)
-(2, 'MAT102', 'Rene Llanos', 'G3', 2, '09:00', '11:00', 3, 'C101'),
-(5, 'MAT103', 'Rene Llanos', 'G2', 3, '09:00', '11:00', 3, 'C101');
+-- Copiamos exactamente las auxiliaturas del estudiante (tipo 2) pero marcadas como tipo 3
+-- FIS200 G1: 1 vez por semana
+(2, 'FIS200', 'Rene Llanos', 'G1', 3, '09:00', '11:00', 3, 'C101'),
+-- MAT103 G1: 2 veces por semana
+(5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 3, 'E301'),
+(5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 3, 'E301');
 
--- 7. INSCRIBIR USUARIO 4
-INSERT INTO inscripciones (id_usuario, id_clase) VALUES
-(4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8),
-(4, 9), (4, 10), (4, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16),
-(4, 17), (4, 18);
+-- 6.1 Sincronizar materias_globales con las materias creadas para el usuario de prueba
+INSERT INTO materias_globales (nombre, sigla, color)
+SELECT DISTINCT nombre, sigla, color
+FROM materias
+ON CONFLICT (sigla) DO NOTHING;
+
+-- 7. INSCRIBIR AUTOMÁTICAMENTE A UN ESTUDIANTE Y A UN AUXILIAR (DATOS DE PRUEBA)
+--    - Estudiante: se inscribe a clases tipo 1 y 2 (materias + auxiliaturas que recibe)
+--    - Auxiliar: se inscribe a clases tipo 1 y 3 (materias + auxiliaturas que dicta)
+DO $$
+DECLARE
+    v_estudiante_id INT;
+    v_auxiliar_id INT;
+BEGIN
+    -- Intentar usar un estudiante específico por correo (si existe)
+    SELECT id INTO v_estudiante_id
+    FROM usuarios
+    WHERE LOWER(correo) = LOWER('reneco@gmail.com')
+    LIMIT 1;
+
+    -- Si no se encuentra por correo, tomar cualquier usuario con rol estudiante (rol_id = 1)
+    IF v_estudiante_id IS NULL THEN
+        SELECT id INTO v_estudiante_id
+        FROM usuarios
+        WHERE rol_id = 1
+        ORDER BY id
+        LIMIT 1;
+    END IF;
+
+    -- Buscar un auxiliar (rol_id = 2)
+    SELECT id INTO v_auxiliar_id
+    FROM usuarios
+    WHERE rol_id = 2
+    ORDER BY id
+    LIMIT 1;
+
+    -- Asignar al auxiliar en auxiliar_materias las mismas materias globales
+    -- que tienen clases marcadas como auxiliaturas (tipo_clase = 2).
+    -- La frecuencia (veces_por_semana) se calcula según cuántas clases tipo 2 hay
+    -- por materia/grupo (FIS200: 1, MAT103: 2).
+    IF v_auxiliar_id IS NOT NULL THEN
+        INSERT INTO auxiliar_materias (auxiliar_id, materia_global_id, grupo, veces_por_semana, horas_por_clase)
+        SELECT
+            v_auxiliar_id,
+            mg.id,
+            c.grupo,
+            COUNT(*) AS veces_por_semana,
+            2 AS horas_por_clase
+        FROM clases c
+        JOIN materias m ON c.id_materia = m.id
+        JOIN materias_globales mg ON mg.sigla = m.sigla
+        WHERE c.tipo_clase = 2
+        GROUP BY mg.id, c.grupo
+        ON CONFLICT (auxiliar_id, materia_global_id, grupo) DO NOTHING;
+    END IF;
+
+    -- Inscribir estudiante a todas las clases tipo 1 y 2
+    IF v_estudiante_id IS NOT NULL THEN
+        INSERT INTO inscripciones (id_usuario, id_clase)
+        SELECT v_estudiante_id, c.id
+        FROM clases c
+        WHERE c.tipo_clase IN (1, 2);
+    END IF;
+
+    -- Inscribir auxiliar a todas las clases tipo 1 y 3 (no a tipo 2)
+    IF v_auxiliar_id IS NOT NULL THEN
+        INSERT INTO inscripciones (id_usuario, id_clase)
+        SELECT v_auxiliar_id, c.id
+        FROM clases c
+        WHERE c.tipo_clase IN (1, 3);
+    END IF;
+END;
+$$;
 
 -- 8. VERIFICAR
 SELECT COUNT(*) as total_materias FROM materias;
 SELECT COUNT(*) as total_clases FROM clases;
-SELECT COUNT(*) as total_inscripciones FROM inscripciones WHERE id_usuario = 4;
+SELECT COUNT(*) as total_inscripciones FROM inscripciones;
 
 

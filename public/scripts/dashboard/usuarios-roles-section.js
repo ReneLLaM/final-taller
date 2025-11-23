@@ -15,6 +15,11 @@
     pageSize: 10,
     deletingId: null,
     currentUserId: null,
+    currentAuxiliarId: null,
+    currentAuxiliarNombre: '',
+    auxMaterias: [],
+    materiasGlobales: [],
+    auxMateriaDeleteId: null,
   };
 
   const els = {
@@ -39,6 +44,23 @@
     userFormTitle: document.getElementById('userFormTitle'),
     userFormMessage: document.getElementById('userFormMessage'),
     confirmDeleteMessage: document.getElementById('confirmDeleteUserMessage'),
+    // Modal gestionar materias de auxiliar
+    auxMateriasModal: document.getElementById('manageAuxMateriasModal'),
+    auxMateriasTitle: document.getElementById('manageAuxMateriasTitle'),
+    auxMateriasList: document.getElementById('manageAuxMateriasList'),
+    auxMateriasForm: document.getElementById('auxMateriaForm'),
+    auxMateriaSelect: document.getElementById('auxMateriaGlobalSelect'),
+    auxMateriaGrupo: document.getElementById('auxMateriaGrupo'),
+    auxMateriaVeces: document.getElementById('auxMateriaVeces'),
+    auxMateriaHoras: document.getElementById('auxMateriaHoras'),
+    auxMateriasMessage: document.getElementById('manageAuxMateriasMessage'),
+    auxMateriaModeLabel: document.getElementById('auxMateriaFormMode'),
+    auxMateriaCancelBtn: document.getElementById('auxMateriaCancelBtn'),
+    auxMateriaSubmitBtn: document.getElementById('auxMateriaSubmitBtn'),
+    confirmDeleteAuxMateriaModal: document.getElementById('confirmDeleteAuxMateriaModal'),
+    confirmDeleteAuxMateriaText: document.getElementById('confirmDeleteAuxMateriaText'),
+    confirmDeleteAuxMateriaMessage: document.getElementById('confirmDeleteAuxMateriaMessage'),
+    btnConfirmDeleteAuxMateria: document.getElementById('btnConfirmDeleteAuxMateria'),
   };
 
   // Mostrar/ocultar sección según la URL (SPA con dashboard.js)
@@ -67,6 +89,249 @@
     }
   }
 
+  // ====== Gestión de materias de auxiliares (admin) ======
+
+  async function fetchMateriasGlobales() {
+    try {
+      const res = await fetch('/api/materias-globales', { credentials: 'include' });
+      if (!res.ok) throw new Error('No se pudieron obtener materias globales');
+      const data = await res.json();
+      state.materiasGlobales = Array.isArray(data) ? data : (data.items || []);
+      const datalist = document.getElementById('auxMateriaGlobalList');
+      if (datalist) {
+        datalist.innerHTML = state.materiasGlobales.map(m => `
+          <option value="${escapeHtml((m.sigla || '') + ' - ' + (m.nombre || ''))}"></option>
+        `).join('');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function fetchAuxMaterias() {
+    if (!state.currentAuxiliarId) return;
+    try {
+      const res = await fetch(`/api/auxiliares/${state.currentAuxiliarId}/materias`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('No se pudieron obtener materias del auxiliar');
+      const data = await res.json();
+      state.auxMaterias = Array.isArray(data) ? data : [];
+      renderAuxMateriasList();
+    } catch (err) {
+      console.error(err);
+      showMessage(els.auxMateriasMessage, 'error', 'No se pudieron cargar las materias del auxiliar');
+    }
+  }
+
+  function renderAuxMateriasList() {
+    if (!els.auxMateriasList) return;
+
+    if (!state.auxMaterias.length) {
+      els.auxMateriasList.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; padding: 24px; color: var(--muted);">
+            Este auxiliar aún no tiene materias asignadas.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    els.auxMateriasList.innerHTML = state.auxMaterias.map(a => {
+      const mat = state.materiasGlobales.find(m => m.id === a.materia_global_id) || {};
+      const nombre = mat.nombre || a.materia_nombre || 'Materia';
+      const sigla = mat.sigla || a.sigla || '';
+      const totalHoras = (a.veces_por_semana || 0) * (a.horas_por_clase || 0);
+      return `
+        <tr data-asignacion-id="${a.id}">
+          <td><strong>${escapeHtml(sigla)}</strong></td>
+          <td>${escapeHtml(nombre)}</td>
+          <td>${escapeHtml(a.grupo || '—')}</td>
+          <td>${a.veces_por_semana}×/sem · ${a.horas_por_clase}h/clase (${totalHoras}h/sem)</td>
+          <td class="actions">
+            <button class="btn btn-primary" data-aux-edit="${a.id}">Editar</button>
+            <button class="btn btn-danger" data-aux-delete="${a.id}">Quitar</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function resetAuxMateriaForm() {
+    if (!els.auxMateriasForm) return;
+    els.auxMateriasForm.dataset.editId = '';
+    if (els.auxMateriaSelect) els.auxMateriaSelect.value = '';
+    if (els.auxMateriaGrupo) els.auxMateriaGrupo.value = '';
+    if (els.auxMateriaVeces) els.auxMateriaVeces.value = '2';
+    if (els.auxMateriaHoras) els.auxMateriaHoras.value = '2';
+    clearMessage(els.auxMateriasMessage);
+    if (els.auxMateriaModeLabel) {
+      els.auxMateriaModeLabel.textContent = 'Añadiendo nueva materia para el auxiliar';
+    }
+    if (els.auxMateriaCancelBtn) {
+      els.auxMateriaCancelBtn.style.display = 'none';
+    }
+  }
+
+  function openAuxMateriasModal() {
+    if (!els.auxMateriasModal) return;
+    resetAuxMateriaForm();
+    if (els.auxMateriasTitle) {
+      els.auxMateriasTitle.textContent = state.currentAuxiliarNombre
+        ? `Gestionar materias de ${state.currentAuxiliarNombre}`
+        : 'Gestionar materias del auxiliar';
+    }
+    openModal(els.auxMateriasModal);
+    fetchMateriasGlobales().then(fetchAuxMaterias).catch(console.error);
+  }
+
+  if (els.auxMateriasForm) {
+    els.auxMateriasForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessage(els.auxMateriasMessage);
+      if (!state.currentAuxiliarId) return;
+
+      const materiaLabel = els.auxMateriaSelect ? els.auxMateriaSelect.value.trim() : '';
+      const grupo = els.auxMateriaGrupo ? els.auxMateriaGrupo.value.trim() : '';
+      const veces = els.auxMateriaVeces ? parseInt(els.auxMateriaVeces.value, 10) : 2;
+      const horas = els.auxMateriaHoras ? parseInt(els.auxMateriaHoras.value, 10) : 2;
+
+      let materia = null;
+      if (materiaLabel && state.materiasGlobales && state.materiasGlobales.length) {
+        const normalized = materiaLabel.toLowerCase();
+        materia = state.materiasGlobales.find(m => {
+          const sigla = (m.sigla || '').toLowerCase();
+          const nombre = (m.nombre || '').toLowerCase();
+          const combined = (sigla ? sigla + ' - ' : '') + nombre;
+          return normalized === combined || normalized === sigla || normalized === nombre;
+        }) || null;
+      }
+
+      const materiaId = materia ? materia.id : null;
+
+      if (!materiaId || !grupo) {
+        showMessage(els.auxMateriasMessage, 'error', 'Materia y grupo son obligatorios');
+        return;
+      }
+
+      const editId = els.auxMateriasForm.dataset.editId;
+      const isEdit = !!editId;
+
+      try {
+        const url = isEdit
+          ? `/api/auxiliares/${state.currentAuxiliarId}/materias/${editId}`
+          : `/api/auxiliares/${state.currentAuxiliarId}/materias`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            materia_global_id: materiaId,
+            grupo,
+            veces_por_semana: veces,
+            horas_por_clase: horas,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showMessage(els.auxMateriasMessage, 'error', data.message || 'Error al guardar la asignación');
+          return;
+        }
+        showMessage(els.auxMateriasMessage, 'success', `Asignación ${isEdit ? 'actualizada' : 'creada'} correctamente`);
+        await fetchAuxMaterias();
+        resetAuxMateriaForm();
+      } catch (err) {
+        console.error(err);
+        showMessage(els.auxMateriasMessage, 'error', 'Error de conexión al guardar');
+      }
+    });
+  }
+
+  if (els.auxMateriaCancelBtn && els.auxMateriasForm) {
+    els.auxMateriaCancelBtn.addEventListener('click', () => {
+      resetAuxMateriaForm();
+    });
+  }
+
+  if (els.auxMateriasList) {
+    els.auxMateriasList.addEventListener('click', async (e) => {
+      const btnEdit = e.target.closest('[data-aux-edit]');
+      const btnDelete = e.target.closest('[data-aux-delete]');
+      if (btnEdit) {
+        const id = parseInt(btnEdit.dataset.auxEdit, 10);
+        const asign = state.auxMaterias.find(a => a.id === id);
+        if (!asign) return;
+        if (els.auxMateriasForm) els.auxMateriasForm.dataset.editId = String(id);
+        if (els.auxMateriaSelect) {
+          const mat = state.materiasGlobales.find(m => m.id === asign.materia_global_id);
+          let label = '';
+          if (mat) {
+            const sigla = mat.sigla || '';
+            const nombre = mat.nombre || '';
+            label = (sigla ? sigla + ' - ' : '') + nombre;
+          } else {
+            const sigla = asign.sigla || '';
+            const nombre = asign.materia_nombre || '';
+            label = (sigla ? sigla + ' - ' : '') + nombre;
+          }
+          els.auxMateriaSelect.value = label;
+        }
+        if (els.auxMateriaGrupo) els.auxMateriaGrupo.value = asign.grupo || '';
+        if (els.auxMateriaVeces) els.auxMateriaVeces.value = String(asign.veces_por_semana || 2);
+        if (els.auxMateriaHoras) els.auxMateriaHoras.value = String(asign.horas_por_clase || 2);
+        clearMessage(els.auxMateriasMessage);
+        if (els.auxMateriaModeLabel) {
+          els.auxMateriaModeLabel.textContent = 'Editando materia asignada al auxiliar';
+        }
+        if (els.auxMateriaCancelBtn) {
+          els.auxMateriaCancelBtn.style.display = '';
+        }
+      }
+      if (btnDelete) {
+        const id = parseInt(btnDelete.dataset.auxDelete, 10);
+        if (!state.currentAuxiliarId || !id) return;
+        state.auxMateriaDeleteId = id;
+        clearMessage(els.auxMateriasMessage);
+        if (els.confirmDeleteAuxMateriaText) {
+          const asign = state.auxMaterias.find(a => a.id === id);
+          const matNombre = asign ? (asign.materia_nombre || asign.sigla || 'esta materia') : 'esta materia';
+          const grupo = asign && asign.grupo ? ` (Grupo ${asign.grupo})` : '';
+          els.confirmDeleteAuxMateriaText.textContent = `¿Deseas quitar ${matNombre}${grupo} de este auxiliar?`;
+        }
+        clearMessage(els.confirmDeleteAuxMateriaMessage);
+        openModal(els.confirmDeleteAuxMateriaModal);
+      }
+    });
+  }
+
+  if (els.btnConfirmDeleteAuxMateria) {
+    els.btnConfirmDeleteAuxMateria.addEventListener('click', async () => {
+      if (!state.currentAuxiliarId || !state.auxMateriaDeleteId) return;
+      clearMessage(els.confirmDeleteAuxMateriaMessage);
+      try {
+        const res = await fetch(`/api/auxiliares/${state.currentAuxiliarId}/materias/${state.auxMateriaDeleteId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showMessage(els.confirmDeleteAuxMateriaMessage, 'error', data.message || 'No se pudo eliminar la asignación');
+          return;
+        }
+        showMessage(els.auxMateriasMessage, 'success', 'Asignación eliminada');
+        state.auxMateriaDeleteId = null;
+        closeModal(els.confirmDeleteAuxMateriaModal);
+        await fetchAuxMaterias();
+      } catch (err) {
+        console.error(err);
+        showMessage(els.confirmDeleteAuxMateriaMessage, 'error', 'Error de conexión al eliminar');
+      }
+    });
+  }
+
   // Utilidades de modal
   function openModal(modal) {
     if (!modal) return;
@@ -86,6 +351,8 @@
   }
   wireClose(els.modalForm);
   wireClose(els.modalDelete);
+  wireClose(els.auxMateriasModal);
+   wireClose(els.confirmDeleteAuxMateriaModal);
 
   // Cargar usuarios
   async function fetchUsers() {
@@ -153,6 +420,7 @@
           <td class="actions">
             <button class="btn btn-primary" data-edit="${u.id}">Editar</button>
             <button class="btn btn-danger" data-delete="${u.id}">Eliminar</button>
+            ${u.rol === 'assistant' ? `<button class="btn btn-secondary" data-manage-materias="${u.id}">Gestionar materias</button>` : ''}
           </td>
         </tr>
       `).join('');
@@ -262,6 +530,7 @@
     els.tbody.addEventListener('click', (e) => {
       const btnEdit = e.target.closest('[data-edit]');
       const btnDelete = e.target.closest('[data-delete]');
+      const btnManage = e.target.closest('[data-manage-materias]');
       if (btnEdit) {
         const id = parseInt(btnEdit.dataset.edit, 10);
         // Buscar en todos los usuarios, no solo en los filtrados
@@ -290,6 +559,14 @@
         state.deletingId = parseInt(btnDelete.dataset.delete, 10);
         clearMessage(els.confirmDeleteMessage);
         openModal(els.modalDelete);
+      }
+      if (btnManage) {
+        const id = parseInt(btnManage.dataset.manageMaterias, 10);
+        const rawUser = state.users.find(u => u.id === id) || state.filtered.find(u => u.id === id);
+        const user = rawUser ? mapUserFromApi(rawUser) : null;
+        state.currentAuxiliarId = id;
+        state.currentAuxiliarNombre = user ? (user.nombre || '') : '';
+        openAuxMateriasModal();
       }
     });
   }

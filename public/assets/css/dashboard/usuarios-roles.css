@@ -315,6 +315,11 @@
   align-items: center;
 }
 
+.modal-aux-materias .actions .btn {
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
 /* Items de carreras en modal admin */
 .carrera-item {
   display: flex;

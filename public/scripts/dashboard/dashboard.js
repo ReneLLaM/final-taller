@@ -245,6 +245,18 @@ let seccionActual = new URLSearchParams(window.location.search).get('section');
 let scheduleCellsInitialized = false;
 let modoEdicionHorario = false;
 
+function syncDashboardLayoutWithSection(sectionParam) {
+    const container = document.querySelector('.dashboard-container');
+    if (!container) return;
+    const section = sectionParam ?? seccionActual ?? new URLSearchParams(window.location.search).get('section');
+    // En el panel de auxiliar queremos menos espacio arriba del horario
+    if (section === 'panel-auxiliar') {
+        container.style.paddingTop = '40px';
+    } else {
+        container.style.paddingTop = '';
+    }
+}
+
 function puedeGestionarHorario(sectionParam) {
     const section = sectionParam ?? seccionActual;
     if (!rolUsuarioActual) return false;
@@ -293,6 +305,9 @@ async function cargarMiHorario() {
         seccionActual = section;
         
         console.log('Sección actual:', section || 'inicio (sin parámetro)');
+
+        // Ajustar layout del contenedor del horario según la sección
+        syncDashboardLayoutWithSection(section);
         
         // Establecer el filtro según la sección
         if (section === 'horario') {
@@ -300,8 +315,13 @@ async function cargarMiHorario() {
             filtroTipoClase = 1;
             console.log('Filtro activado: SOLO CLASES NORMALES (tipo_clase = 1)');
         } else if (section === 'auxiliaturas') {
-            filtroTipoClase = 2; // Solo auxiliaturas
+            // Vista "Mis auxiliaturas" (como estudiante): solo tipo 2
+            filtroTipoClase = 2;
             console.log('Filtro activado: SOLO AUXILIATURAS (tipo_clase = 2)');
+        } else if (section === 'panel-auxiliar') {
+            // Panel de auxiliar: solo las auxiliaturas que dicta (tipo 3)
+            filtroTipoClase = 3;
+            console.log('Filtro activado: SOLO AUXILIATURAS DICTADAS (tipo_clase = 3)');
         } else {
             filtroTipoClase = null; // Todas las clases
             console.log('Filtro: TODAS LAS CLASES');
@@ -524,10 +544,16 @@ function inicializarToggleEdicionHorario() {
 // Función para crear la tarjeta de clase
 function crearClaseCard(clase, altura, offset, conflictosIds) {
     const card = document.createElement('div');
-    card.className = `clase-card ${clase.tipo_clase === 1 ? 'normal' : 'auxiliatura'}`;
-    
-    // Establecer el color del borde
-    card.style.borderColor = clase.color || '#2196F3';
+    let tipoClaseClass = 'normal';
+    if (clase.tipo_clase === 2) tipoClaseClass = 'auxiliatura';
+    if (clase.tipo_clase === 3) tipoClaseClass = 'auxiliatura-dictada';
+
+    card.className = `clase-card ${tipoClaseClass}`;
+
+    // Establecer el color del borde y propagarlo a la tarjeta
+    const colorMateria = clase.color || '#2196F3';
+    card.style.borderColor = colorMateria;
+    card.style.setProperty('--clase-color', colorMateria);
     
     // Establecer altura y posición (una altura por bloque horario)
     const alturaFinal = Math.max(altura, SLOT_HEIGHT);
