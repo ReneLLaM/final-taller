@@ -262,6 +262,25 @@
         </div>
     </div>
 
+    <!-- Modal confirmar desinscripción de auxiliatura (estudiante/auxiliar) -->
+    <div class="modal modal-confirm" id="confirmQuitAuxiliaturaModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2>Quitarme de la auxiliatura</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="confirmQuitAuxText">¿Deseas quitarte de esta auxiliatura?</p>
+                <div id="confirmQuitAuxMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnConfirmQuitAux">Quitarme</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección: Usuarios y Roles (Admin) -->
     <section id="adminUsersRolesSection" class="admin-users-roles-section" hidden>
         <div class="users-panel">
@@ -463,6 +482,46 @@
                 <p>Visualiza únicamente las auxiliaturas que dictas</p>
             </div>
             <div id="auxMateriasGrid" class="aux-materias-grid"></div>
+        </div>
+    </section>
+
+    <!-- Sección: Votación / Inscripción (estudiante y auxiliar) -->
+    <section id="votacionSection" class="votacion-section" hidden>
+        <div class="votacion-card">
+            <p class="votacion-subtitle">
+                Ingresa el código de matriculación para inscribirte a una auxiliatura. Debajo podrás ver y gestionar las auxiliaturas en las que ya estás inscrito.
+            </p>
+            <div class="aux-matricula-card compact">
+                <div class="aux-matricula-field">
+                    <input id="votacionCodigoInput" type="text" class="aux-matricula-code-input" placeholder="1234">
+                </div>
+                <button type="button" id="votacionInscribirmeBtn" class="aux-matricula-black-btn">
+                    Matricularme
+                </button>
+                <div id="votacionMessage" class="message" style="display:none;"></div>
+            </div>
+
+            <div id="votacionMisAuxiliaturas" class="votacion-mis-auxiliaturas">
+                <h3 class="votacion-mis-title">Mis auxiliaturas matriculadas</h3>
+                <p class="votacion-mis-subtitle">
+                    Aquí verás todas las auxiliaturas en las que estás matriculado. Puedes quitarte de cualquiera cuando lo necesites.
+                </p>
+                <div id="votacionMisAuxiliaturasEmpty" class="votacion-mis-empty" style="display:none;"></div>
+                <div class="users-table-wrapper">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Materia</th>
+                                <th>Grupo</th>
+                                <th>Auxiliar</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="votacionMisAuxiliaturasBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -1174,6 +1233,7 @@
     <script src="../../scripts/dashboard/panel-auxiliar-section.js"></script>
     <script src="../../scripts/dashboard/admin-horarios-section.js"></script>
     <script src="../../scripts/dashboard/upload-horario-section.js"></script>
+    <script src="../../scripts/dashboard/votacion-section.js"></script>
 </body>
 </html>
 

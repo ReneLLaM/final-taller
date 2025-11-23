@@ -1,7 +1,5 @@
 (() => {
   const els = {
-    section: document.getElementById('panelAuxiliarSection'),
-    materiasGrid: document.getElementById('auxMateriasGrid'),
     detalleSection: document.getElementById('auxMatDetalleSection'),
     detalleTitulo: document.getElementById('auxMatMateriaTitulo'),
     detalleSubtitulo: document.getElementById('auxMatMateriaSubtitulo'),
@@ -15,23 +13,18 @@
   };
 
   const state = {
-    materiasAsignadas: [],
-    cargado: false,
-    selectedMateriaId: null,
+    auxMateriaId: null,
     cargandoDetalle: false,
   };
 
-  async function fetchMateriasAsignadas() {
-    try {
-      const res = await fetch('/api/mis-auxiliar-materias', { credentials: 'include' });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    } catch (err) {
-      console.error('Error al cargar materias asignadas al auxiliar:', err);
-      return [];
-    }
-  }
+  const confirmEls = {
+    modal: document.getElementById('confirmRemoveAuxStudentModal'),
+    text: document.getElementById('confirmRemoveAuxStudentText'),
+    message: document.getElementById('confirmRemoveAuxStudentMessage'),
+    confirmBtn: document.getElementById('btnConfirmRemoveAuxStudent'),
+  };
+
+  let estudiantePendienteEliminar = null;
 
   function setDetalleMessage(type, text) {
     const el = els.detalleMessage;
@@ -43,15 +36,6 @@
     el.textContent = text;
     el.className = `message ${type}`;
     el.style.display = 'block';
-  }
-
-  function marcarCardSeleccionada(auxMateriaId) {
-    if (!els.materiasGrid) return;
-    els.materiasGrid.querySelectorAll('.aux-materia-card').forEach(card => {
-      const idStr = card.getAttribute('data-aux-materia-id');
-      const id = idStr ? parseInt(idStr, 10) : null;
-      card.classList.toggle('is-selected', id === auxMateriaId);
-    });
   }
 
   function renderDetalleInscritos(estudiantes) {
@@ -86,15 +70,40 @@
     }).join('');
   }
 
-  async function cargarDetalleMateria(auxMateriaId) {
-    if (!auxMateriaId) return;
+  function setBreadcrumbMateria(auxMat) {
+    const pathEl = document.getElementById('breadcrumb-path');
+    if (!pathEl) return;
+
+    const baseHref = 'principal.html?section=panel-auxiliar';
+    const nombre = auxMat.materia_nombre || 'Auxiliatura';
+    const sigla = auxMat.sigla || '';
+    const tituloMateria = sigla ? `${sigla} · ${nombre}` : nombre;
+
+    pathEl.innerHTML = '';
+
+    const link = document.createElement('a');
+    link.href = baseHref;
+    link.textContent = 'Panel auxiliar';
+    link.className = 'breadcrumb-link';
+    pathEl.appendChild(link);
+
+    pathEl.appendChild(document.createTextNode(' / '));
+
+    const span = document.createElement('span');
+    span.textContent = tituloMateria;
+    span.className = 'breadcrumb-current';
+    pathEl.appendChild(span);
+  }
+
+  async function cargarDetalleMateria() {
+    if (!state.auxMateriaId) return;
     if (!els.detalleSection) return;
 
     try {
       state.cargandoDetalle = true;
       setDetalleMessage('info', 'Cargando información de la auxiliatura...');
 
-      const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/matriculacion`, {
+      const res = await fetch(`/api/auxiliar-materias/${state.auxMateriaId}/matriculacion`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -106,6 +115,7 @@
 
       const auxMat = data.auxiliarMateria || {};
       const matriculacion = data.matriculacion || null;
+
       if (els.detalleTitulo) {
         const base = auxMat.materia_nombre || 'Auxiliatura';
         const sigla = auxMat.sigla || '';
@@ -116,6 +126,8 @@
           els.detalleSubtitulo.textContent = grupo || '';
         }
       }
+
+      setBreadcrumbMateria(auxMat);
 
       if (els.detalleCodigoInput) {
         els.detalleCodigoInput.value = matriculacion?.codigo || '';
@@ -148,7 +160,7 @@
   }
 
   async function manejarGenerarCodigo() {
-    const id = state.selectedMateriaId;
+    const id = state.auxMateriaId;
     if (!id || !els.detalleGenerarBtn) return;
 
     let codigo = els.detalleCodigoInput ? els.detalleCodigoInput.value.trim() : '';
@@ -184,12 +196,12 @@
       setDetalleMessage('error', 'Error de conexión al generar el código');
     } finally {
       state.cargandoDetalle = false;
-      els.detalleGenerarBtn.disabled = false;
+      if (els.detalleGenerarBtn) els.detalleGenerarBtn.disabled = false;
     }
   }
 
   async function manejarCerrarMatriculacion() {
-    const auxMateriaId = state.selectedMateriaId;
+    const auxMateriaId = state.auxMateriaId;
     if (!auxMateriaId || !els.detalleCerrarMatriculacionBtn) return;
 
     try {
@@ -222,8 +234,8 @@
   }
 
   async function manejarEliminarInscrito(estudianteId) {
-    const auxMateriaId = state.selectedMateriaId;
-    if (!auxMateriaId || !estudianteId) return;
+    const auxMateriaId = state.auxMateriaId;
+    if (!auxMateriaId || !estudianteId) return false;
 
     try {
       setDetalleMessage('info', 'Eliminando estudiante...');
@@ -234,151 +246,141 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setDetalleMessage('error', data.message || 'No se pudo eliminar al estudiante');
-        return;
+        return false;
       }
-      await cargarDetalleMateria(auxMateriaId);
+      await cargarDetalleMateria();
       setDetalleMessage('success', 'Estudiante eliminado de la lista de inscritos');
+      return true;
     } catch (err) {
       console.error('Error al eliminar estudiante:', err);
       setDetalleMessage('error', 'Error de conexión al eliminar al estudiante');
+      return false;
     }
   }
 
-  function manejarCerrarDetalle() {
-    state.selectedMateriaId = null;
-    if (els.detalleSection) {
-      els.detalleSection.hidden = true;
-    }
-    setDetalleMessage('', '');
-    if (els.detalleInscritosBody) {
-      els.detalleInscritosBody.innerHTML = '';
-    }
-    if (els.detalleCodigoInput) {
-      els.detalleCodigoInput.value = '';
-    }
-  }
-
-  function abrirAdministrarMateria(auxMateriaId) {
-    if (!auxMateriaId) return;
-
-    // Recordar la última materia seleccionada para resaltar su tarjeta
-    state.selectedMateriaId = auxMateriaId;
+  async function loadUserInfoBreadcrumbRight() {
     try {
-      if (window.sessionStorage) {
-        window.sessionStorage.setItem('panelAuxiliar:lastMateriaId', String(auxMateriaId));
-      }
-    } catch (e) {
-      console.warn('No se pudo guardar la última materia seleccionada en sessionStorage:', e);
-    }
-
-    // Navegar a la nueva página independiente de administración de matriculación
-    const url = `/pages/dashboard/aux-matricula.html?auxMateriaId=${auxMateriaId}`;
-    window.location.href = url;
-  }
-
-  function renderMateriasGrid(materias) {
-    if (!els.materiasGrid) return;
-
-    if (!materias.length) {
-      els.materiasGrid.innerHTML = `
-        <div class="aux-materia-card">
-          <div class="aux-materia-header">
-            <h3 class="aux-materia-title">Sin materias asignadas</h3>
-          </div>
-          <div class="aux-materia-grupo-row">
-            <span class="aux-materia-grupo-label">El administrador aún no te asignó materias.</span>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    const cardsHtml = materias.map(a => {
-      const totalHoras = (a.veces_por_semana || 0) * (a.horas_por_clase || 0);
-      const nombre = a.materia_nombre || 'Materia';
-      const sigla = a.sigla || '';
-      const grupo = a.grupo || '—';
-
-      return `
-        <div class="aux-materia-card" data-aux-materia-id="${a.id}">
-          <div class="aux-materia-header">
-            <h3 class="aux-materia-title">${nombre}</h3>
-            <span class="aux-materia-sigla">${sigla || '&mdash;'}</span>
-          </div>
-          <div class="aux-materia-grupo-row">
-            <span class="aux-materia-grupo-label">Grupo:</span>
-            <span class="aux-materia-grupo-value">${grupo}</span>
-          </div>
-          <div class="aux-materia-carga">
-            ${a.veces_por_semana}×/sem · ${a.horas_por_clase}h/clase (${totalHoras}h/sem)
-          </div>
-          <button type="button" class="btn aux-materia-btn" data-aux-materia-id="${a.id}">
-            Administrar materia
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    els.materiasGrid.innerHTML = cardsHtml;
-
-    marcarCardSeleccionada(state.selectedMateriaId);
-
-    // Botones "Administrar" abren el panel de detalle dentro del mismo módulo
-    els.materiasGrid.querySelectorAll('.aux-materia-btn[data-aux-materia-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idStr = btn.getAttribute('data-aux-materia-id');
-        const id = parseInt(idStr, 10);
-        if (!id || Number.isNaN(id)) return;
-        abrirAdministrarMateria(id);
+      const res = await fetch('/api/protected', {
+        method: 'GET',
+        credentials: 'include',
       });
-    });
-  }
+      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      if (!data.user) return;
 
-  async function cargarPanelAuxiliar() {
-    const materias = await fetchMateriasAsignadas();
-    state.materiasAsignadas = materias;
-    state.cargado = true;
+      const roleEl = document.getElementById('breadcrumb-role');
+      if (!roleEl) return;
 
-    renderMateriasGrid(materias);
-
-    // Resaltar la última materia administrada (si existe en sessionStorage)
-    try {
-      const lastIdStr = window.sessionStorage ? window.sessionStorage.getItem('panelAuxiliar:lastMateriaId') : null;
-      const lastId = lastIdStr ? parseInt(lastIdStr, 10) : null;
-      if (lastId && !Number.isNaN(lastId)) {
-        state.selectedMateriaId = lastId;
-        marcarCardSeleccionada(lastId);
+      let rolNombre = 'Usuario';
+      switch (data.user.rol_id) {
+        case 1: rolNombre = 'Estudiante'; break;
+        case 2: rolNombre = 'Auxiliar'; break;
+        case 3: rolNombre = 'Administrador'; break;
       }
-    } catch (e) {
-      console.warn('No se pudo restaurar la última materia seleccionada desde sessionStorage:', e);
-    }
-  }
 
-  function syncVisibilityWithSection() {
-    const params = new URLSearchParams(window.location.search);
-    const section = params.get('section');
-    const show = section === 'panel-auxiliar';
-
-    if (els.section) els.section.hidden = !show;
-
-    if (show && !state.cargado) {
-      cargarPanelAuxiliar().catch(err => console.error('Error en panel auxiliar:', err));
+      roleEl.innerHTML = `<span class="role-text">${rolNombre}:</span> <span class="name-text">${data.user.nombre_completo}</span>`;
+    } catch (err) {
+      console.error('Error al cargar información de usuario en aux-matricula-page:', err);
     }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    if (!els.section) return;
+    const params = new URLSearchParams(window.location.search);
+    const idStr = params.get('auxMateriaId');
+    const id = idStr ? parseInt(idStr, 10) : NaN;
 
-    syncVisibilityWithSection();
+    if (!id || Number.isNaN(id)) {
+      setDetalleMessage('error', 'No se indicó una auxiliatura válida. Vuelve al Panel auxiliar.');
+      if (els.detalleSection) els.detalleSection.hidden = true;
+    } else {
+      state.auxMateriaId = id;
+      cargarDetalleMateria().catch(err => console.error('Error al cargar detalle de auxiliatura:', err));
+    }
+
+    if (els.detalleGenerarBtn) {
+      els.detalleGenerarBtn.addEventListener('click', () => {
+        manejarGenerarCodigo();
+      });
+    }
+
+    if (els.detalleCerrarMatriculacionBtn) {
+      els.detalleCerrarMatriculacionBtn.addEventListener('click', () => {
+        manejarCerrarMatriculacion();
+      });
+    }
+
+    if (els.detalleIniciarVotacionBtn) {
+      els.detalleIniciarVotacionBtn.disabled = true;
+    }
+
+    if (els.detalleInscritosBody) {
+      els.detalleInscritosBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-aux-mat-remove]');
+        if (!btn) return;
+        const id = parseInt(btn.getAttribute('data-aux-mat-remove'), 10);
+        if (!id || Number.isNaN(id)) return;
+
+        estudiantePendienteEliminar = id;
+
+        // Construir texto descriptivo con el nombre del estudiante
+        let nombre = '';
+        const row = btn.closest('tr');
+        if (row) {
+          const cells = row.querySelectorAll('td');
+          if (cells[1]) nombre = cells[1].textContent.trim();
+        }
+
+        if (confirmEls.text) {
+          const base = nombre || 'este estudiante';
+          confirmEls.text.textContent = `¿Deseas quitar a ${base} de esta auxiliatura?`;
+        }
+
+        if (confirmEls.message) {
+          confirmEls.message.style.display = 'none';
+          confirmEls.message.textContent = '';
+        }
+
+        if (confirmEls.modal) {
+          confirmEls.modal.classList.add('show');
+          confirmEls.modal.setAttribute('aria-hidden', 'false');
+        }
+      });
+    }
+
+    if (confirmEls.confirmBtn && confirmEls.modal) {
+      confirmEls.confirmBtn.addEventListener('click', async () => {
+        if (!estudiantePendienteEliminar) return;
+        const ok = await manejarEliminarInscrito(estudiantePendienteEliminar);
+        if (ok) {
+          estudiantePendienteEliminar = null;
+          confirmEls.modal.classList.remove('show');
+          confirmEls.modal.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    if (confirmEls.modal) {
+      confirmEls.modal.addEventListener('click', (e) => {
+        if (e.target.matches('[data-close-modal]')) {
+          confirmEls.modal.classList.remove('show');
+          confirmEls.modal.setAttribute('aria-hidden', 'true');
+          estudiantePendienteEliminar = null;
+          if (confirmEls.message) {
+            confirmEls.message.style.display = 'none';
+            confirmEls.message.textContent = '';
+          }
+        }
+      });
+    }
+
+    loadUserInfoBreadcrumbRight().catch(() => {});
+
+    // Fallback de navegación para el header en esta página independiente
+    if (typeof window.navigateToSection !== 'function') {
+      window.navigateToSection = function (section) {
+        const href = section ? `/pages/dashboard/principal.html?section=${section}` : '/pages/dashboard/principal.html';
+        window.location.href = href;
+      };
+    }
   });
-
-  window.addEventListener('popstate', syncVisibilityWithSection);
-
-  const originalNavigate = window.navigateToSection;
-  if (typeof originalNavigate === 'function') {
-    window.navigateToSection = function (section) {
-      originalNavigate(section);
-      setTimeout(syncVisibilityWithSection, 80);
-    };
-  }
 })();

@@ -7,7 +7,9 @@
 --  - En psql: puedes descomentar la siguiente línea para cambiar de base de datos.
 -- \c taller_db;
 
--- 0. ELIMINAR TODAS LAS TABLAS DE DATOS (NO toca usuarios ni roles)
+--- 0. ELIMINAR TODAS LAS TABLAS DE DATOS (NO toca usuarios ni roles)
+DROP TABLE IF EXISTS auxiliar_matricula_estudiantes CASCADE;
+DROP TABLE IF EXISTS auxiliar_matriculaciones CASCADE;
 DROP TABLE IF EXISTS inscripciones CASCADE;
 DROP TABLE IF EXISTS auxiliar_materias CASCADE;
 DROP TABLE IF EXISTS clases_horarios CASCADE;
@@ -188,6 +190,26 @@ CREATE TABLE auxiliar_materias (
     FOREIGN KEY (auxiliar_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (materia_global_id) REFERENCES materias_globales(id) ON DELETE CASCADE,
     UNIQUE(auxiliar_id, materia_global_id, grupo)
+);
+
+-- 3.2 TABLAS PARA MATRÍCULA A AUXILIATURAS (por código)
+CREATE TABLE auxiliar_matriculaciones (
+    id SERIAL PRIMARY KEY,
+    auxiliar_materia_id INT NOT NULL UNIQUE,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (auxiliar_materia_id) REFERENCES auxiliar_materias(id) ON DELETE CASCADE
+);
+
+CREATE TABLE auxiliar_matricula_estudiantes (
+    id SERIAL PRIMARY KEY,
+    matriculacion_id INT NOT NULL,
+    estudiante_id INT NOT NULL,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (matriculacion_id) REFERENCES auxiliar_matriculaciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (estudiante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    UNIQUE(matriculacion_id, estudiante_id)
 );
 
 -- 3.1 CREAR TABLA PARA HORARIOS IMPORTADOS DESDE EXCEL

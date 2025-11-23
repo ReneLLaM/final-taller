@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Auxiliatura</title>
+    <link rel="stylesheet" href="../../assets/css/dashboard/principal.css">
+    <link rel="stylesheet" href="../../assets/css/dashboard/usuarios-roles.css">
+</head>
+<body>
+    <div id="header-container"></div>
+    <div class="breadcrumb-bar">
+        <div class="breadcrumb-inner with-border">
+            <div class="breadcrumb-path" id="breadcrumb-path">/Votación/Inscripción</div>
+            <div class="breadcrumb-role" id="breadcrumb-role"></div>
+        </div>
+    </div>
+
+    <main class="aux-matricula-page">
+        <section class="aux-matricula-section">
+            <div class="aux-matricula-header">
+                <h1 class="aux-matricula-title" id="auxMatMateriaTitulo">Auxiliatura</h1>
+                <p class="aux-matricula-subtitle" id="auxMatMateriaSubtitulo"></p>
+            </div>
+
+            <div class="aux-matricula-card">
+                <div class="aux-matricula-field">
+                    <input id="auxMatCodigoInput" type="text" class="aux-matricula-code-input" placeholder="Ej: 1234">
+                </div>
+                <button type="button" id="auxMatGenerarBtn" class="aux-matricula-black-btn">
+                    Generar Código de matriculación
+                </button>
+                <div class="aux-matricula-actions-row">
+                    <button type="button" id="auxMatCancelarBtn" class="btn btn-secondary">Cancelar</button>
+                    <button type="button" id="auxMatIniciarVotacionBtn" class="btn btn-primary" disabled>Iniciar Votación</button>
+                </div>
+                <div id="auxMatMessage" class="message" style="display:none;"></div>
+            </div>
+
+            <div class="aux-matricula-inscritos">
+                <h2 class="aux-matricula-inscritos-title">Estudiantes inscritos</h2>
+                <div id="auxMatNoInscritos" class="aux-matricula-empty" style="display:none;"></div>
+                <div class="users-table-wrapper">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Nombre</th>
+                                <th>CU</th>
+                                <th>Carrera</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auxMatInscritosBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../scripts/shared/load-header.js"></script>
+    <script src="../../scripts/dashboard/aux-materia-admin.js"></script>
+</body>
+</html>

@@ -73,6 +73,19 @@
 
 .breadcrumb-path { font-size: 18px; color: #71717A; }
 .breadcrumb-role { font-size: 18px; }
+.breadcrumb-link {
+    color: #0B0B1A;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-current {
+    color: #71717A;
+}
 .breadcrumb-role .role-text { color: #1E1E1E; font-weight: 600; }
 .breadcrumb-role .name-text { color: #71717A; }
 
@@ -145,6 +158,135 @@ body.rol-admin .horario-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 18px;
+}
+
+/* Página de administración de matriculación del auxiliar (aux-materia.html) */
+.aux-matricula-page {
+    margin: 0 140px;
+    padding: 140px 0 24px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.aux-matricula-section {
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1px solid #E8EAEF;
+    padding: 24px 24px 28px;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.aux-matricula-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.aux-matricula-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.aux-matricula-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.aux-matricula-card {
+    border-radius: 16px;
+    border: 1px solid #E8EAEF;
+    background: #FAFBFC;
+    padding: 18px 18px 14px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.aux-materia-card.is-selected {
+    border-color: #4C1D95;
+    box-shadow: 0 0 0 3px rgba(76, 29, 149, 0.35);
+    transform: translateY(-1px);
+}
+
+.aux-matricula-card.compact {
+    max-width: 360px;
+}
+
+.aux-matricula-field {
+    width: 100%;
+}
+
+.aux-matricula-code-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #E8EAEF;
+    background: #FAFBFC;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.aux-matricula-code-input:focus {
+    border-color: #006FEE;
+    box-shadow: 0 0 0 3px rgba(0, 111, 238, 0.1);
+    background: #FFFFFF;
+}
+
+.aux-matricula-black-btn {
+    border: none;
+    background: #0B0B1A;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(11, 11, 26, 0.35);
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.aux-matricula-black-btn:hover {
+    background: #1a1a2e;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(11, 11, 26, 0.5);
+}
+
+.aux-matricula-actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.aux-matricula-inscritos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.aux-matricula-inscritos-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.aux-matricula-empty {
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.aux-matricula-section .users-table-wrapper,
+.votacion-mis-auxiliaturas .users-table-wrapper {
+    overflow-x: auto;
 }
 
 .admin-horarios-insight {
@@ -815,6 +957,11 @@ body.rol-admin .horario-section {
         margin: 0 80px;
         padding: 120px 0 16px;
     }
+
+    .aux-matricula-page {
+        margin: 0 80px;
+        padding: 120px 0 24px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -831,6 +978,16 @@ body.rol-admin .horario-section {
 
     .aux-schedule-grid-inner {
         grid-template-columns: 100px repeat(6, minmax(130px, 1fr));
+    }
+
+    .aux-matricula-page {
+        margin: 0 20px;
+        padding: 110px 0 20px;
+    }
+
+    .aux-matricula-section {
+        padding: 20px 16px 22px;
+        border-radius: 18px;
     }
 }
 
@@ -850,6 +1007,119 @@ body.rol-admin .horario-section {
 
     .aux-schedule-grid-inner {
         grid-template-columns: 80px repeat(6, minmax(120px, 1fr));
+    }
+
+    .aux-matricula-page {
+        margin: 0 14px;
+        padding: 100px 0 16px;
+    }
+
+    .aux-matricula-section {
+        padding: 18px 14px 20px;
+        border-radius: 16px;
+    }
+}
+
+/* Sección de Votación / Inscripción en el dashboard */
+.votacion-section {
+    margin: 0 140px;
+    padding: 120px 0 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+.votacion-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1px solid #E8EAEF;
+    padding: 24px;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+    max-width: 520px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.votacion-subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: #4B5563;
+}
+
+.votacion-card .aux-matricula-card.compact {
+    margin: 0 auto;
+    max-width: 380px;
+}
+
+.votacion-mis-auxiliaturas {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #E8EAEF;
+    width: 100%;
+}
+
+.votacion-mis-title {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.votacion-mis-subtitle {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.votacion-mis-empty {
+    font-size: 14px;
+    color: #6B7280;
+}
+
+@media (max-width: 992px) {
+    .votacion-section {
+        margin: 0 80px;
+        padding: 110px 0 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .votacion-section {
+        margin: 0 20px;
+        padding: 110px 0 16px;
+    }
+
+    .votacion-card {
+        padding: 20px 18px;
+    }
+
+    .votacion-mis-auxiliaturas .users-table-wrapper {
+        margin-top: 4px;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .votacion-section {
+        margin: 0 14px;
+        padding: 100px 0 12px;
+    }
+
+    .votacion-card {
+        padding: 18px 16px;
+        border-radius: 16px;
+    }
+
+    .votacion-mis-title {
+        font-size: 15px;
+    }
+
+    .votacion-mis-subtitle {
+        font-size: 12px;
     }
 }
 

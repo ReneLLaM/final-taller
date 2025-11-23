@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrar auxiliatura</title>
+  <link rel="stylesheet" href="../../assets/css/dashboard/principal.css">
+  <link rel="stylesheet" href="../../assets/css/dashboard/usuarios-roles.css">
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <div class="breadcrumb-bar">
+    <div class="breadcrumb-inner with-border">
+      <div class="breadcrumb-path" id="breadcrumb-path">Panel auxiliar</div>
+      <div class="breadcrumb-role" id="breadcrumb-role"></div>
+    </div>
+  </div>
+
+  <main class="aux-matricula-page">
+    <section id="auxMatDetalleSection" class="aux-matricula-section">
+      <div class="aux-matricula-header">
+        <h2 id="auxMatMateriaTitulo" class="aux-matricula-title">Auxiliatura</h2>
+        <p id="auxMatMateriaSubtitulo" class="aux-matricula-subtitle"></p>
+      </div>
+
+      <div class="aux-matricula-card">
+        <div class="aux-matricula-field">
+          <input id="auxMatCodigoInput" type="text" class="aux-matricula-code-input" placeholder="Ej: 1234">
+        </div>
+        <button type="button" id="auxMatGenerarBtn" class="aux-matricula-black-btn">
+          Generar Código de matriculación
+        </button>
+        <div class="aux-matricula-actions-row">
+          <button type="button" id="auxMatCerrarMatriculacionBtn" class="btn btn-secondary">Cerrar matriculación</button>
+          <button type="button" id="auxMatIniciarVotacionBtn" class="btn btn-primary" disabled>Cerrar votación</button>
+        </div>
+        <div id="auxMatMessage" class="message" style="display:none;"></div>
+      </div>
+
+      <div class="aux-matricula-inscritos">
+        <h3 class="aux-matricula-inscritos-title">Estudiantes inscritos</h3>
+        <div id="auxMatNoInscritos" class="aux-matricula-empty" style="display:none;"></div>
+        <div class="users-table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Nombre</th>
+                <th>CU</th>
+                <th>Carrera</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="auxMatInscritosBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal confirmar eliminación de estudiante inscrito en auxiliatura -->
+  <div class="modal modal-confirm" id="confirmRemoveAuxStudentModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h2>Quitar estudiante de la auxiliatura</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body confirm-body">
+        <p id="confirmRemoveAuxStudentText">¿Deseas quitar a este estudiante de la auxiliatura?</p>
+        <div id="confirmRemoveAuxStudentMessage" class="message" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+        <button type="button" class="btn btn-delete" id="btnConfirmRemoveAuxStudent">Quitar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../scripts/shared/load-header.js"></script>
+  <script src="../../scripts/dashboard/aux-matricula-page.js"></script>
+</body>
+</html>
