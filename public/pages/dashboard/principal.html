@@ -339,6 +339,39 @@
         </div>
     </section>
 
+    <!-- Sección: Horarios (Admin) -->
+    <section id="adminHorariosSection" class="admin-horarios-section" hidden>
+        <div class="admin-horarios-panel">
+            <div class="admin-horarios-toolbar">
+                <div class="admin-horarios-title">Horarios por aula</div>
+                <div class="admin-horarios-filters">
+                    <label for="adminHorariosDiaSelect">Día</label>
+                    <select id="adminHorariosDiaSelect">
+                        <option value="1">Lunes</option>
+                        <option value="2">Martes</option>
+                        <option value="3">Miércoles</option>
+                        <option value="4">Jueves</option>
+                        <option value="5">Viernes</option>
+                        <option value="6">Sábado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="admin-horarios-wrapper horario-wrapper">
+                <div class="admin-horarios-grid">
+                    <div class="admin-horarios-times" id="adminHorariosTimes">
+                        <!-- Horas se llenan desde JS para mantener una sola fuente -->
+                    </div>
+                    <div class="admin-horarios-columns-scroll">
+                        <div class="admin-horarios-columns" id="adminHorariosColumns">
+                            <!-- Columnas de aulas dinámicas -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Sección: Panel Auxiliar (solo rol auxiliar) -->
     <section id="panelAuxiliarSection" class="aux-panel-section" hidden>
         <div class="aux-schedule-section">
@@ -971,6 +1004,7 @@
     <script src="../../scripts/dashboard/admin-carreras-section.js"></script>
     <script src="../../scripts/dashboard/admin-materias-globales-section.js"></script>
     <script src="../../scripts/dashboard/panel-auxiliar-section.js"></script>
+    <script src="../../scripts/dashboard/admin-horarios-section.js"></script>
     <script src="../../scripts/dashboard/upload-horario-section.js"></script>
 </body>
 </html>

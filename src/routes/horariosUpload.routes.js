@@ -4,6 +4,7 @@ import { requireRole } from '../middleware/role.middleware.js';
 import {
   uploadHorariosMiddleware,
   uploadHorarios,
+  getAulasPorDia,
 } from '../controllers/horariosUploadJson.controller.js';
 
 const router = Router();
@@ -15,6 +16,14 @@ router.post(
   requireRole(3),
   uploadHorariosMiddleware,
   uploadHorarios,
+);
+
+// Obtener aulas por día desde clases_horarios (solo administradores)
+router.get(
+  '/horarios/aulas',
+  authMiddleware,
+  requireRole(3),
+  getAulasPorDia,
 );
 
 export default router;

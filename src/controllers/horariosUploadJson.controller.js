@@ -141,3 +141,30 @@ export const uploadHorarios = async (req, res) => {
     });
   }
 };
+
+// Obtener aulas distintas para un día específico desde clases_horarios
+export const getAulasPorDia = async (req, res) => {
+  try {
+    const diaParam = req.query.dia ?? req.params.dia;
+    const dia = parseInt(diaParam, 10);
+
+    if (!dia || Number.isNaN(dia) || dia < 1 || dia > 6) {
+      return res.status(400).json({ message: 'Parámetro dia inválido. Debe estar entre 1 y 6.' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT DISTINCT aula
+       FROM clases_horarios
+       WHERE dia_semana = $1
+         AND aula IS NOT NULL
+         AND TRIM(aula) <> ''
+       ORDER BY aula`,
+      [dia],
+    );
+
+    return res.json(rows);
+  } catch (error) {
+    console.error('Error en getAulasPorDia:', error);
+    return res.status(500).json({ message: 'Error al obtener aulas por día', error: error.message });
+  }
+};

@@ -267,6 +267,114 @@ body.rol-admin .dashboard-container {
     font-size: 14px;
 }
 
+/* ============================================
+   HORARIOS (ADMIN)
+   ============================================ */
+
+.admin-horrios-section,
+.admin-horarios-section {
+    margin: 0 140px;
+    padding: 120px 0 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-horarios-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-top: 20px;
+}
+
+.admin-horarios-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-horarios-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.admin-horarios-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-horarios-filters label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.admin-horarios-filters select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #E8EAEF;
+    background: #FAFBFC;
+    font-size: 14px;
+}
+
+.admin-horarios-wrapper {
+    padding: 14px;
+}
+
+.admin-horarios-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.admin-horarios-times {
+    flex: 0 0 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 43px;
+}
+
+.admin-horarios-columns-scroll {
+    flex: 1;
+    overflow-x: auto;
+}
+
+.admin-horarios-columns {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 100%;
+}
+
+.admin-horarios-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+}
+
+.admin-aula-header {
+    font-size: 12px;
+}
+
+.admin-horarios-cell {
+    min-height: var(--slot-height);
+    height: var(--slot-height);
+    border-radius: 8px;
+    border: 1px dashed #E5E7EB;
+    background: #F9FAFB;
+}
+
+.admin-horarios-empty {
+    padding: 18px 22px;
+    border-radius: 12px;
+    border: 1px dashed #E5E7EB;
+    background: #F9FAFB;
+    font-size: 14px;
+    color: #475467;
+}
+
 .aux-panel-message.error {
     background: #FEF2F2;
     color: #7F1D1D;
