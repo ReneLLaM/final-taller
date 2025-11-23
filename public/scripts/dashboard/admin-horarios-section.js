@@ -37,6 +37,12 @@
     resumen: document.getElementById('adminHorarioResumen'),
     diaLabel: document.getElementById('adminHorarioDiaLabel'),
     deleteBtn: document.getElementById('adminHorarioDeleteBtn'),
+    insightMateria: document.getElementById('adminInsightMateria'),
+    insightDocente: document.getElementById('adminInsightDocente'),
+    insightGrupo: document.getElementById('adminInsightGrupo'),
+    insightAula: document.getElementById('adminInsightAula'),
+    insightHorario: document.getElementById('adminInsightHorario'),
+    insightDia: document.getElementById('adminInsightDiaActual'),
   };
 
   const state = {
@@ -124,6 +130,39 @@
     };
   }
 
+  function updateInsightPanel(horario) {
+    if (!horario || !els.insightMateria) return;
+
+    const materiaTxt = horario.materia || '';
+    const docente = horario.docente || '';
+    const aula = horario.aula || '';
+    const { grupoCodigo } = splitMateria(horario.materia);
+
+    const horaInicio = typeof horario.hora_inicio === 'string'
+      ? horario.hora_inicio.substring(0, 5)
+      : horario.hora_inicio;
+    const horaFin = typeof horario.hora_fin === 'string'
+      ? horario.hora_fin.substring(0, 5)
+      : horario.hora_fin;
+
+    if (els.insightMateria) els.insightMateria.textContent = materiaTxt || 'Bloque sin materia';
+    if (els.insightDocente) els.insightDocente.textContent = docente || '—';
+    if (els.insightGrupo) els.insightGrupo.textContent = grupoCodigo || '—';
+    if (els.insightAula) els.insightAula.textContent = aula || '—';
+    if (els.insightHorario) {
+      const rango = `${horaInicio || '--:--'} - ${horaFin || '--:--'}`;
+      els.insightHorario.textContent = rango;
+    }
+
+    if (els.insightDia) {
+      const dia = horario.dia_semana || state.diaActual;
+      const nombreDia = typeof window.nombreDia === 'function'
+        ? window.nombreDia(parseInt(dia, 10) || 1)
+        : `Día ${dia}`;
+      els.insightDia.textContent = `Día actual: ${nombreDia}`;
+    }
+  }
+
   function renderTimes() {
     if (!els.times || state.timesRendered) return;
     els.times.innerHTML = TIME_SLOTS.map(rango => `
@@ -144,8 +183,16 @@
 
     const rangoTexto = (horaInicio || '--:--') + ' - ' + (horaFin || '--:--');
 
+    const aula = horario.aula || '';
+
     return `
-      <div class="admin-horario-card" data-horario-id="${horario.id}">
+      <div class="admin-horario-card" 
+           data-horario-id="${horario.id}"
+           data-materia="${escapeHtml(horario.materia || '')}"
+           data-grupo="${escapeHtml(grupoCodigo || '')}"
+           data-docente="${escapeHtml(docente)}"
+           data-aula="${escapeHtml(aula)}"
+           data-rango="${escapeHtml(rangoTexto)}">
         <div class="admin-horario-title">${escapeHtml(displayTitulo || 'Materia')}</div>
         <div class="admin-horario-row">
           <span class="admin-horario-label">Docente:</span>
@@ -179,8 +226,159 @@
     return map;
   }
 
+  let accionesPopover = null;
+  let accionesHorarioActual = null;
+
+  function cerrarAccionesPopover() {
+    if (!accionesPopover) return;
+    accionesPopover.classList.remove('show');
+    accionesPopover.style.display = 'none';
+  }
+
+  function crearAccionesPopover() {
+    if (accionesPopover) return accionesPopover;
+    accionesPopover = document.createElement('div');
+    accionesPopover.className = 'admin-horario-actions-popover';
+    document.body.appendChild(accionesPopover);
+
+    document.addEventListener('click', (e) => {
+      if (!accionesPopover) return;
+      if (accionesPopover.contains(e.target)) return;
+      if (e.target.closest('.admin-horario-card')) return;
+      cerrarAccionesPopover();
+    });
+
+    window.addEventListener('scroll', () => {
+      cerrarAccionesPopover();
+    });
+
+    window.addEventListener('resize', () => {
+      cerrarAccionesPopover();
+    });
+
+    return accionesPopover;
+  }
+
+  function abrirAccionesHorario(horario, cardEl) {
+    if (!horario || !cardEl) return;
+    const pop = crearAccionesPopover();
+    accionesHorarioActual = horario;
+
+    const dia = horario.dia_semana || state.diaActual;
+    const nombreDia = typeof window.nombreDia === 'function'
+      ? window.nombreDia(parseInt(dia, 10) || 1)
+      : `Día ${dia}`;
+
+    const horaInicio = typeof horario.hora_inicio === 'string'
+      ? horario.hora_inicio.substring(0, 5)
+      : horario.hora_inicio;
+    const horaFin = typeof horario.hora_fin === 'string'
+      ? horario.hora_fin.substring(0, 5)
+      : horario.hora_fin;
+
+    const materiaTxt = horario.materia || '';
+    const aula = horario.aula || '';
+    const docente = horario.docente || '';
+    const { codigo, grupoCodigo } = splitMateria(horario.materia);
+    const rangoTexto = `${horaInicio || '--:--'} - ${horaFin || '--:--'}`;
+
+    pop.innerHTML = `
+      <div class="admin-horario-actions-header">
+        <div class="admin-horario-actions-header-main">
+          <div class="admin-horario-actions-title">${escapeHtml(materiaTxt || 'Materia')}</div>
+          <div class="admin-horario-actions-subtitle">${escapeHtml(nombreDia)} · ${escapeHtml(rangoTexto)} · ${escapeHtml(aula || '-')}</div>
+        </div>
+        <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="admin-horario-actions-details">
+        <div class="admin-horario-actions-detail-row">
+          <span class="admin-horario-actions-detail-label">Código</span>
+          <span class="admin-horario-actions-detail-value">${escapeHtml(codigo || '—')}</span>
+        </div>
+        <div class="admin-horario-actions-detail-row">
+          <span class="admin-horario-actions-detail-label">Grupo</span>
+          <span class="admin-horario-actions-detail-value">${escapeHtml(grupoCodigo || '—')}</span>
+        </div>
+        <div class="admin-horario-actions-detail-row">
+          <span class="admin-horario-actions-detail-label">Docente</span>
+          <span class="admin-horario-actions-detail-value">${escapeHtml(docente || '—')}</span>
+        </div>
+        <div class="admin-horario-actions-detail-row">
+          <span class="admin-horario-actions-detail-label">Aula</span>
+          <span class="admin-horario-actions-detail-value">${escapeHtml(aula || '—')}</span>
+        </div>
+        <div class="admin-horario-actions-detail-row">
+          <span class="admin-horario-actions-detail-label">Horario</span>
+          <span class="admin-horario-actions-detail-value">${escapeHtml(rangoTexto)}</span>
+        </div>
+      </div>
+      <div class="admin-horario-actions-buttons">
+        <button type="button" class="btn btn-secondary btn-sm" data-action="nuevo">Nuevo en este bloque</button>
+        <button type="button" class="btn btn-primary btn-sm" data-action="editar">Editar horario</button>
+        <button type="button" class="btn btn-secondary btn-sm admin-btn-danger" data-action="eliminar">Eliminar</button>
+      </div>
+    `;
+
+    const rect = cardEl.getBoundingClientRect();
+    pop.style.visibility = 'hidden';
+    pop.classList.add('show');
+    pop.style.display = 'block';
+
+    const popRect = pop.getBoundingClientRect();
+    let top = rect.bottom + 8;
+    if (top + popRect.height + 8 > window.innerHeight) {
+      top = rect.top - popRect.height - 8;
+    }
+    const baseCenter = rect.left + rect.width / 2;
+    const padding = 12;
+    const halfWidth = popRect.width / 2;
+    const minCenter = padding + halfWidth;
+    const maxCenter = window.innerWidth - padding - halfWidth;
+    const center = Math.max(minCenter, Math.min(baseCenter, maxCenter));
+
+    pop.style.top = `${Math.max(8, top)}px`;
+    pop.style.left = `${center}px`;
+    pop.style.visibility = 'visible';
+
+    const closeBtn = pop.querySelector('.admin-horario-actions-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        cerrarAccionesPopover();
+      };
+    }
+
+    const btnNuevo = pop.querySelector('[data-action="nuevo"]');
+    const btnEditar = pop.querySelector('[data-action="editar"]');
+    const btnEliminar = pop.querySelector('[data-action="eliminar"]');
+
+    if (btnNuevo) {
+      btnNuevo.onclick = () => {
+        const slotIndex = getSlotIndexForHoraInicio(horario.hora_inicio);
+        const aulaLocal = horario.aula || '';
+        cerrarAccionesPopover();
+        abrirModalCrearHorario(aulaLocal, slotIndex >= 0 ? slotIndex : 0);
+      };
+    }
+
+    if (btnEditar) {
+      btnEditar.onclick = () => {
+        cerrarAccionesPopover();
+        abrirModalEditarHorario(horario);
+      };
+    }
+
+    if (btnEliminar) {
+      btnEliminar.onclick = () => {
+        cerrarAccionesPopover();
+        abrirModalEditarHorario(horario);
+      };
+    }
+  }
+
   function attachCellEvents() {
     if (!els.columns) return;
+    let lastHoverCard = null;
+
     els.columns.querySelectorAll('.admin-horarios-cell').forEach(cell => {
       cell.addEventListener('click', (event) => {
         const aula = cell.dataset.aula || '';
@@ -190,11 +388,36 @@
           const id = parseInt(cardEl.dataset.horarioId || '0', 10);
           const horario = state.horarios.find(h => h.id === id);
           if (horario) {
-            abrirModalEditarHorario(horario);
+            event.stopPropagation();
+            cerrarAccionesPopover();
+            abrirAccionesHorario(horario, cardEl);
           }
           return;
         }
         abrirModalCrearHorario(aula, slotIndex);
+      });
+
+      cell.addEventListener('mousemove', (event) => {
+        const cardEl = event.target.closest('.admin-horario-card');
+        if (!cardEl) return;
+
+        if (lastHoverCard && lastHoverCard !== cardEl) {
+          lastHoverCard.classList.remove('is-hover');
+        }
+        lastHoverCard = cardEl;
+        cardEl.classList.add('is-hover');
+
+        const id = parseInt(cardEl.dataset.horarioId || '0', 10);
+        const horario = state.horarios.find(h => h.id === id);
+        if (horario) updateInsightPanel(horario);
+      });
+
+      cell.addEventListener('mouseleave', () => {
+        if (lastHoverCard) {
+          lastHoverCard.classList.remove('is-hover');
+          lastHoverCard = null;
+        }
+        // Dejamos el último detalle de texto visible en el panel
       });
     });
   }
@@ -283,6 +506,22 @@
     state.cargado = true;
 
     renderGrid();
+
+    // Actualizar etiqueta de día en el panel de detalle
+    if (els.insightDia) {
+      const nombreDia = typeof window.nombreDia === 'function'
+        ? window.nombreDia(state.diaActual)
+        : `Día ${state.diaActual}`;
+      els.insightDia.textContent = `Día actual: ${nombreDia}`;
+    }
+
+    // Pequeño parpadeo cuando se recargan los horarios (cambio de día o CRUD)
+    const wrapper = document.querySelector('.admin-horarios-wrapper');
+    if (wrapper) {
+      wrapper.classList.remove('admin-day-changed');
+      void wrapper.offsetWidth; // reflow para reiniciar la animación
+      wrapper.classList.add('admin-day-changed');
+    }
   }
 
   function abrirModalCrearHorario(aula, slotIndex) {

@@ -422,6 +422,23 @@
                     </select>
                 </div>
             </div>
+            <div class="admin-horarios-insight" id="adminHorariosInsight">
+                <div class="admin-horarios-insight-header">
+                    <span class="insight-label">Detalle del horario seleccionado</span>
+                    <span class="insight-small" id="adminInsightDiaActual">Día actual: Lunes</span>
+                </div>
+                <div class="admin-horarios-insight-body">
+                    <div class="insight-main">
+                        <span id="adminInsightMateria">Pasa el mouse sobre un bloque para ver todos los detalles.</span>
+                    </div>
+                    <div class="insight-meta">
+                        <div><span class="insight-meta-label">Docente:</span> <span id="adminInsightDocente">–</span></div>
+                        <div><span class="insight-meta-label">Grupo:</span> <span id="adminInsightGrupo">–</span></div>
+                        <div><span class="insight-meta-label">Aula:</span> <span id="adminInsightAula">–</span></div>
+                        <div><span class="insight-meta-label">Horario:</span> <span id="adminInsightHorario">–</span></div>
+                    </div>
+                </div>
+            </div>
 
             <div class="admin-horarios-wrapper horario-wrapper">
                 <div class="admin-horarios-grid">
@@ -483,6 +500,91 @@
     </section>
 
     <div class="dashboard-container">
+        <div class="dashboard-summary admin-dashboard-summary" id="adminDashboardSummary">
+            <div class="summary-cards-grid">
+                <div class="summary-card admin-summary-usuarios">
+                    <div class="summary-title">Usuarios totales</div>
+                    <div class="summary-count" id="adminSummaryUsuariosTotal">0</div>
+                </div>
+                <div class="summary-card admin-summary-aulas">
+                    <div class="summary-title">Aulas registradas</div>
+                    <div class="summary-count" id="adminSummaryAulas">0</div>
+                </div>
+                <div class="summary-card admin-summary-materias-globales">
+                    <div class="summary-title">Materias globales</div>
+                    <div class="summary-count" id="adminSummaryMateriasGlobales">0</div>
+                </div>
+                <div class="summary-card admin-summary-horarios">
+                    <div class="summary-title">Horarios importados</div>
+                    <div class="summary-count" id="adminSummaryHorarios">0</div>
+                </div>
+            </div>
+            <div class="summary-cards-grid admin-secondary-grid">
+                <div class="summary-card admin-summary-estudiantes">
+                    <div class="summary-title">Estudiantes</div>
+                    <div class="summary-count" id="adminSummaryEstudiantes">0</div>
+                </div>
+                <div class="summary-card admin-summary-auxiliares">
+                    <div class="summary-title">Auxiliares</div>
+                    <div class="summary-count" id="adminSummaryAuxiliares">0</div>
+                </div>
+                <div class="summary-card admin-summary-admins">
+                    <div class="summary-title">Administradores</div>
+                    <div class="summary-count" id="adminSummaryAdmins">0</div>
+                </div>
+                <div class="summary-card admin-summary-carreras">
+                    <div class="summary-title">Carreras</div>
+                    <div class="summary-count" id="adminSummaryCarreras">0</div>
+                </div>
+            </div>
+            <div class="admin-charts-row">
+                <div class="admin-chart-card">
+                    <div class="admin-chart-title">Distribución de usuarios</div>
+                    <div class="admin-chart-bar-group">
+                        <div class="admin-chart-bar-row">
+                            <span class="admin-chart-bar-label">Estudiantes</span>
+                            <div class="admin-chart-bar-track">
+                                <div class="admin-chart-bar-fill role-estudiantes" id="adminChartEstudiantesBar"></div>
+                            </div>
+                            <span class="admin-chart-bar-number" id="adminChartEstudiantesValue">0</span>
+                        </div>
+                        <div class="admin-chart-bar-row">
+                            <span class="admin-chart-bar-label">Auxiliares</span>
+                            <div class="admin-chart-bar-track">
+                                <div class="admin-chart-bar-fill role-auxiliares" id="adminChartAuxiliaresBar"></div>
+                            </div>
+                            <span class="admin-chart-bar-number" id="adminChartAuxiliaresValue">0</span>
+                        </div>
+                        <div class="admin-chart-bar-row">
+                            <span class="admin-chart-bar-label">Administradores</span>
+                            <div class="admin-chart-bar-track">
+                                <div class="admin-chart-bar-fill role-admins" id="adminChartAdminsBar"></div>
+                            </div>
+                            <span class="admin-chart-bar-number" id="adminChartAdminsValue">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-chart-card">
+                    <div class="admin-chart-title">Aulas vs horarios importados</div>
+                    <div class="admin-chart-bar-group">
+                        <div class="admin-chart-bar-row">
+                            <span class="admin-chart-bar-label">Aulas</span>
+                            <div class="admin-chart-bar-track">
+                                <div class="admin-chart-bar-fill chart-aulas" id="adminChartAulasBar"></div>
+                            </div>
+                            <span class="admin-chart-bar-number" id="adminChartAulasValue">0</span>
+                        </div>
+                        <div class="admin-chart-bar-row">
+                            <span class="admin-chart-bar-label">Horarios</span>
+                            <div class="admin-chart-bar-track">
+                                <div class="admin-chart-bar-fill chart-horarios" id="adminChartHorariosBar"></div>
+                            </div>
+                            <span class="admin-chart-bar-number" id="adminChartHorariosValue">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="dashboard-summary" id="dashboardSummary">
             <div class="summary-cards-grid">
                 <div class="summary-card summary-materias">

@@ -62,6 +62,13 @@ async function loadUserInfo() {
             if (!allowed.includes(section)) {
                 // Redirigir a principal sin sección si intenta acceder a otra área
                 window.history.replaceState({}, '', 'principal.html');
+                seccionActual = null;
+            }
+
+            // Si es administrador, preparar su dashboard de inicio (sin forzar doble carga)
+            if (data.user.rol_id !== 3) {
+                const adminSummaryEl = document.getElementById('adminDashboardSummary');
+                if (adminSummaryEl) adminSummaryEl.style.display = 'none';
             }
             
             // Aquí se puede cargar contenido específico según el rol si es necesario
@@ -309,6 +316,13 @@ async function cargarMiHorario() {
         // Ajustar layout del contenedor del horario según la sección
         syncDashboardLayoutWithSection(section);
         
+        // Para administradores no se renderiza el horario personal; se muestra dashboard propio
+        if (rolUsuarioActual === 3) {
+            console.log('Rol admin: omitiendo carga de horario personal, mostrando dashboard admin');
+            await cargarAdminDashboard();
+            return;
+        }
+
         // Establecer el filtro según la sección
         if (section === 'horario') {
             // Vista "Mi disponibilidad": solo clases normales
@@ -983,6 +997,12 @@ function actualizarDashboardSummary(clases, conflictosLista) {
     const summaryContainer = document.getElementById('dashboardSummary');
     if (!summaryContainer) return;
 
+    // Para administradores no se muestra el resumen de estudiante
+    if (rolUsuarioActual === 3) {
+        summaryContainer.style.display = 'none';
+        return;
+    }
+
     // Mostrar solo en la vista principal (sin parámetro section)
     const esInicio = !seccionActual;
     summaryContainer.style.display = esInicio ? 'block' : 'none';
@@ -1020,6 +1040,99 @@ function actualizarDashboardSummary(clases, conflictosLista) {
     if (elAux) elAux.textContent = String(totalAuxiliaturas);
     if (elNotif) elNotif.textContent = String(totalNotificaciones);
     if (elChoques) elChoques.textContent = String(totalChoques);
+}
+
+// Cargar y mostrar el dashboard específico del administrador
+async function cargarAdminDashboard() {
+    const adminSummary = document.getElementById('adminDashboardSummary');
+    if (!adminSummary) return;
+
+    // Solo aplica para rol admin
+    if (rolUsuarioActual !== 3) {
+        adminSummary.style.display = 'none';
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    const esInicio = !section;
+
+    const studentSummary = document.getElementById('dashboardSummary');
+    const horarioSectionEl = document.querySelector('.horario-section');
+
+    if (!esInicio) {
+        adminSummary.style.display = 'none';
+        if (studentSummary) studentSummary.style.display = 'none';
+        if (horarioSectionEl) horarioSectionEl.style.display = 'none';
+        return;
+    }
+
+    // Vista de inicio para admin: mostrar tarjetas admin y ocultar horario/resumen de estudiante
+    adminSummary.style.display = 'block';
+    if (studentSummary) studentSummary.style.display = 'none';
+    if (horarioSectionEl) horarioSectionEl.style.display = 'none';
+
+    try {
+        const res = await fetch('/api/admin/dashboard-stats', {
+            method: 'GET',
+            credentials: 'include',
+        });
+        if (!res.ok) {
+            console.error('Error al obtener estadísticas del dashboard admin:', res.status);
+            return;
+        }
+        const data = await res.json();
+
+        const usuarios = data.usuarios || {};
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(value ?? 0);
+        };
+
+        const totalUsuarios = usuarios.total || 0;
+        const totalEst = usuarios.estudiantes || 0;
+        const totalAux = usuarios.auxiliares || 0;
+        const totalAdm = usuarios.administradores || 0;
+
+        // Tarjetas de resumen
+        setText('adminSummaryUsuariosTotal', totalUsuarios);
+        setText('adminSummaryEstudiantes', totalEst);
+        setText('adminSummaryAuxiliares', totalAux);
+        setText('adminSummaryAdmins', totalAdm);
+        setText('adminSummaryAulas', data.aulas || 0);
+        setText('adminSummaryCarreras', data.carreras || 0);
+        setText('adminSummaryMateriasGlobales', data.materias_globales || 0);
+        setText('adminSummaryHorarios', data.horarios_importados || 0);
+
+        // Gráficas simples de barras
+        const totalRoles = Math.max(totalEst + totalAux + totalAdm, 1);
+        const setBar = (barId, value, total) => {
+            const bar = document.getElementById(barId);
+            if (!bar) return;
+            const pct = Math.max(4, Math.min(100, Math.round((value / total) * 100)));
+            bar.style.width = `${pct}%`;
+        };
+
+        setBar('adminChartEstudiantesBar', totalEst, totalRoles);
+        setBar('adminChartAuxiliaresBar', totalAux, totalRoles);
+        setBar('adminChartAdminsBar', totalAdm, totalRoles);
+
+        setText('adminChartEstudiantesValue', totalEst);
+        setText('adminChartAuxiliaresValue', totalAux);
+        setText('adminChartAdminsValue', totalAdm);
+
+        const aulas = data.aulas || 0;
+        const horarios = data.horarios_importados || 0;
+        const maxAH = Math.max(aulas, horarios, 1);
+
+        setBar('adminChartAulasBar', aulas, maxAH);
+        setBar('adminChartHorariosBar', horarios, maxAH);
+
+        setText('adminChartAulasValue', aulas);
+        setText('adminChartHorariosValue', horarios);
+    } catch (error) {
+        console.error('Error de red al cargar estadísticas admin:', error);
+    }
 }
 
 function renderConflictos(conflictos) {

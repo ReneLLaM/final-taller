@@ -85,9 +85,9 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Ocultar completamente el dashboard de horario para administradores */
-body.rol-admin .dashboard-container {
-    display: none !important;
+/* Para administradores ocultamos solo el horario de estudiante, no todo el contenedor */
+body.rol-admin .horario-section {
+    display: none;
 }
 
 /* ============================================
@@ -145,6 +145,79 @@ body.rol-admin .dashboard-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 18px;
+}
+
+.admin-horarios-insight {
+    margin: 8px 0 6px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    background: #F9FAFB;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-horarios-insight-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11px;
+    color: #4B5563;
+}
+
+.admin-horarios-insight-header .insight-label {
+    font-weight: 600;
+    color: #111827;
+}
+
+.admin-horarios-insight-header .insight-small {
+    font-size: 10px;
+    color: #6B7280;
+}
+
+.admin-horarios-insight-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-horarios-insight-body .insight-main {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.admin-horarios-insight-body .insight-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    font-size: 11px;
+    color: #4B5563;
+}
+
+.admin-horarios-insight-body .insight-meta-label {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.admin-horarios-wrapper.admin-day-changed .admin-horario-card {
+    animation: admin-card-pulse 0.5s ease-out;
+}
+
+@keyframes admin-card-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.0);
+        transform: translateY(0);
+    }
+    40% {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+        transform: translateY(-1px);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.0);
+        transform: translateY(0);
+    }
 }
 
 .aux-materia-card {
@@ -331,8 +404,8 @@ body.rol-admin .dashboard-container {
     flex: 0 0 130px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding-top: 43px;
+    gap: 16px;
+    padding-top: calc(var(--header-row-height) + 12px);
 }
 
 .admin-horarios-columns-scroll {
@@ -359,15 +432,17 @@ body.rol-admin .dashboard-container {
 }
 
 .admin-horarios-cell {
-    min-height: 60px;
+    min-height: var(--slot-height);
+    height: var(--slot-height);
     padding: 4px;
     border-radius: 10px;
     border: 1px dashed #E5E7EB;
     background: #F9FAFB;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    overflow: visible;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 4px;
+    overflow: hidden;
 }
 
 .admin-horarios-empty {
@@ -390,11 +465,179 @@ body.rol-admin .dashboard-container {
     gap: 6px;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    flex: 1 1 0;
+    min-width: 0;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 .admin-horario-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+}
+
+.admin-horario-card.is-hover {
+    border-left-color: #2563EB;
+    background: #EEF2FF;
+}
+
+/* Tooltip de detalle para horarios de administrador */
+.admin-horario-tooltip {
+    position: absolute;
+    z-index: 9999;
+    max-width: 260px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #0B0B1A;
+    color: #F9FAFB;
+    font-size: 11px;
+    line-height: 1.4;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.admin-horario-tooltip.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.admin-horario-tooltip .tooltip-title {
+    font-weight: 600;
+    font-size: 11.5px;
+    margin-bottom: 4px;
+}
+
+.admin-horario-tooltip .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.admin-horario-tooltip .tooltip-label {
+    font-weight: 600;
+    color: #E5E7EB;
+}
+
+.admin-horario-tooltip .tooltip-value {
+    color: #E5E7EB;
+    text-align: right;
+}
+
+.admin-horario-actions-popover {
+    position: fixed;
+    z-index: 10000;
+    min-width: 260px;
+    max-width: 320px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.45);
+    transform: translateX(-50%);
+    max-height: 60vh;
+    overflow-y: auto;
+    display: none;
+}
+
+.admin-horario-actions-popover.show {
+    display: block;
+}
+
+.admin-horario-actions-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.admin-horario-actions-header-main {
+    min-width: 0;
+}
+
+.admin-horario-actions-close {
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 999px;
+}
+
+.admin-horario-actions-close:hover {
+    background: #F3F4F6;
+    color: #111827;
+}
+
+.admin-horario-actions-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.admin-horario-actions-subtitle {
+    font-size: 10px;
+    color: #6B7280;
+}
+
+.admin-horario-actions-details {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid #E5E7EB;
+    display: grid;
+    gap: 3px;
+    font-size: 11px;
+    color: #4B5563;
+}
+
+.admin-horario-actions-detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.admin-horario-actions-detail-label {
+    font-weight: 600;
+    color: #6B7280;
+    white-space: nowrap;
+}
+
+.admin-horario-actions-detail-value {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-horario-actions-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.admin-horario-actions-buttons .btn.btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.admin-btn-danger {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FECACA;
+}
+
+.admin-btn-danger:hover {
+    background: #FCA5A5;
+    color: #7F1D1D;
 }
 
 .admin-horario-title {
@@ -678,6 +921,94 @@ body.rol-admin .dashboard-container {
 
 .summary-card.summary-choques {
     background: #FEF2F2;
+}
+
+.admin-dashboard-summary {
+    margin-bottom: 24px;
+}
+
+.admin-secondary-grid {
+    margin-top: 14px;
+}
+
+.admin-summary-usuarios { background: #EFF6FF; }
+.admin-summary-aulas { background: #ECFDF3; }
+.admin-summary-materias-globales { background: #FFFBEB; }
+.admin-summary-horarios { background: #FEF2F2; }
+.admin-summary-estudiantes { background: #EEF2FF; }
+.admin-summary-auxiliares { background: #FDF2FF; }
+.admin-summary-admins { background: #F0F9FF; }
+.admin-summary-carreras { background: #FFF7ED; }
+
+.admin-charts-row {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-chart-card {
+    flex: 1 1 260px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid #E5E7EB;
+    padding: 14px 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.admin-chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0B0B1A;
+    margin-bottom: 10px;
+}
+
+.admin-chart-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-chart-bar-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+    color: #4B5563;
+}
+
+.admin-chart-bar-label {
+    white-space: nowrap;
+}
+
+.admin-chart-bar-track {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: #E5E7EB;
+    overflow: hidden;
+}
+
+.admin-chart-bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.role-estudiantes { background: #4F46E5; }
+.role-auxiliares { background: #22C55E; }
+.role-admins { background: #F97316; }
+.chart-aulas { background: #0EA5E9; }
+.chart-horarios { background: #EC4899; }
+
+.admin-chart-bar-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 11.5px;
+    color: #111827;
 }
 
 .horario-toolbar {
@@ -2329,6 +2660,17 @@ body.rol-admin .dashboard-container {
         margin: 0 60px;
         padding-top: 120px;
     }
+
+    .admin-horrios-section,
+    .admin-horarios-section {
+        margin: 0 60px;
+        padding-top: 120px;
+    }
+
+    .admin-charts-row {
+        flex-direction: row;
+        gap: 12px;
+    }
 }
 
 /* Tablets pequeñas (600px - 768px) */
@@ -2403,6 +2745,52 @@ body.rol-admin .dashboard-container {
 
     .materia-item {
         grid-template-columns: 1fr 90px 110px;
+    }
+
+    .admin-horrios-section,
+    .admin-horarios-section {
+        margin: 0 20px;
+        padding-top: 135px;
+    }
+
+    .admin-horarios-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .admin-horarios-wrapper {
+        padding: 10px 0;
+    }
+
+    .admin-horarios-insight {
+        padding: 10px 12px;
+    }
+
+    .admin-horarios-times {
+        flex: 0 0 100px;
+    }
+
+    .admin-charts-row {
+        flex-direction: column;
+    }
+
+    .admin-chart-card {
+        min-width: 0;
+    }
+
+    .admin-horario-actions-popover {
+        width: min(340px, 94vw);
+        padding: 10px 10px;
+    }
+
+    .admin-horario-actions-buttons {
+        flex-wrap: wrap;
+    }
+
+    .admin-horario-actions-buttons .btn.btn-sm {
+        flex: 1 1 100%;
+        text-align: center;
     }
 }
 
@@ -2485,6 +2873,32 @@ body.rol-admin .dashboard-container {
     .message {
         font-size: 12px;
         padding: 8px;
+    }
+
+    .admin-horrios-section,
+    .admin-horarios-section {
+        margin: 0 15px;
+        padding-top: 125px;
+    }
+
+    .admin-horarios-title {
+        font-size: 18px;
+    }
+
+    .admin-horarios-times {
+        flex: 0 0 90px;
+    }
+
+    .admin-horarios-insight {
+        padding: 8px 10px;
+    }
+
+    .admin-horarios-grid {
+        gap: 6px;
+    }
+
+    .admin-charts-row {
+        gap: 10px;
     }
 }
 

@@ -14,6 +14,7 @@ import carrerasRoutes from "./routes/carreras.routes.js";
 import horariosUploadRoutes from "./routes/horariosUpload.routes.js";
 import aulasRoutes from "./routes/aulas.routes.js";
 import auxiliarMateriasRoutes from "./routes/auxiliarMaterias.routes.js";
+import adminDashboardRoutes from "./routes/adminDashboard.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,7 @@ app.use("/api", horariosUploadRoutes);
 app.use("/api", materiasGlobalesRoutes);
 app.use("/api", aulasRoutes);
 app.use("/api", auxiliarMateriasRoutes);
+app.use("/api", adminDashboardRoutes);
 
 // Ruta raíz - redirigir al login
 app.get("/", (req, res) => {
