@@ -95,6 +95,28 @@
     pathEl.appendChild(span);
   }
 
+  function syncVotacionButton(matriculacion, votacion) {
+    const btn = els.detalleIniciarVotacionBtn;
+    if (!btn) return;
+
+    if (!matriculacion) {
+      btn.disabled = true;
+      btn.textContent = 'Iniciar votación';
+      btn.dataset.votacionActiva = '0';
+      return;
+    }
+
+    btn.disabled = false;
+
+    if (votacion && votacion.activa) {
+      btn.textContent = 'Finalizar votación';
+      btn.dataset.votacionActiva = '1';
+    } else {
+      btn.textContent = 'Iniciar votación';
+      btn.dataset.votacionActiva = '0';
+    }
+  }
+
   async function cargarDetalleMateria() {
     if (!state.auxMateriaId) return;
     if (!els.detalleSection) return;
@@ -115,6 +137,7 @@
 
       const auxMat = data.auxiliarMateria || {};
       const matriculacion = data.matriculacion || null;
+      const votacion = data.votacion || null;
 
       if (els.detalleTitulo) {
         const base = auxMat.materia_nombre || 'Auxiliatura';
@@ -151,6 +174,8 @@
           els.detalleCerrarMatriculacionBtn.disabled = true;
         }
       }
+
+      syncVotacionButton(matriculacion, votacion);
     } catch (err) {
       console.error('Error al cargar detalle de matriculación:', err);
       setDetalleMessage('error', 'Error de conexión al cargar la auxiliatura');
@@ -233,6 +258,39 @@
     }
   }
 
+  async function manejarToggleVotacion() {
+    const auxMateriaId = state.auxMateriaId;
+    const btn = els.detalleIniciarVotacionBtn;
+    if (!auxMateriaId || !btn) return;
+
+    const votacionActiva = btn.dataset.votacionActiva === '1';
+    const endpoint = votacionActiva ? 'finalizar' : 'iniciar';
+
+    try {
+      btn.disabled = true;
+      setDetalleMessage('info', votacionActiva ? 'Finalizando votación...' : 'Iniciando votación...');
+
+      const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/${endpoint}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDetalleMessage('error', data.message || 'No se pudo cambiar el estado de la votación');
+        btn.disabled = false;
+        return;
+      }
+
+      await cargarDetalleMateria();
+      setDetalleMessage('success', data.message || `Votación ${votacionActiva ? 'finalizada' : 'iniciada'} correctamente.`);
+    } catch (err) {
+      console.error('Error al cambiar el estado de la votación:', err);
+      setDetalleMessage('error', 'Error de conexión al cambiar el estado de la votación');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   async function manejarEliminarInscrito(estudianteId) {
     const auxMateriaId = state.auxMateriaId;
     if (!auxMateriaId || !estudianteId) return false;
@@ -311,6 +369,11 @@
 
     if (els.detalleIniciarVotacionBtn) {
       els.detalleIniciarVotacionBtn.disabled = true;
+      els.detalleIniciarVotacionBtn.textContent = 'Iniciar votación';
+      els.detalleIniciarVotacionBtn.dataset.votacionActiva = '0';
+      els.detalleIniciarVotacionBtn.addEventListener('click', () => {
+        manejarToggleVotacion();
+      });
     }
 
     if (els.detalleInscritosBody) {

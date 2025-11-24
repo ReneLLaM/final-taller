@@ -49,7 +49,17 @@
       const grupo = item.grupo || '';
       const auxiliar = item.auxiliar_nombre || '';
       const codigo = item.codigo || '';
+      const auxMateriaId = item.auxiliar_materia_id;
       const materiaLabel = [sigla, nombre].filter(Boolean).join(' · ');
+      const votacionId = item.votacion_id;
+      const votacionActiva = item.votacion_activa === true;
+      let votarLabel = 'Votar';
+      if (votacionId && !votacionActiva) {
+        votarLabel = 'Ver resultados';
+      }
+      const votarButtonHtml = votacionId
+        ? `<button type="button" class="btn btn-primary" data-votacion-ir="${auxMateriaId}">${votarLabel}</button>`
+        : '';
       return `
         <tr>
           <td>${index + 1}</td>
@@ -57,6 +67,7 @@
           <td>${grupo || '—'}</td>
           <td>${auxiliar || '—'}</td>
           <td class="actions">
+            ${votarButtonHtml}
             <button type="button" class="btn btn-secondary" data-votacion-quitar="${codigo}">Quitarme</button>
           </td>
         </tr>
@@ -189,6 +200,16 @@
 
     if (els.misAuxBody) {
       els.misAuxBody.addEventListener('click', (e) => {
+        const votarBtn = e.target.closest('[data-votacion-ir]');
+        if (votarBtn) {
+          const auxMateriaIdRaw = votarBtn.getAttribute('data-votacion-ir');
+          const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
+          if (!auxMateriaId || Number.isNaN(auxMateriaId)) return;
+          // Navegar al panel de votación basado en principal.html
+          window.location.href = `principal.html?section=votacion-panel&auxMateriaId=${auxMateriaId}`;
+          return;
+        }
+
         const btn = e.target.closest('[data-votacion-quitar]');
         if (!btn) return;
         const codigo = btn.getAttribute('data-votacion-quitar');
@@ -262,4 +283,7 @@
       setTimeout(syncVisibilityWithSection, 80);
     };
   }
+
+  // Exponer recarga para integración con websockets
+  window.recargarMisAuxiliaturas = cargarMisAuxiliaturas;
 })();

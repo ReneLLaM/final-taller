@@ -35,6 +35,28 @@
     els.message.style.display = 'block';
   }
 
+  function syncVotacionButton(matriculacion, votacion) {
+    const btn = els.iniciarVotacionBtn;
+    if (!btn) return;
+
+    if (!matriculacion) {
+      btn.disabled = true;
+      btn.textContent = 'Iniciar Votación';
+      btn.dataset.votacionActiva = '0';
+      return;
+    }
+
+    btn.disabled = false;
+
+    if (votacion && votacion.activa) {
+      btn.textContent = 'Finalizar Votación';
+      btn.dataset.votacionActiva = '1';
+    } else {
+      btn.textContent = 'Iniciar Votación';
+      btn.dataset.votacionActiva = '0';
+    }
+  }
+
   function renderInscritos(estudiantes) {
     if (!els.inscritosBody || !els.noInscritos) return;
     if (!estudiantes || !estudiantes.length) {
@@ -82,6 +104,7 @@
         setMessage('error', data.message || 'No se pudo cargar la información de la auxiliatura');
         return;
       }
+      const votacion = data.votacion || null;
       if (els.titulo) {
         const base = data.auxiliarMateria?.materia_nombre || 'Auxiliatura';
         const sigla = data.auxiliarMateria?.sigla || '';
@@ -96,6 +119,7 @@
         els.codigoInput.value = data.matriculacion?.codigo || '';
       }
       renderInscritos(data.estudiantes || []);
+      syncVotacionButton(data.matriculacion || null, votacion);
       setMessage('info', 'Configura el código y comparte con tus estudiantes.');
     } catch (err) {
       console.error('Error al cargar detalle de matriculación:', err);
@@ -161,6 +185,37 @@
     }
   }
 
+  async function manejarToggleVotacion() {
+    if (!state.auxMateriaId || !els.iniciarVotacionBtn) return;
+
+    const activa = els.iniciarVotacionBtn.dataset.votacionActiva === '1';
+    const endpoint = activa ? 'finalizar' : 'iniciar';
+
+    try {
+      els.iniciarVotacionBtn.disabled = true;
+      setMessage('info', activa ? 'Finalizando votación...' : 'Iniciando votación...');
+
+      const res = await fetch(`/api/auxiliar-materias/${state.auxMateriaId}/votacion/${endpoint}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage('error', data.message || 'No se pudo cambiar el estado de la votación');
+        els.iniciarVotacionBtn.disabled = false;
+        return;
+      }
+
+      await cargarDetalle();
+      setMessage('success', data.message || (activa ? 'Votación finalizada.' : 'Votación iniciada.'));
+    } catch (err) {
+      console.error('Error al cambiar estado de votación:', err);
+      setMessage('error', 'Error de conexión al cambiar el estado de la votación');
+    } finally {
+      els.iniciarVotacionBtn.disabled = false;
+    }
+  }
+
   function init() {
     state.auxMateriaId = getAuxMateriaIdFromUrl();
     if (!state.auxMateriaId) {
@@ -183,6 +238,11 @@
 
     if (els.iniciarVotacionBtn) {
       els.iniciarVotacionBtn.disabled = true;
+      els.iniciarVotacionBtn.textContent = 'Iniciar Votación';
+      els.iniciarVotacionBtn.dataset.votacionActiva = '0';
+      els.iniciarVotacionBtn.addEventListener('click', () => {
+        manejarToggleVotacion();
+      });
     }
 
     if (els.inscritosBody) {

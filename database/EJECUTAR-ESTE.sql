@@ -10,6 +10,7 @@
 --- 0. ELIMINAR TODAS LAS TABLAS DE DATOS (NO toca usuarios ni roles)
 DROP TABLE IF EXISTS auxiliar_matricula_estudiantes CASCADE;
 DROP TABLE IF EXISTS auxiliar_matriculaciones CASCADE;
+DROP TABLE IF EXISTS auxiliar_votaciones CASCADE;
 DROP TABLE IF EXISTS inscripciones CASCADE;
 DROP TABLE IF EXISTS auxiliar_materias CASCADE;
 DROP TABLE IF EXISTS clases_horarios CASCADE;
@@ -210,6 +211,16 @@ CREATE TABLE auxiliar_matricula_estudiantes (
     FOREIGN KEY (matriculacion_id) REFERENCES auxiliar_matriculaciones(id) ON DELETE CASCADE,
     FOREIGN KEY (estudiante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     UNIQUE(matriculacion_id, estudiante_id)
+);
+
+-- 3.3 TABLA PARA ESTADO DE VOTACIONES DE AUXILIATURAS
+CREATE TABLE auxiliar_votaciones (
+    id SERIAL PRIMARY KEY,
+    auxiliar_materia_id INT NOT NULL UNIQUE,
+    activa BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_inicio TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre TIMESTAMP,
+    FOREIGN KEY (auxiliar_materia_id) REFERENCES auxiliar_materias(id) ON DELETE CASCADE
 );
 
 -- 3.1 CREAR TABLA PARA HORARIOS IMPORTADOS DESDE EXCEL

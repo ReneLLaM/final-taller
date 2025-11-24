@@ -9,6 +9,9 @@ import {
   eliminarInscrito,
   getMisAuxiliaturasMatriculadas,
   desinscribirsePorCodigo,
+  iniciarVotacion,
+  finalizarVotacion,
+  getDisponibilidadVotacion,
 } from '../controllers/auxiliarMatriculas.controller.js';
 
 const router = Router();
@@ -32,6 +35,27 @@ router.post(
   verifyToken,
   requireRole(2),
   cerrarMatriculacion,
+);
+
+router.post(
+  '/auxiliar-materias/:auxMateriaId/votacion/iniciar',
+  verifyToken,
+  requireRole(2),
+  iniciarVotacion,
+);
+
+router.post(
+  '/auxiliar-materias/:auxMateriaId/votacion/finalizar',
+  verifyToken,
+  requireRole(2),
+  finalizarVotacion,
+);
+
+router.get(
+  '/auxiliar-materias/:auxMateriaId/votacion/disponibilidad',
+  verifyToken,
+  requireRole(1, 2),
+  getDisponibilidadVotacion,
 );
 
 router.post('/matriculacion/inscribirse', verifyToken, requireRole(1, 2), inscribirsePorCodigo);

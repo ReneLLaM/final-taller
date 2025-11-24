@@ -2,6 +2,7 @@ const SECTION_LABELS = {
     'horario': '/Mi disponibilidad',
     'auxiliaturas': '/Mis auxiliaturas',
     'votacion': '/Votación/Inscripción',
+    'votacion-panel': '/Votación/Panel',
     'panel-auxiliar': '/Panel auxiliar',
     'aulas': '/Aulas',
     'carreras': '/Carreras',
@@ -13,9 +14,27 @@ const SECTION_LABELS = {
 
 function updateBreadcrumbPath(section) {
     const pathEl = document.getElementById('breadcrumb-path');
-    if (pathEl) {
-        pathEl.textContent = SECTION_LABELS[section] || '/Inicio';
+    if (!pathEl) return;
+
+    // Caso especial: panel de votación con breadcrumb navegable
+    if (section === 'votacion-panel') {
+        pathEl.innerHTML = '<a href="principal.html?section=votacion" class="breadcrumb-link" data-section="votacion">Votación</a> / Panel';
+
+        const link = pathEl.querySelector('[data-section="votacion"]');
+        if (link) {
+            link.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                if (typeof window.navigateToSection === 'function') {
+                    window.navigateToSection('votacion');
+                } else {
+                    window.location.href = 'principal.html?section=votacion';
+                }
+            });
+        }
+        return;
     }
+
+    pathEl.textContent = SECTION_LABELS[section] || '/Inicio';
 }
 
 // Cargar información del usuario
@@ -54,8 +73,8 @@ async function loadUserInfo() {
             const section = params.get('section');
             seccionActual = section;
             const allowedByRole = {
-                1: ['horario','auxiliaturas','votacion', null],
-                2: ['panel-auxiliar','horario','auxiliaturas','votacion', null],
+                1: ['horario','auxiliaturas','votacion','votacion-panel', null],
+                2: ['panel-auxiliar','horario','auxiliaturas','votacion','votacion-panel', null],
                 3: ['aulas','usuarios-roles','carreras','materias-globales','horarios','subir-horario', null]
             };
             const allowed = allowedByRole[data.user.rol_id] || [null];
@@ -336,6 +355,10 @@ async function cargarMiHorario() {
             // Panel de auxiliar: solo las auxiliaturas que dicta (tipo 3)
             filtroTipoClase = 3;
             console.log('Filtro activado: SOLO AUXILIATURAS DICTADAS (tipo_clase = 3)');
+        } else if (section === 'votacion-panel') {
+            // Panel de votación: mostrar todas las clases (1,2,3) como referencia visual
+            filtroTipoClase = null;
+            console.log('Filtro activado: TODAS LAS CLASES (panel de votación)');
         } else {
             filtroTipoClase = null; // Todas las clases
             console.log('Filtro: TODAS LAS CLASES');
@@ -370,7 +393,19 @@ async function cargarMiHorario() {
         // Renderizar las clases en el horario
         console.log('Llamando a renderizarClases con', clasesFiltradas.length, 'clases');
         renderizarClases(clasesFiltradas);
-        
+
+        // Si estamos en el panel de votación, cargar disponibilidad de slots
+        if (section === 'votacion-panel') {
+            const auxMateriaIdRaw = params.get('auxMateriaId');
+            const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
+            if (auxMateriaId && !Number.isNaN(auxMateriaId)) {
+                console.log('Cargando disponibilidad de votación para auxiliar_materia_id =', auxMateriaId);
+                await cargarDisponibilidadVotacion(auxMateriaId);
+            } else {
+                console.warn('auxMateriaId no válido en la URL para votacion-panel');
+            }
+        }
+
         console.log('=== CARGA DE HORARIO COMPLETADA ===');
     } catch (error) {
         console.error('=== ERROR EN CARGA DE HORARIO ===');
@@ -497,6 +532,107 @@ function renderizarClases(clases) {
     aplicarLayoutConflictos();
 }
 
+// ================================
+// VOTACIÓN - CARDS DE DISPONIBILIDAD
+// ================================
+
+async function cargarDisponibilidadVotacion(auxMateriaId) {
+    try {
+        const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/disponibilidad`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!res.ok) {
+            console.warn('No se pudo cargar disponibilidad de votación:', res.status);
+            return;
+        }
+
+        const data = await res.json().catch(() => null);
+        if (!data || !Array.isArray(data.disponibilidad)) {
+            console.warn('Respuesta de disponibilidad inesperada:', data);
+            return;
+        }
+
+        renderizarVotacionDisponibilidad(data.disponibilidad);
+    } catch (error) {
+        console.error('Error al cargar disponibilidad de votación:', error);
+    }
+}
+
+function renderizarVotacionDisponibilidad(disponibilidad) {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section !== 'votacion-panel') {
+        return;
+    }
+
+    // Limpiar cards anteriores
+    document.querySelectorAll('.votacion-slot-card').forEach(card => card.remove());
+
+    if (!Array.isArray(disponibilidad) || !disponibilidad.length) {
+        console.log('No hay disponibilidad de votación para renderizar');
+        return;
+    }
+
+    disponibilidad.forEach(item => {
+        const dia = parseInt(item.dia_semana, 10);
+        const horaInicio = typeof item.hora_inicio === 'string'
+            ? item.hora_inicio.substring(0, 5)
+            : item.hora_inicio;
+
+        if (!dia || !horaInicio) return;
+
+        const cell = document.querySelector(`.schedule-cell[data-dia="${dia}"][data-hora="${horaInicio}"]`);
+        if (!cell) return;
+
+        const estado = item.estado || 'neutral';
+        const totalEst = item.total_estudiantes ?? null;
+        const dispEst = item.estudiantes_disponibles ?? null;
+        const porc = item.porcentaje_disponibles;
+        const aulasCantidad = item.aulas_disponibles ?? 0;
+
+        const card = document.createElement('div');
+        card.className = 'votacion-slot-card';
+        if (estado === 'recomendada') {
+            card.classList.add('votacion-estado-recomendada');
+        } else if (estado === 'no_disponible') {
+            card.classList.add('votacion-estado-no-disponible');
+        } else {
+            card.classList.add('votacion-estado-neutral');
+        }
+
+        let fraccionTexto = '-';
+        if (dispEst != null && totalEst != null) {
+            fraccionTexto = `${dispEst}/${totalEst}`;
+        }
+
+        let porcentajeTexto = '-';
+        if (porc != null) {
+            porcentajeTexto = `${porc}%`;
+        }
+
+        card.innerHTML = `
+            <div class="votacion-slot-main">
+                <span class="votacion-slot-votar">Votar</span>
+            </div>
+            <div class="votacion-slot-row">
+                <span class="votacion-slot-label">Cantidad de aulas</span>
+                <span class="votacion-slot-value">${aulasCantidad}</span>
+            </div>
+            <div class="votacion-slot-disponibilidad">
+                <div class="votacion-slot-disponibilidad-label">Disponibilidad de estudiantes</div>
+                <div class="votacion-slot-disponibilidad-data">
+                    <span class="votacion-slot-fraccion">${fraccionTexto}</span>
+                    <span class="votacion-slot-porcentaje">${porcentajeTexto}</span>
+                </div>
+            </div>
+        `;
+
+        cell.appendChild(card);
+    });
+}
+
 // Recalcular SLOT_HEIGHT al cambiar el viewport y re-renderizar
 window.addEventListener('resize', () => {
     const nuevaAltura = getSlotHeight();
@@ -504,6 +640,21 @@ window.addEventListener('resize', () => {
         SLOT_HEIGHT = nuevaAltura;
         console.log('[RESPONSIVE] SLOT_HEIGHT actualizado:', SLOT_HEIGHT);
         renderizarClases(clasesRenderizadas);
+
+        // Si estamos en el panel de votación, volver a dibujar las cards
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const sectionActual = params.get('section');
+            if (sectionActual === 'votacion-panel') {
+                const auxMateriaIdRaw = params.get('auxMateriaId');
+                const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
+                if (auxMateriaId && !Number.isNaN(auxMateriaId)) {
+                    cargarDisponibilidadVotacion(auxMateriaId);
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo recargar disponibilidad de votación tras el resize:', e);
+        }
     }
 });
 

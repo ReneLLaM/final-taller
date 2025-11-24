@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { PORT } from "./config.js";
+import { initSocket } from "./socket.js";
 import usersRoutes from "./routes/users.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import clasesRoutes from "./routes/clases.routes.js";
@@ -52,6 +53,9 @@ app.get("/", (req, res) => {
 const server = app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Inicializar WebSockets con socket.io
+const io = initSocket(server);
 
 server.on('error', (err) => {
     if (err.code === 'EACCES') {
