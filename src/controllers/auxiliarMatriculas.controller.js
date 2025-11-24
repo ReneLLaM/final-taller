@@ -610,7 +610,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
       `SELECT c.dia_semana, c.hora_inicio, c.hora_fin, c.tipo_clase
        FROM inscripciones i
        INNER JOIN clases c ON i.id_clase = c.id
-       WHERE i.id_usuario = $1 AND c.tipo_clase IN (1, 3)`,
+       WHERE i.id_usuario = $1 AND c.tipo_clase IN (1, 2, 3)`,
       [materia.auxiliar_id],
     );
 
@@ -765,14 +765,44 @@ export const getDisponibilidadVotacion = async (req, res) => {
       recomendadosPorDia.set(dia, yaEnDia + 1);
     }
 
+    // Contar votos totales por slot (todos los estudiantes matriculados)
+    const votosPorSlot = new Map();
+    if (materia.votacion_id) {
+      const { rows: votosCountRows } = await pool.query(
+        `SELECT dia_semana, hora_inicio, COUNT(*) AS total_votos
+         FROM auxiliar_votos
+         WHERE votacion_id = $1
+         GROUP BY dia_semana, hora_inicio`,
+        [materia.votacion_id],
+      );
+
+      votosCountRows.forEach((row) => {
+        const diaRow = parseInt(row.dia_semana, 10);
+        const horaRowRaw = row.hora_inicio;
+        const horaRowStr = typeof horaRowRaw === 'string'
+          ? horaRowRaw.substring(0, 5)
+          : horaRowRaw?.toString().substring(0, 5);
+        if (!diaRow || !horaRowStr) return;
+        const key = `${diaRow}|${horaRowStr}`;
+        const total = typeof row.total_votos === 'number'
+          ? row.total_votos
+          : parseInt(row.total_votos, 10) || 0;
+        votosPorSlot.set(key, total);
+      });
+    }
+
     const disponibilidad = slots.map((s) => {
       let estado = 'neutral';
       if (seleccionados.has(`${s.dia_semana}|${s.hora_inicio}`)) {
         estado = 'recomendada';
-      } else if (!s.auxiliar_disponible && !s.hay_aulas_disponibles) {
-        // Rojo solo cuando el auxiliar NO puede y tampoco hay aulas libres
+      } else if (!s.auxiliar_disponible || !s.hay_aulas_disponibles) {
+        // No disponible si el auxiliar tiene clases en ese horario
+        // o si no existe ninguna aula libre para el bloque
         estado = 'no_disponible';
       }
+
+      const keySlot = `${s.dia_semana}|${s.hora_inicio}`;
+      const votosSlot = votosPorSlot.has(keySlot) ? votosPorSlot.get(keySlot) : 0;
 
       return {
         dia_semana: s.dia_semana,
@@ -786,6 +816,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
         total_estudiantes: s.total_estudiantes,
         estudiantes_disponibles: s.estudiantes_disponibles,
         porcentaje_disponibles: s.porcentaje_disponibles,
+        votos_slot: votosSlot,
         estado,
       };
     });
@@ -797,6 +828,8 @@ export const getDisponibilidadVotacion = async (req, res) => {
       max_votos: vecesPorSemana,
       votos_usados: votosUsados,
       mis_votos: misVotos,
+      puede_votar: esEstudianteMatriculado && !esAuxiliarDeLaMateria,
+      es_auxiliar_de_la_materia: esAuxiliarDeLaMateria,
       disponibilidad,
     });
   } catch (error) {
@@ -970,8 +1003,13 @@ export const emitirVotoVotacion = async (req, res) => {
       return res.status(400).json({ message: 'No hay una votación activa para esta auxiliatura' });
     }
 
-    if (rolId !== 1) {
-      return res.status(403).json({ message: 'Solo los estudiantes pueden emitir votos' });
+    const esAuxiliarDeLaMateria = materia.auxiliar_id === usuarioId;
+    if (esAuxiliarDeLaMateria) {
+      return res.status(403).json({ message: 'El auxiliar que dicta esta auxiliatura no puede emitir votos en ella' });
+    }
+
+    if (rolId !== 1 && rolId !== 2) {
+      return res.status(403).json({ message: 'Solo los estudiantes o auxiliares matriculados pueden emitir votos' });
     }
 
     const { rows: inscRows } = await pool.query(
@@ -1079,8 +1117,13 @@ export const eliminarVotoVotacion = async (req, res) => {
       return res.status(400).json({ message: 'La votación ya no está activa' });
     }
 
-    if (rolId !== 1) {
-      return res.status(403).json({ message: 'Solo los estudiantes pueden eliminar votos' });
+    const esAuxiliarDeLaMateria = materia.auxiliar_id === usuarioId;
+    if (esAuxiliarDeLaMateria) {
+      return res.status(403).json({ message: 'El auxiliar que dicta esta auxiliatura no puede eliminar votos porque no puede emitirlos' });
+    }
+
+    if (rolId !== 1 && rolId !== 2) {
+      return res.status(403).json({ message: 'Solo los estudiantes o auxiliares matriculados pueden eliminar votos' });
     }
 
     const { rows: existentes } = await pool.query(

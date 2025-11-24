@@ -135,12 +135,15 @@
     border: 1.5px solid #DC2626;
 }
 .votacion-slot-card.votacion-slot-mio {
-    border-color: #0B0B1A;
-    box-shadow: 0 0 0 2px rgba(11, 11, 26, 0.35);
+    border-color: #16A34A;
+    background: rgba(22, 163, 74, 0.16);
+    box-shadow: 0 8px 22px rgba(22, 163, 74, 0.45);
+    transform: translateY(-1px);
 }
 
 .votacion-slot-card.votacion-slot-mio .votacion-slot-votar {
-    color: #16A34A;
+    color: #065F46;
+    font-weight: 700;
 }
 
 .votacion-slot-main .votacion-slot-votos-resumen {

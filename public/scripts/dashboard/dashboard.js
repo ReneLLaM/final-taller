@@ -542,6 +542,8 @@ let votacionPanelMaxVotos = 0;
 let votacionPanelVotosUsados = 0;
 let votacionPanelMisVotosSet = new Set();
 let votacionPanelSlotSeleccionado = null;
+let votacionPanelPuedeVotar = true;
+let votacionPanelEsAuxiliarMateria = false;
 
 const votacionPanelHeaderEl = document.getElementById('votacionPanelHeader');
 const votacionPanelHeaderTextEl = document.getElementById('votacionPanelHeaderText');
@@ -569,6 +571,23 @@ function actualizarHeaderVotacion() {
 
     const max = votacionPanelMaxVotos || 0;
     const usados = votacionPanelVotosUsados || 0;
+
+    // Modo solo lectura (por ejemplo, auxiliar dueño de la materia)
+    if (!votacionPanelPuedeVotar) {
+        if (votacionPanelHeaderTextEl) {
+            if (votacionPanelEsAuxiliarMateria) {
+                votacionPanelHeaderTextEl.textContent =
+                    'Estás viendo el estado de los votos de tu auxiliatura. Aquí se muestran los bloques y cuántos votos tienen, pero tú no puedes emitir votos en tu propia auxiliatura.';
+            } else {
+                votacionPanelHeaderTextEl.textContent =
+                    'Solo puedes ver el estado de los votos de esta auxiliatura. No tienes permisos para emitir o eliminar votos.';
+            }
+        }
+        if (votacionPanelCounterEl) {
+            votacionPanelCounterEl.textContent = '';
+        }
+        return;
+    }
 
     if (votacionPanelHeaderTextEl) {
         if (max === 1) {
@@ -638,6 +657,7 @@ function abrirVotacionPopover(slot, cardEl) {
         : '-';
     const porcentaje = slot.porcentaje_disponibles != null ? `${slot.porcentaje_disponibles}%` : '-';
     const aulas = slot.aulas_disponibles != null ? slot.aulas_disponibles : 0;
+    const votosSlot = typeof slot.votos_slot === 'number' ? slot.votos_slot : 0;
     const estadoTexto = slot.estado === 'recomendada'
         ? 'Recomendado'
         : slot.estado === 'no_disponible'
@@ -649,10 +669,83 @@ function abrirVotacionPopover(slot, cardEl) {
     const max = votacionPanelMaxVotos || 0;
     const usados = votacionPanelVotosUsados || 0;
     const alLimite = max > 0 && usados >= max;
+    const noDisponible = slot.estado === 'no_disponible';
+    const soloLectura = !votacionPanelPuedeVotar;
 
     let innerHtml = '';
 
-    if (!yaVotado && alLimite && max > 0) {
+    if (noDisponible) {
+        innerHtml = `
+          <div class="admin-horario-actions-header">
+            <div class="admin-horario-actions-header-main">
+              <div class="admin-horario-actions-title">Horario no disponible</div>
+              <div class="admin-horario-actions-subtitle">${escapeHtml(diaNombre)} · ${escapeHtml(rango)}</div>
+            </div>
+            <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+          </div>
+          <div class="admin-horario-actions-details">
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estado</span>
+              <span class="admin-horario-actions-detail-value">${escapeHtml(estadoTexto)}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Aulas</span>
+              <span class="admin-horario-actions-detail-value">${aulas}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Votos en este horario</span>
+              <span class="admin-horario-actions-detail-value">${votosSlot}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Motivo</span>
+              <span class="admin-horario-actions-detail-value">
+                Este bloque no admite votos porque el auxiliar tiene clases en ese horario o no hay aulas disponibles.
+              </span>
+            </div>
+          </div>
+          <div class="admin-horario-actions-buttons">
+            <button type="button" class="btn btn-primary btn-sm" data-action="aceptar">Aceptar</button>
+          </div>
+        `;
+    } else if (soloLectura) {
+        innerHtml = `
+          <div class="admin-horario-actions-header">
+            <div class="admin-horario-actions-header-main">
+              <div class="admin-horario-actions-title">Detalle del horario</div>
+              <div class="admin-horario-actions-subtitle">${escapeHtml(diaNombre)} · ${escapeHtml(rango)}</div>
+            </div>
+            <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+          </div>
+          <div class="admin-horario-actions-details">
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estado</span>
+              <span class="admin-horario-actions-detail-value">${escapeHtml(estadoTexto)}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Aulas</span>
+              <span class="admin-horario-actions-detail-value">${aulas}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estudiantes</span>
+              <span class="admin-horario-actions-detail-value">${fraccion} (${porcentaje})</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Votos en este horario</span>
+              <span class="admin-horario-actions-detail-value">${votosSlot}</span>
+            </div>
+            ${votacionPanelEsAuxiliarMateria ? `
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Modo</span>
+              <span class="admin-horario-actions-detail-value">
+                Solo visualización. Como auxiliar de esta materia no puedes emitir votos.
+              </span>
+            </div>` : ''}
+          </div>
+          <div class="admin-horario-actions-buttons">
+            <button type="button" class="btn btn-primary btn-sm" data-action="aceptar">Aceptar</button>
+          </div>
+        `;
+    } else if (!yaVotado && alLimite && max > 0) {
         innerHtml = `
           <div class="admin-horario-actions-header">
             <div class="admin-horario-actions-header-main">
@@ -700,6 +793,10 @@ function abrirVotacionPopover(slot, cardEl) {
               <span class="admin-horario-actions-detail-value">${fraccion} (${porcentaje})</span>
             </div>
             <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Votos en este horario</span>
+              <span class="admin-horario-actions-detail-value">${votosSlot}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
               <span class="admin-horario-actions-detail-label">Tus votos</span>
               <span class="admin-horario-actions-detail-value">${usados} de ${max || '—'}</span>
             </div>
@@ -731,6 +828,10 @@ function abrirVotacionPopover(slot, cardEl) {
             <div class="admin-horario-actions-detail-row">
               <span class="admin-horario-actions-detail-label">Estudiantes</span>
               <span class="admin-horario-actions-detail-value">${fraccion} (${porcentaje})</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Votos en este horario</span>
+              <span class="admin-horario-actions-detail-value">${votosSlot}</span>
             </div>
             ${max > 0 ? `
             <div class="admin-horario-actions-detail-row">
@@ -832,6 +933,9 @@ async function cargarDisponibilidadVotacion(auxMateriaId) {
             misVotos.map((v) => `${v.dia_semana}|${typeof v.hora_inicio === 'string' ? v.hora_inicio.substring(0, 5) : v.hora_inicio}`),
         );
 
+        votacionPanelPuedeVotar = data.puede_votar !== false;
+        votacionPanelEsAuxiliarMateria = !!data.es_auxiliar_de_la_materia;
+
         actualizarHeaderVotacion();
         renderizarVotacionDisponibilidad(data);
     } catch (error) {
@@ -872,6 +976,7 @@ function renderizarVotacionDisponibilidad(payload) {
         const dispEst = item.estudiantes_disponibles ?? null;
         const porc = item.porcentaje_disponibles;
         const aulasCantidad = item.aulas_disponibles ?? 0;
+        const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
 
         const card = document.createElement('div');
         card.className = 'votacion-slot-card';
@@ -885,10 +990,16 @@ function renderizarVotacionDisponibilidad(payload) {
 
         const key = `${dia}|${horaInicio}`;
         const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
-        const votarLabel = yaVotado ? 'Tu voto' : 'Votar';
-        const votosResumenTexto = votacionPanelMaxVotos
-            ? `Tus votos: ${votacionPanelVotosUsados}/${votacionPanelMaxVotos}`
-            : '';
+        const noDisponible = estado === 'no_disponible';
+
+        let votarLabel;
+        if (noDisponible) {
+            votarLabel = 'No disponible';
+        } else {
+            votarLabel = yaVotado ? 'Tu voto' : 'Votar';
+        }
+
+        const votosResumenTexto = `${votosSlot} voto${votosSlot === 1 ? '' : 's'}`;
 
         let fraccionTexto = '-';
         if (dispEst != null && totalEst != null) {
@@ -900,7 +1011,7 @@ function renderizarVotacionDisponibilidad(payload) {
             porcentajeTexto = `${porc}%`;
         }
 
-        if (yaVotado) {
+        if (yaVotado && !noDisponible) {
             card.classList.add('votacion-slot-mio');
         }
 
@@ -943,6 +1054,7 @@ function renderizarVotacionDisponibilidad(payload) {
                 estudiantes_disponibles: dispEst,
                 porcentaje_disponibles: porc,
                 aulas_disponibles: aulasCantidad,
+                votos_slot: votosSlot,
             };
             abrirVotacionPopover(slotInfo, card);
         });
@@ -953,6 +1065,11 @@ function renderizarVotacionDisponibilidad(payload) {
 
 async function enviarVotoActual(accion) {
     if (!votacionPanelSlotSeleccionado) return;
+
+    // Seguridad adicional en el frontend: no intentar votar si el usuario no puede
+    // o si el slot está marcado como no disponible.
+    if (!votacionPanelPuedeVotar) return;
+    if (votacionPanelSlotSeleccionado.estado === 'no_disponible') return;
 
     const params = new URLSearchParams(window.location.search);
     const auxMateriaIdRaw = params.get('auxMateriaId');
