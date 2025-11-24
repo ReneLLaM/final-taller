@@ -428,6 +428,7 @@ function navigateToSection(section) {
         window.history.pushState({}, '', url);
         seccionActual = section;
         updateBreadcrumbPath(section);
+        actualizarHeaderVotacion();
         // Asegurar desactivación de edición al cambiar de sección
         desactivarEdicionHorario();
         inicializarToggleEdicionHorario();
@@ -452,6 +453,7 @@ window.addEventListener('popstate', () => {
     const section = params.get('section');
     seccionActual = section;
     updateBreadcrumbPath(section);
+    actualizarHeaderVotacion();
 });
 
 // Función para renderizar las clases en el grid
@@ -541,13 +543,267 @@ let votacionPanelVotosUsados = 0;
 let votacionPanelMisVotosSet = new Set();
 let votacionPanelSlotSeleccionado = null;
 
-const votacionSlotModal = document.getElementById('votacionSlotModal');
-const votacionSlotModalTitle = document.getElementById('votacionSlotModalTitle');
-const votacionSlotModalDescription = document.getElementById('votacionSlotModalDescription');
-const votacionSlotModalInfo = document.getElementById('votacionSlotModalInfo');
-const votacionSlotModalMessage = document.getElementById('votacionSlotModalMessage');
-const btnVotacionSlotConfirm = document.getElementById('btnVotacionSlotConfirm');
-const btnVotacionSlotDelete = document.getElementById('btnVotacionSlotDelete');
+const votacionPanelHeaderEl = document.getElementById('votacionPanelHeader');
+const votacionPanelHeaderTextEl = document.getElementById('votacionPanelHeaderText');
+const votacionPanelCounterEl = document.getElementById('votacionPanelCounter');
+
+let votacionSlotPopover = null;
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function actualizarHeaderVotacion() {
+    if (!votacionPanelHeaderEl) return;
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    const visible = section === 'votacion-panel';
+    votacionPanelHeaderEl.hidden = !visible;
+    if (!visible) return;
+
+    const max = votacionPanelMaxVotos || 0;
+    const usados = votacionPanelVotosUsados || 0;
+
+    if (votacionPanelHeaderTextEl) {
+        if (max === 1) {
+            votacionPanelHeaderTextEl.textContent =
+                'Para esta auxiliatura debes emitir 1 voto. Elige el bloque donde mejor te acomode asistir. Mientras la votación esté activa, puedes cambiar tu voto eliminándolo y luego votando en otro bloque.';
+        } else if (max > 1) {
+            votacionPanelHeaderTextEl.textContent =
+                `Para esta auxiliatura debes emitir ${max} votos. Elige los bloques donde podrías asistir con mayor comodidad. Mientras la votación esté activa, puedes mover tus votos eliminando uno y luego votando en otro horario.`;
+        } else {
+            votacionPanelHeaderTextEl.textContent =
+                'Haz clic sobre los bloques del horario para emitir o eliminar tus votos mientras la votación esté activa.';
+        }
+    }
+
+    if (votacionPanelCounterEl) {
+        if (max > 0) {
+            votacionPanelCounterEl.textContent = `Tus votos: ${usados} de ${max}`;
+        } else {
+            votacionPanelCounterEl.textContent = '';
+        }
+    }
+}
+
+function cerrarVotacionPopover() {
+    if (!votacionSlotPopover) return;
+    votacionSlotPopover.classList.remove('show');
+    votacionSlotPopover.style.display = 'none';
+    votacionPanelSlotSeleccionado = null;
+}
+
+function crearVotacionPopover() {
+    if (votacionSlotPopover) return votacionSlotPopover;
+    votacionSlotPopover = document.createElement('div');
+    votacionSlotPopover.className = 'admin-horario-actions-popover';
+    document.body.appendChild(votacionSlotPopover);
+
+    document.addEventListener('click', (e) => {
+        if (!votacionSlotPopover) return;
+        if (votacionSlotPopover.contains(e.target)) return;
+        if (e.target.closest('.votacion-slot-card')) return;
+        cerrarVotacionPopover();
+    });
+
+    window.addEventListener('scroll', () => {
+        cerrarVotacionPopover();
+    });
+
+    window.addEventListener('resize', () => {
+        cerrarVotacionPopover();
+    });
+
+    return votacionSlotPopover;
+}
+
+function abrirVotacionPopover(slot, cardEl) {
+    if (!slot || !cardEl) return;
+    const pop = crearVotacionPopover();
+    votacionPanelSlotSeleccionado = slot;
+
+    const diaNum = parseInt(slot.dia_semana, 10) || 1;
+    const diaNombre = typeof window.nombreDia === 'function'
+        ? window.nombreDia(diaNum)
+        : `Día ${diaNum}`;
+    const rango = `${slot.hora_inicio || '--:--'} - ${slot.hora_fin || '--:--'}`;
+    const fraccion = slot.estudiantes_disponibles != null && slot.total_estudiantes != null
+        ? `${slot.estudiantes_disponibles}/${slot.total_estudiantes}`
+        : '-';
+    const porcentaje = slot.porcentaje_disponibles != null ? `${slot.porcentaje_disponibles}%` : '-';
+    const aulas = slot.aulas_disponibles != null ? slot.aulas_disponibles : 0;
+    const estadoTexto = slot.estado === 'recomendada'
+        ? 'Recomendado'
+        : slot.estado === 'no_disponible'
+            ? 'No disponible'
+            : 'Neutral';
+
+    const key = `${diaNum}|${slot.hora_inicio}`;
+    const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
+    const max = votacionPanelMaxVotos || 0;
+    const usados = votacionPanelVotosUsados || 0;
+    const alLimite = max > 0 && usados >= max;
+
+    let innerHtml = '';
+
+    if (!yaVotado && alLimite && max > 0) {
+        innerHtml = `
+          <div class="admin-horario-actions-header">
+            <div class="admin-horario-actions-header-main">
+              <div class="admin-horario-actions-title">Límite de votos alcanzado</div>
+              <div class="admin-horario-actions-subtitle">${escapeHtml(diaNombre)} · ${escapeHtml(rango)}</div>
+            </div>
+            <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+          </div>
+          <div class="admin-horario-actions-details">
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Tus votos</span>
+              <span class="admin-horario-actions-detail-value">${usados} de ${max}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Instrucción</span>
+              <span class="admin-horario-actions-detail-value">
+                Debes eliminar uno de tus votos actuales para poder votar en otro horario.
+              </span>
+            </div>
+          </div>
+          <div class="admin-horario-actions-buttons">
+            <button type="button" class="btn btn-primary btn-sm" data-action="aceptar">Aceptar</button>
+          </div>
+        `;
+    } else if (yaVotado) {
+        innerHtml = `
+          <div class="admin-horario-actions-header">
+            <div class="admin-horario-actions-header-main">
+              <div class="admin-horario-actions-title">Tu voto en este bloque</div>
+              <div class="admin-horario-actions-subtitle">${escapeHtml(diaNombre)} · ${escapeHtml(rango)}</div>
+            </div>
+            <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+          </div>
+          <div class="admin-horario-actions-details">
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estado</span>
+              <span class="admin-horario-actions-detail-value">${escapeHtml(estadoTexto)}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Aulas</span>
+              <span class="admin-horario-actions-detail-value">${aulas}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estudiantes</span>
+              <span class="admin-horario-actions-detail-value">${fraccion} (${porcentaje})</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Tus votos</span>
+              <span class="admin-horario-actions-detail-value">${usados} de ${max || '—'}</span>
+            </div>
+          </div>
+          <div class="message info" data-votacion-message style="display:none;"></div>
+          <div class="admin-horario-actions-buttons">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="cancelar">Cancelar</button>
+            <button type="button" class="btn btn-secondary btn-sm admin-btn-danger" data-action="eliminar">Eliminar voto</button>
+          </div>
+        `;
+    } else {
+        innerHtml = `
+          <div class="admin-horario-actions-header">
+            <div class="admin-horario-actions-header-main">
+              <div class="admin-horario-actions-title">Votar en este horario</div>
+              <div class="admin-horario-actions-subtitle">${escapeHtml(diaNombre)} · ${escapeHtml(rango)}</div>
+            </div>
+            <button type="button" class="admin-horario-actions-close" aria-label="Cerrar">&times;</button>
+          </div>
+          <div class="admin-horario-actions-details">
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estado</span>
+              <span class="admin-horario-actions-detail-value">${escapeHtml(estadoTexto)}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Aulas</span>
+              <span class="admin-horario-actions-detail-value">${aulas}</span>
+            </div>
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Estudiantes</span>
+              <span class="admin-horario-actions-detail-value">${fraccion} (${porcentaje})</span>
+            </div>
+            ${max > 0 ? `
+            <div class="admin-horario-actions-detail-row">
+              <span class="admin-horario-actions-detail-label">Tus votos</span>
+              <span class="admin-horario-actions-detail-value">${usados} de ${max}</span>
+            </div>` : ''}
+          </div>
+          <div class="message info" data-votacion-message style="display:none;"></div>
+          <div class="admin-horario-actions-buttons">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="cancelar">Cancelar</button>
+            <button type="button" class="btn btn-primary btn-sm" data-action="votar">Votar aquí</button>
+          </div>
+        `;
+    }
+
+    pop.innerHTML = innerHtml;
+
+    const closeBtn = pop.querySelector('.admin-horario-actions-close');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            cerrarVotacionPopover();
+        };
+    }
+
+    const btnAceptar = pop.querySelector('[data-action="aceptar"]');
+    if (btnAceptar) {
+        btnAceptar.onclick = () => {
+            cerrarVotacionPopover();
+        };
+    }
+
+    const btnCancelar = pop.querySelector('[data-action="cancelar"]');
+    if (btnCancelar) {
+        btnCancelar.onclick = () => {
+            cerrarVotacionPopover();
+        };
+    }
+
+    const btnVotar = pop.querySelector('[data-action="votar"]');
+    if (btnVotar) {
+        btnVotar.onclick = () => {
+            enviarVotoActual('crear');
+        };
+    }
+
+    const btnEliminar = pop.querySelector('[data-action="eliminar"]');
+    if (btnEliminar) {
+        btnEliminar.onclick = () => {
+            enviarVotoActual('eliminar');
+        };
+    }
+
+    pop.style.visibility = 'hidden';
+    pop.classList.add('show');
+    pop.style.display = 'block';
+
+    const rect = cardEl.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    let top = rect.bottom + 8;
+    if (top + popRect.height + 8 > window.innerHeight) {
+        top = rect.top - popRect.height - 8;
+    }
+    const baseCenter = rect.left + rect.width / 2;
+    const padding = 12;
+    const halfWidth = popRect.width / 2;
+    const minCenter = padding + halfWidth;
+    const maxCenterPos = window.innerWidth - padding - halfWidth;
+    const center = Math.max(minCenter, Math.min(baseCenter, maxCenterPos));
+
+    pop.style.top = `${Math.max(8, top)}px`;
+    pop.style.left = `${center}px`;
+    pop.style.visibility = 'visible';
+}
 
 async function cargarDisponibilidadVotacion(auxMateriaId) {
     try {
@@ -576,6 +832,7 @@ async function cargarDisponibilidadVotacion(auxMateriaId) {
             misVotos.map((v) => `${v.dia_semana}|${typeof v.hora_inicio === 'string' ? v.hora_inicio.substring(0, 5) : v.hora_inicio}`),
         );
 
+        actualizarHeaderVotacion();
         renderizarVotacionDisponibilidad(data);
     } catch (error) {
         console.error('Error al cargar disponibilidad de votación:', error);
@@ -628,7 +885,10 @@ function renderizarVotacionDisponibilidad(payload) {
 
         const key = `${dia}|${horaInicio}`;
         const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
-        const votarLabel = yaVotado ? 'Voto emitido' : 'Votar';
+        const votarLabel = yaVotado ? 'Tu voto' : 'Votar';
+        const votosResumenTexto = votacionPanelMaxVotos
+            ? `Tus votos: ${votacionPanelVotosUsados}/${votacionPanelMaxVotos}`
+            : '';
 
         let fraccionTexto = '-';
         if (dispEst != null && totalEst != null) {
@@ -640,9 +900,14 @@ function renderizarVotacionDisponibilidad(payload) {
             porcentajeTexto = `${porc}%`;
         }
 
+        if (yaVotado) {
+            card.classList.add('votacion-slot-mio');
+        }
+
         card.innerHTML = `
             <div class="votacion-slot-main">
                 <span class="votacion-slot-votar">${votarLabel}</span>
+                ${votosResumenTexto ? `<span class="votacion-slot-votos-resumen">${votosResumenTexto}</span>` : ''}
             </div>
             <div class="votacion-slot-row">
                 <span class="votacion-slot-label">Cantidad de aulas</span>
@@ -667,7 +932,8 @@ function renderizarVotacionDisponibilidad(payload) {
         card.dataset.aulasDisponibles = aulasCantidad;
 
         card.style.cursor = 'pointer';
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (event) => {
+            event.stopPropagation();
             const slotInfo = {
                 dia_semana: dia,
                 hora_inicio: horaInicio,
@@ -678,90 +944,11 @@ function renderizarVotacionDisponibilidad(payload) {
                 porcentaje_disponibles: porc,
                 aulas_disponibles: aulasCantidad,
             };
-            abrirModalVotacionSlot(slotInfo);
+            abrirVotacionPopover(slotInfo, card);
         });
 
         cell.appendChild(card);
     });
-}
-
-function abrirModalVotacionSlot(slot) {
-    if (!votacionSlotModal || !slot) return;
-
-    votacionPanelSlotSeleccionado = slot;
-
-    const diaNum = parseInt(slot.dia_semana, 10) || 1;
-    const diaNombre = typeof window.nombreDia === 'function'
-        ? window.nombreDia(diaNum)
-        : `Día ${diaNum}`;
-    const rango = `${slot.hora_inicio || '--:--'} - ${slot.hora_fin || '--:--'}`;
-    const estadoTexto = slot.estado === 'recomendada'
-        ? 'Recomendado'
-        : slot.estado === 'no_disponible'
-            ? 'No disponible'
-            : 'Neutral';
-    const fraccion = slot.estudiantes_disponibles != null && slot.total_estudiantes != null
-        ? `${slot.estudiantes_disponibles}/${slot.total_estudiantes}`
-        : '-';
-    const porcentaje = slot.porcentaje_disponibles != null ? `${slot.porcentaje_disponibles}%` : '-';
-    const aulas = slot.aulas_disponibles != null ? slot.aulas_disponibles : 0;
-
-    const key = `${diaNum}|${slot.hora_inicio}`;
-    const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
-
-    if (votacionSlotModalTitle) {
-        votacionSlotModalTitle.textContent = yaVotado ? 'Eliminar voto' : 'Votar en este horario';
-    }
-
-    if (votacionSlotModalDescription) {
-        if (yaVotado) {
-            votacionSlotModalDescription.textContent = `Ya emitiste un voto en este bloque (${diaNombre}, ${rango}). Puedes eliminarlo si deseas mover tu voto a otro horario mientras la votación siga activa.`;
-        } else {
-            const totalVotos = votacionPanelMaxVotos || 0;
-            votacionSlotModalDescription.textContent = totalVotos
-                ? `Para esta auxiliatura debes emitir ${totalVotos} voto(s). Elige cuidadosamente los bloques donde podrías asistir con mayor comodidad. Podrás cambiar tus votos mientras la votación esté activa eliminando uno y volviendo a votar en otro horario.`
-                : 'Elige este bloque si es un horario en el que podrías asistir a la auxiliatura. Podrás cambiar tu voto mientras la votación esté activa.';
-        }
-    }
-
-    if (votacionSlotModalInfo) {
-        votacionSlotModalInfo.innerHTML = `
-            <div><strong>${diaNombre}</strong> · ${rango}</div>
-            <div>Aulas disponibles: <strong>${aulas}</strong></div>
-            <div>Disponibilidad de estudiantes: <strong>${fraccion} (${porcentaje})</strong></div>
-            <div>Estado del bloque: <strong>${estadoTexto}</strong></div>
-            <div>Votos usados: <strong>${votacionPanelVotosUsados}</strong> de <strong>${votacionPanelMaxVotos}</strong></div>
-        `;
-    }
-
-    if (votacionSlotModalMessage) {
-        votacionSlotModalMessage.style.display = 'none';
-        votacionSlotModalMessage.textContent = '';
-    }
-
-    if (btnVotacionSlotDelete) {
-        btnVotacionSlotDelete.style.display = yaVotado ? 'inline-flex' : 'none';
-    }
-
-    if (btnVotacionSlotConfirm) {
-        btnVotacionSlotConfirm.style.display = yaVotado ? 'none' : 'inline-flex';
-        btnVotacionSlotConfirm.disabled = false;
-        if (!yaVotado && votacionPanelMaxVotos && votacionPanelVotosUsados >= votacionPanelMaxVotos) {
-            btnVotacionSlotConfirm.disabled = true;
-            if (votacionSlotModalMessage) {
-                votacionSlotModalMessage.className = 'message info';
-                votacionSlotModalMessage.textContent = 'Ya utilizaste todos tus votos. Elimina uno antes de volver a votar.';
-                votacionSlotModalMessage.style.display = 'block';
-            }
-        }
-    }
-
-    if (typeof mostrarModal === 'function') {
-        mostrarModal(votacionSlotModal);
-    } else {
-        votacionSlotModal.classList.add('show');
-        votacionSlotModal.setAttribute('aria-hidden', 'false');
-    }
 }
 
 async function enviarVotoActual(accion) {
@@ -772,10 +959,14 @@ async function enviarVotoActual(accion) {
     const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
     if (!auxMateriaId || Number.isNaN(auxMateriaId)) return;
 
-    if (votacionSlotModalMessage) {
-        votacionSlotModalMessage.className = 'message info';
-        votacionSlotModalMessage.textContent = accion === 'crear' ? 'Registrando voto...' : 'Eliminando voto...';
-        votacionSlotModalMessage.style.display = 'block';
+    let messageEl = null;
+    if (votacionSlotPopover) {
+        messageEl = votacionSlotPopover.querySelector('[data-votacion-message]');
+    }
+    if (messageEl) {
+        messageEl.className = 'message info';
+        messageEl.textContent = accion === 'crear' ? 'Registrando voto...' : 'Eliminando voto...';
+        messageEl.style.display = 'block';
     }
 
     const payload = {
@@ -797,10 +988,10 @@ async function enviarVotoActual(accion) {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            if (votacionSlotModalMessage) {
-                votacionSlotModalMessage.className = 'message error';
-                votacionSlotModalMessage.textContent = data.message || 'No se pudo procesar el voto';
-                votacionSlotModalMessage.style.display = 'block';
+            if (messageEl) {
+                messageEl.className = 'message error';
+                messageEl.textContent = data.message || 'No se pudo procesar el voto';
+                messageEl.style.display = 'block';
             }
             return;
         }
@@ -819,34 +1010,16 @@ async function enviarVotoActual(accion) {
             votacionPanelMisVotosSet.delete(key);
         }
 
-        if (typeof cerrarModal === 'function') {
-            cerrarModal(votacionSlotModal);
-        } else if (votacionSlotModal) {
-            votacionSlotModal.classList.remove('show');
-            votacionSlotModal.setAttribute('aria-hidden', 'true');
-        }
-
+        cerrarVotacionPopover();
         await cargarDisponibilidadVotacion(auxMateriaId);
     } catch (error) {
         console.error('Error al enviar voto:', error);
-        if (votacionSlotModalMessage) {
-            votacionSlotModalMessage.className = 'message error';
-            votacionSlotModalMessage.textContent = 'Error de conexión. Intenta nuevamente.';
-            votacionSlotModalMessage.style.display = 'block';
+        if (messageEl) {
+            messageEl.className = 'message error';
+            messageEl.textContent = 'Error de conexión. Intenta nuevamente.';
+            messageEl.style.display = 'block';
         }
     }
-}
-
-if (btnVotacionSlotConfirm) {
-    btnVotacionSlotConfirm.addEventListener('click', () => {
-        enviarVotoActual('crear');
-    });
-}
-
-if (btnVotacionSlotDelete) {
-    btnVotacionSlotDelete.addEventListener('click', () => {
-        enviarVotoActual('eliminar');
-    });
 }
 
 // Recalcular SLOT_HEIGHT al cambiar el viewport y re-renderizar
