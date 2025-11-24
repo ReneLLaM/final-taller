@@ -12,13 +12,17 @@ const SECTION_LABELS = {
     'subir-horario': '/Subir horario'
 };
 
+let votacionPanelMateriaLabel = null;
+
 function updateBreadcrumbPath(section) {
     const pathEl = document.getElementById('breadcrumb-path');
     if (!pathEl) return;
 
     // Caso especial: panel de votación con breadcrumb navegable
     if (section === 'votacion-panel') {
-        pathEl.innerHTML = '<a href="principal.html?section=votacion" class="breadcrumb-link" data-section="votacion">Votación</a> / Panel';
+        const materiaLabel = votacionPanelMateriaLabel || 'Panel';
+        const detalle = typeof escapeHtml === 'function' ? escapeHtml(materiaLabel) : materiaLabel;
+        pathEl.innerHTML = `<a href="principal.html?section=votacion" class="breadcrumb-link" data-section="votacion">Votación</a> / ${detalle}`;
 
         const link = pathEl.querySelector('[data-section="votacion"]');
         if (link) {
@@ -546,8 +550,12 @@ let votacionPanelPuedeVotar = true;
 let votacionPanelEsAuxiliarMateria = false;
 
 const votacionPanelHeaderEl = document.getElementById('votacionPanelHeader');
+const votacionPanelHeaderTitleEl = document.getElementById('votacionPanelHeaderTitle');
 const votacionPanelHeaderTextEl = document.getElementById('votacionPanelHeaderText');
 const votacionPanelCounterEl = document.getElementById('votacionPanelCounter');
+
+const votacionResultadosSectionEl = document.getElementById('votacionResultadosSection');
+const votacionResultadosBodyEl = document.getElementById('votacionResultadosBody');
 
 let votacionSlotPopover = null;
 
@@ -948,8 +956,23 @@ async function cargarDisponibilidadVotacion(auxMateriaId) {
         votacionPanelPuedeVotar = data.puede_votar !== false;
         votacionPanelEsAuxiliarMateria = !!data.es_auxiliar_de_la_materia;
 
+        if (data.materia_nombre || data.materia_sigla) {
+            const base = data.materia_nombre || 'Auxiliatura';
+            const sigla = data.materia_sigla || '';
+            const grupo = data.grupo ? `Grupo ${data.grupo}` : '';
+            const materiaLabel = sigla ? `${sigla} · ${base}` : base;
+            votacionPanelMateriaLabel = grupo ? `${materiaLabel} (${grupo})` : materiaLabel;
+
+            if (votacionPanelHeaderTitleEl) {
+                votacionPanelHeaderTitleEl.textContent = `Votación · ${materiaLabel}`;
+            }
+
+            updateBreadcrumbPath('votacion-panel');
+        }
+
         actualizarHeaderVotacion();
         renderizarVotacionDisponibilidad(data);
+        renderizarVotacionResultadosPanel(data);
     } catch (error) {
         console.error('Error al cargar disponibilidad de votación:', error);
     }
@@ -1073,6 +1096,98 @@ function renderizarVotacionDisponibilidad(payload) {
 
         cell.appendChild(card);
     });
+}
+
+function renderizarVotacionResultadosPanel(payload) {
+    if (!votacionResultadosSectionEl || !votacionResultadosBodyEl) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section !== 'votacion-panel') {
+        votacionResultadosSectionEl.hidden = true;
+        votacionResultadosBodyEl.innerHTML = '';
+        return;
+    }
+
+    const disponibilidad = Array.isArray(payload?.disponibilidad) ? payload.disponibilidad : [];
+    const conVotos = disponibilidad.filter((item) => {
+        const votos = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+        return votos > 0;
+    });
+
+    if (!conVotos.length) {
+        votacionResultadosSectionEl.hidden = true;
+        votacionResultadosBodyEl.innerHTML = '';
+        return;
+    }
+
+    const maxVotos = typeof payload.max_votos === 'number'
+        ? payload.max_votos
+        : (payload.veces_por_semana || 0);
+    const filasPorVoto = 5;
+    const topNBase = maxVotos > 0 ? maxVotos * filasPorVoto : filasPorVoto;
+
+    const ordenados = conVotos.slice().sort((a, b) => {
+        const votosA = typeof a.votos_slot === 'number' ? a.votos_slot : 0;
+        const votosB = typeof b.votos_slot === 'number' ? b.votos_slot : 0;
+        if (votosB !== votosA) return votosB - votosA;
+        const porcA = a.porcentaje_disponibles ?? 0;
+        const porcB = b.porcentaje_disponibles ?? 0;
+        if (porcB !== porcA) return porcB - porcA;
+        if (a.dia_semana !== b.dia_semana) return a.dia_semana - b.dia_semana;
+        return String(a.hora_inicio).localeCompare(String(b.hora_inicio));
+    });
+
+    const top = ordenados.slice(0, topNBase);
+
+    const totalVotosGlobal = top.reduce((sum, item) => {
+        const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+        return sum + v;
+    }, 0);
+
+    let maxVotosSlot = 0;
+    top.forEach((item) => {
+        const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+        if (v > maxVotosSlot) maxVotosSlot = v;
+    });
+    if (maxVotosSlot <= 0) maxVotosSlot = 1;
+
+    votacionResultadosBodyEl.innerHTML = top.map((item) => {
+        const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+        const horaInicioStr = typeof item.hora_inicio === 'string'
+            ? item.hora_inicio.substring(0, 5)
+            : item.hora_inicio;
+        const horaFinStr = typeof item.hora_fin === 'string'
+            ? item.hora_fin.substring(0, 5)
+            : item.hora_fin;
+        const rango = `${horaInicioStr || '--:--'} - ${horaFinStr || '--:--'}`;
+        const diaNum = parseInt(item.dia_semana, 10) || 1;
+        const diaNombre = typeof window.nombreDia === 'function'
+            ? window.nombreDia(diaNum)
+            : `Día ${diaNum}`;
+        const porcentajeVotos = totalVotosGlobal > 0
+            ? Math.round((votosSlot * 100) / totalVotosGlobal)
+            : 0;
+        const barWidth = Math.round((votosSlot * 100) / maxVotosSlot);
+        const aula = item.aula_sugerida || '—';
+
+        return `
+          <tr>
+            <td>${escapeHtml(rango)}</td>
+            <td>${escapeHtml(diaNombre)}</td>
+            <td>
+              <div class="admin-chart-bar-track">
+                <div class="admin-chart-bar-fill chart-aulas" style="width:${barWidth}%;"></div>
+              </div>
+            </td>
+            <td class="admin-chart-bar-number">${porcentajeVotos}%</td>
+            <td class="admin-chart-bar-number">${votosSlot}</td>
+            <td>${escapeHtml(aula)}</td>
+          </tr>
+        `;
+    }).join('');
+
+    votacionResultadosSectionEl.hidden = false;
 }
 
 async function enviarVotoActual(accion) {

@@ -56,145 +56,166 @@
           </table>
         </div>
       </div>
+    </section>
 
-      <section id="auxMatVotacionSection" class="aux-matricula-votacion-section" hidden>
-        <h3 class="aux-matricula-inscritos-title">Estado de votación de la auxiliatura</h3>
-        <p class="aux-matricula-empty" id="auxMatVotacionEstadoTexto">
-          Aquí verás cómo van los votos por horario cuando la votación esté activa.
-        </p>
-        <div id="auxMatVotacionHorarioWrapper" class="horario-wrapper" hidden>
-          <!-- Reutilizamos el mismo layout de horario del dashboard para mostrar la votación en modo solo lectura -->
-          <div class="horario-grid" id="auxMatVotacionGrid">
-            <div class="time-column header-cell"></div>
-            <div class="day-header">Lunes</div>
-            <div class="day-header">Martes</div>
-            <div class="day-header">Miércoles</div>
-            <div class="day-header">Jueves</div>
-            <div class="day-header">Viernes</div>
-            <div class="day-header">Sábado</div>
+    <section id="auxMatVotacionSection" class="aux-matricula-votacion-section" hidden>
+      <h3 class="aux-matricula-inscritos-title">Estado de votación de la auxiliatura</h3>
+      <p class="aux-matricula-empty" id="auxMatVotacionEstadoTexto">
+        Aquí verás cómo van los votos por horario cuando la votación esté activa.
+      </p>
+      <div id="auxMatVotacionHorarioWrapper" class="horario-wrapper" hidden>
+        <!-- Reutilizamos el mismo layout de horario del dashboard para mostrar la votación en modo solo lectura -->
+        <div class="horario-grid" id="auxMatVotacionGrid">
+          <div class="time-column header-cell"></div>
+          <div class="day-header">Lunes</div>
+          <div class="day-header">Martes</div>
+          <div class="day-header">Miércoles</div>
+          <div class="day-header">Jueves</div>
+          <div class="day-header">Viernes</div>
+          <div class="day-header">Sábado</div>
 
-            <div class="time-slot">07:00 - 08:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="07:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="07:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="07:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="07:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="07:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="07:00"></div>
+          <div class="time-slot">07:00 - 08:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="07:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="07:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="07:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="07:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="07:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="07:00"></div>
 
-            <div class="time-slot reducir-separacion">08:00 - 09:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="08:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="08:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="08:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="08:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="08:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="08:00"></div>
+          <div class="time-slot reducir-separacion">08:00 - 09:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="08:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="08:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="08:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="08:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="08:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="08:00"></div>
 
-            <div class="time-slot">09:00 - 10:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="09:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="09:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="09:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="09:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="09:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="09:00"></div>
+          <div class="time-slot">09:00 - 10:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="09:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="09:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="09:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="09:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="09:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="09:00"></div>
 
-            <div class="time-slot reducir-separacion">10:00 - 11:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="10:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="10:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="10:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="10:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="10:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="10:00"></div>
+          <div class="time-slot reducir-separacion">10:00 - 11:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="10:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="10:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="10:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="10:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="10:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="10:00"></div>
 
-            <div class="time-slot">11:00 - 12:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="11:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="11:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="11:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="11:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="11:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="11:00"></div>
+          <div class="time-slot">11:00 - 12:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="11:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="11:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="11:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="11:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="11:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="11:00"></div>
 
-            <div class="time-slot reducir-separacion">12:00 - 13:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="12:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="12:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="12:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="12:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="12:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="12:00"></div>
+          <div class="time-slot reducir-separacion">12:00 - 13:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="12:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="12:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="12:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="12:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="12:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="12:00"></div>
 
-            <div class="time-slot centrar-separacion">13:00 - 14:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="13:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="13:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="13:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="13:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="13:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="13:00"></div>
+          <div class="time-slot centrar-separacion">13:00 - 14:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="13:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="13:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="13:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="13:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="13:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="13:00"></div>
 
-            <div class="time-slot">14:00 - 15:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="14:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="14:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="14:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="14:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="14:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="14:00"></div>
+          <div class="time-slot">14:00 - 15:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="14:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="14:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="14:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="14:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="14:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="14:00"></div>
 
-            <div class="time-slot reducir-separacion">15:00 - 16:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="15:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="15:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="15:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="15:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="15:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="15:00"></div>
+          <div class="time-slot reducir-separacion">15:00 - 16:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="15:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="15:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="15:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="15:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="15:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="15:00"></div>
 
-            <div class="time-slot">16:00 - 17:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="16:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="16:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="16:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="16:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="16:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="16:00"></div>
+          <div class="time-slot">16:00 - 17:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="16:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="16:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="16:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="16:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="16:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="16:00"></div>
 
-            <div class="time-slot reducir-separacion">17:00 - 18:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="17:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="17:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="17:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="17:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="17:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="17:00"></div>
+          <div class="time-slot reducir-separacion">17:00 - 18:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="17:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="17:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="17:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="17:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="17:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="17:00"></div>
 
-            <div class="time-slot">18:00 - 19:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="18:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="18:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="18:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="18:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="18:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="18:00"></div>
+          <div class="time-slot">18:00 - 19:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="18:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="18:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="18:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="18:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="18:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="18:00"></div>
 
-            <div class="time-slot reducir-separacion">19:00 - 20:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="19:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="19:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="19:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="19:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="19:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="19:00"></div>
+          <div class="time-slot reducir-separacion">19:00 - 20:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="19:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="19:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="19:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="19:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="19:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="19:00"></div>
 
-            <div class="time-slot">20:00 - 21:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="20:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="20:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="20:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="20:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="20:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="20:00"></div>
+          <div class="time-slot">20:00 - 21:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="20:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="20:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="20:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="20:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="20:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="20:00"></div>
 
-            <div class="time-slot reducir-separacion">21:00 - 22:00</div>
-            <div class="schedule-cell" data-dia="1" data-hora="21:00"></div>
-            <div class="schedule-cell" data-dia="2" data-hora="21:00"></div>
-            <div class="schedule-cell" data-dia="3" data-hora="21:00"></div>
-            <div class="schedule-cell" data-dia="4" data-hora="21:00"></div>
-            <div class="schedule-cell" data-dia="5" data-hora="21:00"></div>
-            <div class="schedule-cell" data-dia="6" data-hora="21:00"></div>
-          </div>
+          <div class="time-slot reducir-separacion">21:00 - 22:00</div>
+          <div class="schedule-cell" data-dia="1" data-hora="21:00"></div>
+          <div class="schedule-cell" data-dia="2" data-hora="21:00"></div>
+          <div class="schedule-cell" data-dia="3" data-hora="21:00"></div>
+          <div class="schedule-cell" data-dia="4" data-hora="21:00"></div>
+          <div class="schedule-cell" data-dia="5" data-hora="21:00"></div>
+          <div class="schedule-cell" data-dia="6" data-hora="21:00"></div>
         </div>
-      </section>
+      </div>
+    </section>
+
+    <section id="auxMatVotacionResultadosSection" class="aux-matricula-votacion-section" hidden>
+      <div class="aux-matricula-inscritos">
+        <h3 class="aux-matricula-inscritos-title">Resultado actual de votaciones</h3>
+        <div class="users-table-wrapper">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Dia</th>
+                <th>Popularidad</th>
+                <th>%</th>
+                <th>Total</th>
+                <th>Aula</th>
+              </tr>
+            </thead>
+            <tbody id="auxMatVotacionResultadosBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
   </main>
 

@@ -14,6 +14,8 @@
     votacionEstadoTexto: document.getElementById('auxMatVotacionEstadoTexto'),
     votacionHorarioWrapper: document.getElementById('auxMatVotacionHorarioWrapper'),
     votacionGrid: document.getElementById('auxMatVotacionGrid'),
+    votacionResultadosSection: document.getElementById('auxMatVotacionResultadosSection'),
+    votacionResultadosBody: document.getElementById('auxMatVotacionResultadosBody'),
   };
 
   const state = {
@@ -29,6 +31,21 @@
   };
 
   let estudiantePendienteEliminar = null;
+
+  function nombreDiaLocal(dia) {
+    const nombres = [null, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return nombres[dia] || 'Día';
+  }
+
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
   function setDetalleMessage(type, text) {
     const el = els.detalleMessage;
@@ -143,6 +160,10 @@
           els.votacionEstadoTexto.textContent = data.message || 'No se pudo cargar el estado de votación.';
         }
         els.votacionHorarioWrapper.hidden = true;
+        if (els.votacionResultadosSection && els.votacionResultadosBody) {
+          els.votacionResultadosSection.hidden = true;
+          els.votacionResultadosBody.innerHTML = '';
+        }
         return;
       }
 
@@ -152,10 +173,16 @@
           els.votacionEstadoTexto.textContent = 'No hay bloques configurados para mostrar disponibilidad.';
         }
         els.votacionHorarioWrapper.hidden = true;
+        if (els.votacionResultadosSection && els.votacionResultadosBody) {
+          els.votacionResultadosSection.hidden = true;
+          els.votacionResultadosBody.innerHTML = '';
+        }
         return;
       }
 
       els.votacionHorarioWrapper.hidden = false;
+
+      renderVotacionResultadosAux(data);
 
       disponibilidad.forEach((item) => {
         const dia = parseInt(item.dia_semana, 10);
@@ -222,7 +249,95 @@
         els.votacionEstadoTexto.textContent = 'Error de conexión al cargar el estado de votación.';
       }
       els.votacionHorarioWrapper.hidden = true;
+      if (els.votacionResultadosSection && els.votacionResultadosBody) {
+        els.votacionResultadosSection.hidden = true;
+        els.votacionResultadosBody.innerHTML = '';
+      }
     }
+  }
+
+  function renderVotacionResultadosAux(payload) {
+    const section = els.votacionResultadosSection;
+    const tbody = els.votacionResultadosBody;
+    if (!section || !tbody) return;
+
+    const disponibilidad = Array.isArray(payload?.disponibilidad) ? payload.disponibilidad : [];
+    const conVotos = disponibilidad.filter((item) => {
+      const votos = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+      return votos > 0;
+    });
+
+    if (!conVotos.length) {
+      section.hidden = true;
+      tbody.innerHTML = '';
+      return;
+    }
+
+    const maxVotos = typeof payload.max_votos === 'number'
+      ? payload.max_votos
+      : (payload.veces_por_semana || 0);
+    const filasPorVoto = 5;
+    const topNBase = maxVotos > 0 ? maxVotos * filasPorVoto : filasPorVoto;
+
+    const ordenados = conVotos.slice().sort((a, b) => {
+      const votosA = typeof a.votos_slot === 'number' ? a.votos_slot : 0;
+      const votosB = typeof b.votos_slot === 'number' ? b.votos_slot : 0;
+      if (votosB !== votosA) return votosB - votosA;
+      const porcA = a.porcentaje_disponibles ?? 0;
+      const porcB = b.porcentaje_disponibles ?? 0;
+      if (porcB !== porcA) return porcB - porcA;
+      if (a.dia_semana !== b.dia_semana) return a.dia_semana - b.dia_semana;
+      return String(a.hora_inicio).localeCompare(String(b.hora_inicio));
+    });
+
+    const top = ordenados.slice(0, topNBase);
+
+    const totalVotosGlobal = top.reduce((sum, item) => {
+      const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+      return sum + v;
+    }, 0);
+
+    let maxVotosSlot = 0;
+    top.forEach((item) => {
+      const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+      if (v > maxVotosSlot) maxVotosSlot = v;
+    });
+    if (maxVotosSlot <= 0) maxVotosSlot = 1;
+
+    tbody.innerHTML = top.map((item) => {
+      const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+      const horaInicioStr = typeof item.hora_inicio === 'string'
+        ? item.hora_inicio.substring(0, 5)
+        : item.hora_inicio;
+      const horaFinStr = typeof item.hora_fin === 'string'
+        ? item.hora_fin.substring(0, 5)
+        : item.hora_fin;
+      const rango = `${horaInicioStr || '--:--'} - ${horaFinStr || '--:--'}`;
+      const diaNum = parseInt(item.dia_semana, 10) || 1;
+      const diaNombre = nombreDiaLocal(diaNum);
+      const porcentajeVotos = totalVotosGlobal > 0
+        ? Math.round((votosSlot * 100) / totalVotosGlobal)
+        : 0;
+      const barWidth = Math.round((votosSlot * 100) / maxVotosSlot);
+      const aula = item.aula_sugerida || '—';
+
+      return `
+        <tr>
+          <td>${escapeHtml(rango)}</td>
+          <td>${escapeHtml(diaNombre)}</td>
+          <td>
+            <div class="admin-chart-bar-track">
+              <div class="admin-chart-bar-fill chart-aulas" style="width:${barWidth}%;"></div>
+            </div>
+          </td>
+          <td class="admin-chart-bar-number">${porcentajeVotos}%</td>
+          <td class="admin-chart-bar-number">${votosSlot}</td>
+          <td>${escapeHtml(aula)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    section.hidden = false;
   }
 
   function setBreadcrumbMateria(auxMat) {
@@ -343,6 +458,10 @@
           }
           if (els.votacionGrid) {
             els.votacionGrid.innerHTML = '';
+          }
+          if (els.votacionResultadosSection && els.votacionResultadosBody) {
+            els.votacionResultadosSection.hidden = true;
+            els.votacionResultadosBody.innerHTML = '';
           }
         } else {
           els.votacionSection.hidden = false;

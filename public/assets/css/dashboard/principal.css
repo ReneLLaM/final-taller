@@ -416,6 +416,7 @@ body.rol-admin .horario-section {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding-top: 35px;
 }
 
 .aux-matricula-inscritos-title {

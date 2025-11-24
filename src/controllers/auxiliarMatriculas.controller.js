@@ -502,9 +502,13 @@ export const getDisponibilidadVotacion = async (req, res) => {
         am.auxiliar_id,
         am.veces_por_semana,
         am.horas_por_clase,
+        am.grupo,
+        mg.nombre AS materia_nombre,
+        mg.sigla AS materia_sigla,
         v.id AS votacion_id,
         v.activa AS votacion_activa
        FROM auxiliar_materias am
+       JOIN materias_globales mg ON mg.id = am.materia_global_id
        LEFT JOIN auxiliar_votaciones v ON v.auxiliar_materia_id = am.id
        WHERE am.id = $1`,
       [auxMateriaId],
@@ -657,6 +661,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
         let aulasLibres = 0;
         let aulasAdecuadas = 0;
         let capacidadMaxLibre = 0;
+        let mejorAulaAdecuada = null;
 
         aulas.forEach((aula) => {
           const key = `${dia}|${aula.sigla}`;
@@ -668,6 +673,9 @@ export const getDisponibilidadVotacion = async (req, res) => {
             capacidadMaxLibre = Math.max(capacidadMaxLibre, cap);
             if (totalEstudiantes > 0 && cap >= totalEstudiantes) {
               aulasAdecuadas += 1;
+              if (!mejorAulaAdecuada || cap < mejorAulaAdecuada.capacidad) {
+                mejorAulaAdecuada = aula;
+              }
             }
           }
         });
@@ -713,6 +721,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
           total_estudiantes: totalEstudiantes,
           estudiantes_disponibles: estudiantesDisponibles,
           porcentaje_disponibles: porcentajeDisponibles,
+          aula_sugerida: mejorAulaAdecuada ? mejorAulaAdecuada.sigla : null,
         });
       });
     }
@@ -817,6 +826,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
         estudiantes_disponibles: s.estudiantes_disponibles,
         porcentaje_disponibles: s.porcentaje_disponibles,
         votos_slot: votosSlot,
+        aula_sugerida: s.aula_sugerida,
         estado,
       };
     });
@@ -830,6 +840,9 @@ export const getDisponibilidadVotacion = async (req, res) => {
       mis_votos: misVotos,
       puede_votar: esEstudianteMatriculado && !esAuxiliarDeLaMateria,
       es_auxiliar_de_la_materia: esAuxiliarDeLaMateria,
+      materia_nombre: materia.materia_nombre,
+      materia_sigla: materia.materia_sigla,
+      grupo: materia.grupo,
       disponibilidad,
     });
   } catch (error) {
