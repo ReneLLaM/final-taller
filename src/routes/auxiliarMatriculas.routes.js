@@ -63,14 +63,14 @@ router.get(
 router.post(
   '/auxiliar-materias/:auxMateriaId/votacion/votos',
   verifyToken,
-  requireRole(1),
+  requireRole(1, 2),
   emitirVotoVotacion,
 );
 
 router.delete(
   '/auxiliar-materias/:auxMateriaId/votacion/votos',
   verifyToken,
-  requireRole(1),
+  requireRole(1, 2),
   eliminarVotoVotacion,
 );
 

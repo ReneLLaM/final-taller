@@ -56,6 +56,17 @@
           </table>
         </div>
       </div>
+
+      <section id="auxMatVotacionSection" class="aux-matricula-votacion-section" hidden>
+        <h3 class="aux-matricula-inscritos-title">Estado de votación de la auxiliatura</h3>
+        <p class="aux-matricula-empty" id="auxMatVotacionEstadoTexto">
+          Aquí verás cómo van los votos por horario cuando la votación esté activa.
+        </p>
+        <div id="auxMatVotacionHorarioWrapper" class="horario-wrapper" hidden>
+          <!-- Reutilizamos el mismo layout de horario del dashboard para mostrar la votación en modo solo lectura -->
+          <div class="horario-grid" id="auxMatVotacionGrid"></div>
+        </div>
+      </section>
     </section>
   </main>
 
