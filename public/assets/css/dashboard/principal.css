@@ -369,7 +369,7 @@ body.rol-admin .horario-section {
 }
 
 .aux-matricula-code-input {
-    width: 100%;
+    width: 98%;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid #E8EAEF;
@@ -902,9 +902,9 @@ body.rol-admin .horario-section {
     flex: 1;
     min-width: 0;
     text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
 }
 
 .admin-horario-actions-buttons {

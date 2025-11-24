@@ -10,6 +10,10 @@
     detalleMessage: document.getElementById('auxMatMessage'),
     detalleInscritosBody: document.getElementById('auxMatInscritosBody'),
     detalleNoInscritos: document.getElementById('auxMatNoInscritos'),
+    votacionSection: document.getElementById('auxMatVotacionSection'),
+    votacionEstadoTexto: document.getElementById('auxMatVotacionEstadoTexto'),
+    votacionHorarioWrapper: document.getElementById('auxMatVotacionHorarioWrapper'),
+    votacionGrid: document.getElementById('auxMatVotacionGrid'),
   };
 
   const state = {
@@ -68,6 +72,157 @@
         </tr>
       `;
     }).join('');
+  }
+
+  // Construir un grid de horario para mostrar el resultado de la votación en modo solo lectura
+  function construirGridVotacionIfNeeded() {
+    if (!els.votacionGrid || els.votacionGrid.childElementCount > 0) return;
+
+    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    const headerRow = document.createElement('div');
+    headerRow.className = 'schedule-row header-row';
+
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'time-column header-cell';
+    headerRow.appendChild(emptyCell);
+
+    dias.forEach((diaNombre, index) => {
+      const cell = document.createElement('div');
+      cell.className = 'day-header';
+      cell.dataset.dia = String(index + 1);
+      cell.textContent = diaNombre;
+      headerRow.appendChild(cell);
+    });
+
+    els.votacionGrid.appendChild(headerRow);
+
+    const bloquesInicioHoras = [7, 9, 11, 14, 16, 18, 20];
+
+    bloquesInicioHoras.forEach((hInicio) => {
+      const row = document.createElement('div');
+      row.className = 'schedule-row';
+
+      const timeCell = document.createElement('div');
+      timeCell.className = 'time-column';
+      const hFin = hInicio + 2;
+      const label = `${String(hInicio).padStart(2, '0')}:00 - ${String(hFin).padStart(2, '0')}:00`;
+      timeCell.textContent = label;
+      row.appendChild(timeCell);
+
+      for (let dia = 1; dia <= 6; dia += 1) {
+        const cell = document.createElement('div');
+        cell.className = 'schedule-cell';
+        cell.dataset.dia = String(dia);
+        cell.dataset.hora = `${String(hInicio).padStart(2, '0')}:00`;
+        row.appendChild(cell);
+      }
+
+      els.votacionGrid.appendChild(row);
+    });
+  }
+
+  async function cargarVotacionSoloLectura(auxMateriaId) {
+    if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
+
+    if (els.votacionGrid.childElementCount === 0) {
+      construirGridVotacionIfNeeded();
+    }
+
+    // Limpiar posibles cards anteriores
+    els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
+
+    try {
+      const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/disponibilidad`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !Array.isArray(data.disponibilidad)) {
+        if (els.votacionEstadoTexto) {
+          els.votacionEstadoTexto.textContent = data.message || 'No se pudo cargar el estado de votación.';
+        }
+        els.votacionHorarioWrapper.hidden = true;
+        return;
+      }
+
+      const disponibilidad = data.disponibilidad;
+      if (!disponibilidad.length) {
+        if (els.votacionEstadoTexto) {
+          els.votacionEstadoTexto.textContent = 'No hay bloques configurados para mostrar disponibilidad.';
+        }
+        els.votacionHorarioWrapper.hidden = true;
+        return;
+      }
+
+      els.votacionHorarioWrapper.hidden = false;
+
+      disponibilidad.forEach((item) => {
+        const dia = parseInt(item.dia_semana, 10);
+        const horaInicio = typeof item.hora_inicio === 'string'
+          ? item.hora_inicio.substring(0, 5)
+          : item.hora_inicio;
+        if (!dia || !horaInicio) return;
+
+        const cell = els.votacionGrid.querySelector(`.schedule-cell[data-dia="${dia}"][data-hora="${horaInicio}"]`);
+        if (!cell) return;
+
+        const estado = item.estado || 'neutral';
+        const totalEst = item.total_estudiantes ?? null;
+        const dispEst = item.estudiantes_disponibles ?? null;
+        const porc = item.porcentaje_disponibles;
+        const aulasCantidad = item.aulas_disponibles ?? 0;
+        const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+
+        const card = document.createElement('div');
+        card.className = 'votacion-slot-card';
+        if (estado === 'recomendada') {
+          card.classList.add('votacion-estado-recomendada');
+        } else if (estado === 'no_disponible') {
+          card.classList.add('votacion-estado-no-disponible');
+        } else {
+          card.classList.add('votacion-estado-neutral');
+        }
+
+        const votosResumenTexto = `${votosSlot} voto${votosSlot === 1 ? '' : 's'}`;
+
+        let fraccionTexto = '-';
+        if (dispEst != null && totalEst != null) {
+          fraccionTexto = `${dispEst}/${totalEst}`;
+        }
+
+        let porcentajeTexto = '-';
+        if (porc != null) {
+          porcentajeTexto = `${porc}%`;
+        }
+
+        card.innerHTML = `
+          <div class="votacion-slot-main">
+            <span class="votacion-slot-votar">${estado === 'no_disponible' ? 'No disponible' : 'Horario'}</span>
+            ${votosResumenTexto ? `<span class="votacion-slot-votos-resumen">${votosResumenTexto}</span>` : ''}
+          </div>
+          <div class="votacion-slot-row">
+            <span class="votacion-slot-label">Cantidad de aulas</span>
+            <span class="votacion-slot-value">${aulasCantidad}</span>
+          </div>
+          <div class="votacion-slot-disponibilidad">
+            <div class="votacion-slot-disponibilidad-label">Disponibilidad de estudiantes</div>
+            <div class="votacion-slot-disponibilidad-data">
+              <span class="votacion-slot-fraccion">${fraccionTexto}</span>
+              <span class="votacion-slot-porcentaje">${porcentajeTexto}</span>
+            </div>
+          </div>
+        `;
+
+        cell.appendChild(card);
+      });
+    } catch (err) {
+      console.error('Error al cargar votación en modo solo lectura:', err);
+      if (els.votacionEstadoTexto) {
+        els.votacionEstadoTexto.textContent = 'Error de conexión al cargar el estado de votación.';
+      }
+      els.votacionHorarioWrapper.hidden = true;
+    }
   }
 
   function setBreadcrumbMateria(auxMat) {
@@ -172,6 +327,30 @@
         setDetalleMessage('info', 'Matriculación CERRADA. Nadie más puede inscribirse, pero el código se mantiene.');
         if (els.detalleCerrarMatriculacionBtn) {
           els.detalleCerrarMatriculacionBtn.disabled = true;
+        }
+      }
+
+      // Mostrar estado de votación en modo solo lectura debajo del detalle
+      if (els.votacionSection) {
+        if (!votacion || !votacion.activa) {
+          els.votacionSection.hidden = false;
+          if (els.votacionEstadoTexto) {
+            els.votacionEstadoTexto.textContent =
+              'La votación aún no está activa para esta auxiliatura. Cuando la inicies, aquí podrás ver cuántos votos tiene cada horario.';
+          }
+          if (els.votacionHorarioWrapper) {
+            els.votacionHorarioWrapper.hidden = true;
+          }
+          if (els.votacionGrid) {
+            els.votacionGrid.innerHTML = '';
+          }
+        } else {
+          els.votacionSection.hidden = false;
+          if (els.votacionEstadoTexto) {
+            els.votacionEstadoTexto.textContent =
+              'La votación está activa. Debajo se muestra el horario con el total de votos por bloque. Esta vista es solo de consulta; no puedes emitir votos aquí.';
+          }
+          await cargarVotacionSoloLectura(state.auxMateriaId);
         }
       }
 

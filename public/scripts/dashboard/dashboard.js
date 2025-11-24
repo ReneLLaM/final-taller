@@ -566,8 +566,20 @@ function actualizarHeaderVotacion() {
     const params = new URLSearchParams(window.location.search);
     const section = params.get('section');
     const visible = section === 'votacion-panel';
+
+    // Sincronizar siempre el estado visual del header con la sección actual
     votacionPanelHeaderEl.hidden = !visible;
-    if (!visible) return;
+    votacionPanelHeaderEl.style.display = visible ? '' : 'none';
+
+    if (!visible) {
+        if (votacionPanelHeaderTextEl) {
+            votacionPanelHeaderTextEl.textContent = '';
+        }
+        if (votacionPanelCounterEl) {
+            votacionPanelCounterEl.textContent = '';
+        }
+        return;
+    }
 
     const max = votacionPanelMaxVotos || 0;
     const usados = votacionPanelVotosUsados || 0;
