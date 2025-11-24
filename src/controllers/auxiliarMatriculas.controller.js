@@ -623,6 +623,20 @@ export const getDisponibilidadVotacion = async (req, res) => {
     const horasPorClase = materia.horas_por_clase || 2;
     const vecesPorSemana = materia.veces_por_semana ? parseInt(materia.veces_por_semana, 10) || 1 : 1;
 
+    let misVotos = [];
+    let votosUsados = 0;
+    if (materia.votacion_id) {
+      const { rows: votosRows } = await pool.query(
+        `SELECT id, dia_semana, hora_inicio, hora_fin
+         FROM auxiliar_votos
+         WHERE votacion_id = $1 AND estudiante_id = $2
+         ORDER BY dia_semana, hora_inicio`,
+        [materia.votacion_id, usuarioId],
+      );
+      misVotos = votosRows;
+      votosUsados = votosRows.length;
+    }
+
     const totalEstudiantes = estudianteIds.length;
 
     // Bloques fijos de 2 horas: 07-09, 09-11, 11-13, 14-16, 16-18, 18-20, 20-22
@@ -634,6 +648,9 @@ export const getDisponibilidadVotacion = async (req, res) => {
 
     for (let dia = 1; dia <= 6; dia += 1) {
       bloquesInicioHoras.forEach((hInicio) => {
+        if (dia === 6 && hInicio >= 14) {
+          return;
+        }
         const inicioSlot = hInicio * 60;
         const finSlot = inicioSlot + duracionBloqueMin;
 
@@ -777,6 +794,9 @@ export const getDisponibilidadVotacion = async (req, res) => {
       auxiliar_materia_id: materia.id,
       horas_por_clase: horasPorClase,
       veces_por_semana: vecesPorSemana,
+      max_votos: vecesPorSemana,
+      votos_usados: votosUsados,
+      mis_votos: misVotos,
       disponibilidad,
     });
   } catch (error) {
@@ -899,6 +919,202 @@ export const finalizarVotacion = async (req, res) => {
     console.error('Error en finalizarVotacion:', error);
     res.status(500).json({
       message: 'Error al finalizar la votación',
+      error: error.message,
+    });
+  }
+};
+
+export const emitirVotoVotacion = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
+    const usuarioId = req.user.userId ?? req.user.id ?? req.userId;
+    const rolId = req.user.rol_id;
+    const auxMateriaId = parseInt(req.params.auxMateriaId, 10);
+
+    if (!auxMateriaId || Number.isNaN(auxMateriaId)) {
+      return res.status(400).json({ message: 'Materia inválida' });
+    }
+
+    const { dia_semana, hora_inicio, hora_fin } = req.body || {};
+    const dia = parseInt(dia_semana, 10);
+    const horaInicio = hora_inicio;
+    const horaFin = hora_fin;
+
+    if (!dia || Number.isNaN(dia) || !horaInicio || !horaFin) {
+      return res.status(400).json({ message: 'Parámetros de voto inválidos' });
+    }
+
+    const { rows: materiaRows } = await pool.query(
+      `SELECT
+        am.id,
+        am.auxiliar_id,
+        am.veces_por_semana,
+        v.id AS votacion_id,
+        v.activa AS votacion_activa
+       FROM auxiliar_materias am
+       LEFT JOIN auxiliar_votaciones v ON v.auxiliar_materia_id = am.id
+       WHERE am.id = $1`,
+      [auxMateriaId],
+    );
+
+    if (!materiaRows.length) {
+      return res.status(404).json({ message: 'Materia de auxiliar no encontrada' });
+    }
+
+    const materia = materiaRows[0];
+
+    if (!materia.votacion_id || !materia.votacion_activa) {
+      return res.status(400).json({ message: 'No hay una votación activa para esta auxiliatura' });
+    }
+
+    if (rolId !== 1) {
+      return res.status(403).json({ message: 'Solo los estudiantes pueden emitir votos' });
+    }
+
+    const { rows: inscRows } = await pool.query(
+      `SELECT 1
+       FROM auxiliar_matricula_estudiantes ame
+       INNER JOIN auxiliar_matriculaciones mat ON ame.matriculacion_id = mat.id
+       WHERE mat.auxiliar_materia_id = $1 AND ame.estudiante_id = $2`,
+      [auxMateriaId, usuarioId],
+    );
+
+    if (!inscRows.length) {
+      return res.status(403).json({ message: 'No estás inscrito en esta auxiliatura' });
+    }
+
+    const maxVotos = materia.veces_por_semana ? parseInt(materia.veces_por_semana, 10) || 1 : 1;
+
+    const { rows: existentes } = await pool.query(
+      `SELECT id, dia_semana, hora_inicio
+       FROM auxiliar_votos
+       WHERE votacion_id = $1 AND estudiante_id = $2
+       ORDER BY dia_semana, hora_inicio`,
+      [materia.votacion_id, usuarioId],
+    );
+
+    const usados = existentes.length;
+
+    const yaEnSlot = existentes.find(
+      (v) => v.dia_semana === dia && String(v.hora_inicio).substring(0, 5) === String(horaInicio).substring(0, 5),
+    );
+
+    if (yaEnSlot) {
+      return res.status(400).json({ message: 'Ya emitiste un voto en este horario' });
+    }
+
+    if (usados >= maxVotos) {
+      return res.status(400).json({ message: 'Ya utilizaste todos tus votos. Elimina uno antes de volver a votar.' });
+    }
+
+    const { rows: insertRows } = await pool.query(
+      `INSERT INTO auxiliar_votos (votacion_id, estudiante_id, dia_semana, hora_inicio, hora_fin)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, dia_semana, hora_inicio, hora_fin`,
+      [materia.votacion_id, usuarioId, dia, horaInicio, horaFin],
+    );
+
+    const votosUsados = usados + 1;
+
+    res.status(201).json({
+      message: 'Voto registrado correctamente',
+      max_votos: maxVotos,
+      votos_usados: votosUsados,
+      voto: insertRows[0],
+    });
+  } catch (error) {
+    console.error('Error en emitirVotoVotacion:', error);
+    res.status(500).json({
+      message: 'Error al registrar el voto',
+      error: error.message,
+    });
+  }
+};
+
+export const eliminarVotoVotacion = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
+    const usuarioId = req.user.userId ?? req.user.id ?? req.userId;
+    const rolId = req.user.rol_id;
+    const auxMateriaId = parseInt(req.params.auxMateriaId, 10);
+
+    if (!auxMateriaId || Number.isNaN(auxMateriaId)) {
+      return res.status(400).json({ message: 'Materia inválida' });
+    }
+
+    const { dia_semana, hora_inicio } = req.body || {};
+    const dia = parseInt(dia_semana, 10);
+    const horaInicio = hora_inicio;
+
+    if (!dia || Number.isNaN(dia) || !horaInicio) {
+      return res.status(400).json({ message: 'Parámetros de voto inválidos' });
+    }
+
+    const { rows: materiaRows } = await pool.query(
+      `SELECT
+        am.id,
+        am.auxiliar_id,
+        am.veces_por_semana,
+        v.id AS votacion_id,
+        v.activa AS votacion_activa
+       FROM auxiliar_materias am
+       LEFT JOIN auxiliar_votaciones v ON v.auxiliar_materia_id = am.id
+       WHERE am.id = $1`,
+      [auxMateriaId],
+    );
+
+    if (!materiaRows.length) {
+      return res.status(404).json({ message: 'Materia de auxiliar no encontrada' });
+    }
+
+    const materia = materiaRows[0];
+
+    if (!materia.votacion_id || !materia.votacion_activa) {
+      return res.status(400).json({ message: 'La votación ya no está activa' });
+    }
+
+    if (rolId !== 1) {
+      return res.status(403).json({ message: 'Solo los estudiantes pueden eliminar votos' });
+    }
+
+    const { rows: existentes } = await pool.query(
+      `SELECT id, dia_semana, hora_inicio
+       FROM auxiliar_votos
+       WHERE votacion_id = $1 AND estudiante_id = $2
+       ORDER BY dia_semana, hora_inicio`,
+      [materia.votacion_id, usuarioId],
+    );
+
+    const usados = existentes.length;
+
+    const voto = existentes.find(
+      (v) => v.dia_semana === dia && String(v.hora_inicio).substring(0, 5) === String(horaInicio).substring(0, 5),
+    );
+
+    if (!voto) {
+      return res.status(404).json({ message: 'No tenías un voto registrado en este horario' });
+    }
+
+    await pool.query('DELETE FROM auxiliar_votos WHERE id = $1', [voto.id]);
+
+    const votosUsados = usados - 1;
+    const maxVotos = materia.veces_por_semana ? parseInt(materia.veces_por_semana, 10) || 1 : 1;
+
+    res.json({
+      message: 'Voto eliminado correctamente',
+      max_votos: maxVotos,
+      votos_usados: votosUsados,
+    });
+  } catch (error) {
+    console.error('Error en eliminarVotoVotacion:', error);
+    res.status(500).json({
+      message: 'Error al eliminar el voto',
       error: error.message,
     });
   }

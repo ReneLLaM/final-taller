@@ -281,6 +281,26 @@
         </div>
     </div>
 
+    <div class="modal modal-confirm" id="votacionSlotModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h2 id="votacionSlotModalTitle">Votar en este horario</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body confirm-body">
+                <p id="votacionSlotModalDescription"></p>
+                <div id="votacionSlotModalInfo" class="slot-tag" style="margin-top: 8px;"></div>
+                <div id="votacionSlotModalMessage" class="message" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="button" class="btn btn-delete" id="btnVotacionSlotDelete" style="display:none;">Eliminar voto</button>
+                <button type="button" class="btn btn-primary" id="btnVotacionSlotConfirm">Votar aquí</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección: Usuarios y Roles (Admin) -->
     <section id="adminUsersRolesSection" class="admin-users-roles-section" hidden>
         <div class="users-panel">

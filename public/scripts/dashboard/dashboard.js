@@ -536,6 +536,19 @@ function renderizarClases(clases) {
 // VOTACIÓN - CARDS DE DISPONIBILIDAD
 // ================================
 
+let votacionPanelMaxVotos = 0;
+let votacionPanelVotosUsados = 0;
+let votacionPanelMisVotosSet = new Set();
+let votacionPanelSlotSeleccionado = null;
+
+const votacionSlotModal = document.getElementById('votacionSlotModal');
+const votacionSlotModalTitle = document.getElementById('votacionSlotModalTitle');
+const votacionSlotModalDescription = document.getElementById('votacionSlotModalDescription');
+const votacionSlotModalInfo = document.getElementById('votacionSlotModalInfo');
+const votacionSlotModalMessage = document.getElementById('votacionSlotModalMessage');
+const btnVotacionSlotConfirm = document.getElementById('btnVotacionSlotConfirm');
+const btnVotacionSlotDelete = document.getElementById('btnVotacionSlotDelete');
+
 async function cargarDisponibilidadVotacion(auxMateriaId) {
     try {
         const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/disponibilidad`, {
@@ -553,14 +566,23 @@ async function cargarDisponibilidadVotacion(auxMateriaId) {
             console.warn('Respuesta de disponibilidad inesperada:', data);
             return;
         }
+        const maxVotos = typeof data.max_votos === 'number' ? data.max_votos : (data.veces_por_semana || 0);
+        const usados = typeof data.votos_usados === 'number' ? data.votos_usados : 0;
+        const misVotos = Array.isArray(data.mis_votos) ? data.mis_votos : [];
 
-        renderizarVotacionDisponibilidad(data.disponibilidad);
+        votacionPanelMaxVotos = maxVotos;
+        votacionPanelVotosUsados = usados;
+        votacionPanelMisVotosSet = new Set(
+            misVotos.map((v) => `${v.dia_semana}|${typeof v.hora_inicio === 'string' ? v.hora_inicio.substring(0, 5) : v.hora_inicio}`),
+        );
+
+        renderizarVotacionDisponibilidad(data);
     } catch (error) {
         console.error('Error al cargar disponibilidad de votación:', error);
     }
 }
 
-function renderizarVotacionDisponibilidad(disponibilidad) {
+function renderizarVotacionDisponibilidad(payload) {
     const params = new URLSearchParams(window.location.search);
     const section = params.get('section');
     if (section !== 'votacion-panel') {
@@ -570,7 +592,9 @@ function renderizarVotacionDisponibilidad(disponibilidad) {
     // Limpiar cards anteriores
     document.querySelectorAll('.votacion-slot-card').forEach(card => card.remove());
 
-    if (!Array.isArray(disponibilidad) || !disponibilidad.length) {
+    const disponibilidad = Array.isArray(payload?.disponibilidad) ? payload.disponibilidad : [];
+
+    if (!disponibilidad.length) {
         console.log('No hay disponibilidad de votación para renderizar');
         return;
     }
@@ -602,6 +626,10 @@ function renderizarVotacionDisponibilidad(disponibilidad) {
             card.classList.add('votacion-estado-neutral');
         }
 
+        const key = `${dia}|${horaInicio}`;
+        const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
+        const votarLabel = yaVotado ? 'Voto emitido' : 'Votar';
+
         let fraccionTexto = '-';
         if (dispEst != null && totalEst != null) {
             fraccionTexto = `${dispEst}/${totalEst}`;
@@ -614,7 +642,7 @@ function renderizarVotacionDisponibilidad(disponibilidad) {
 
         card.innerHTML = `
             <div class="votacion-slot-main">
-                <span class="votacion-slot-votar">Votar</span>
+                <span class="votacion-slot-votar">${votarLabel}</span>
             </div>
             <div class="votacion-slot-row">
                 <span class="votacion-slot-label">Cantidad de aulas</span>
@@ -629,7 +657,195 @@ function renderizarVotacionDisponibilidad(disponibilidad) {
             </div>
         `;
 
+        card.dataset.dia = String(dia);
+        card.dataset.horaInicio = horaInicio;
+        card.dataset.horaFin = typeof item.hora_fin === 'string' ? item.hora_fin.substring(0, 5) : item.hora_fin;
+        card.dataset.estado = estado;
+        card.dataset.totalEstudiantes = totalEst;
+        card.dataset.estudiantesDisponibles = dispEst;
+        card.dataset.porcentajeDisponibles = porc;
+        card.dataset.aulasDisponibles = aulasCantidad;
+
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => {
+            const slotInfo = {
+                dia_semana: dia,
+                hora_inicio: horaInicio,
+                hora_fin: card.dataset.horaFin,
+                estado,
+                total_estudiantes: totalEst,
+                estudiantes_disponibles: dispEst,
+                porcentaje_disponibles: porc,
+                aulas_disponibles: aulasCantidad,
+            };
+            abrirModalVotacionSlot(slotInfo);
+        });
+
         cell.appendChild(card);
+    });
+}
+
+function abrirModalVotacionSlot(slot) {
+    if (!votacionSlotModal || !slot) return;
+
+    votacionPanelSlotSeleccionado = slot;
+
+    const diaNum = parseInt(slot.dia_semana, 10) || 1;
+    const diaNombre = typeof window.nombreDia === 'function'
+        ? window.nombreDia(diaNum)
+        : `Día ${diaNum}`;
+    const rango = `${slot.hora_inicio || '--:--'} - ${slot.hora_fin || '--:--'}`;
+    const estadoTexto = slot.estado === 'recomendada'
+        ? 'Recomendado'
+        : slot.estado === 'no_disponible'
+            ? 'No disponible'
+            : 'Neutral';
+    const fraccion = slot.estudiantes_disponibles != null && slot.total_estudiantes != null
+        ? `${slot.estudiantes_disponibles}/${slot.total_estudiantes}`
+        : '-';
+    const porcentaje = slot.porcentaje_disponibles != null ? `${slot.porcentaje_disponibles}%` : '-';
+    const aulas = slot.aulas_disponibles != null ? slot.aulas_disponibles : 0;
+
+    const key = `${diaNum}|${slot.hora_inicio}`;
+    const yaVotado = votacionPanelMisVotosSet && votacionPanelMisVotosSet.has(key);
+
+    if (votacionSlotModalTitle) {
+        votacionSlotModalTitle.textContent = yaVotado ? 'Eliminar voto' : 'Votar en este horario';
+    }
+
+    if (votacionSlotModalDescription) {
+        if (yaVotado) {
+            votacionSlotModalDescription.textContent = `Ya emitiste un voto en este bloque (${diaNombre}, ${rango}). Puedes eliminarlo si deseas mover tu voto a otro horario mientras la votación siga activa.`;
+        } else {
+            const totalVotos = votacionPanelMaxVotos || 0;
+            votacionSlotModalDescription.textContent = totalVotos
+                ? `Para esta auxiliatura debes emitir ${totalVotos} voto(s). Elige cuidadosamente los bloques donde podrías asistir con mayor comodidad. Podrás cambiar tus votos mientras la votación esté activa eliminando uno y volviendo a votar en otro horario.`
+                : 'Elige este bloque si es un horario en el que podrías asistir a la auxiliatura. Podrás cambiar tu voto mientras la votación esté activa.';
+        }
+    }
+
+    if (votacionSlotModalInfo) {
+        votacionSlotModalInfo.innerHTML = `
+            <div><strong>${diaNombre}</strong> · ${rango}</div>
+            <div>Aulas disponibles: <strong>${aulas}</strong></div>
+            <div>Disponibilidad de estudiantes: <strong>${fraccion} (${porcentaje})</strong></div>
+            <div>Estado del bloque: <strong>${estadoTexto}</strong></div>
+            <div>Votos usados: <strong>${votacionPanelVotosUsados}</strong> de <strong>${votacionPanelMaxVotos}</strong></div>
+        `;
+    }
+
+    if (votacionSlotModalMessage) {
+        votacionSlotModalMessage.style.display = 'none';
+        votacionSlotModalMessage.textContent = '';
+    }
+
+    if (btnVotacionSlotDelete) {
+        btnVotacionSlotDelete.style.display = yaVotado ? 'inline-flex' : 'none';
+    }
+
+    if (btnVotacionSlotConfirm) {
+        btnVotacionSlotConfirm.style.display = yaVotado ? 'none' : 'inline-flex';
+        btnVotacionSlotConfirm.disabled = false;
+        if (!yaVotado && votacionPanelMaxVotos && votacionPanelVotosUsados >= votacionPanelMaxVotos) {
+            btnVotacionSlotConfirm.disabled = true;
+            if (votacionSlotModalMessage) {
+                votacionSlotModalMessage.className = 'message info';
+                votacionSlotModalMessage.textContent = 'Ya utilizaste todos tus votos. Elimina uno antes de volver a votar.';
+                votacionSlotModalMessage.style.display = 'block';
+            }
+        }
+    }
+
+    if (typeof mostrarModal === 'function') {
+        mostrarModal(votacionSlotModal);
+    } else {
+        votacionSlotModal.classList.add('show');
+        votacionSlotModal.setAttribute('aria-hidden', 'false');
+    }
+}
+
+async function enviarVotoActual(accion) {
+    if (!votacionPanelSlotSeleccionado) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const auxMateriaIdRaw = params.get('auxMateriaId');
+    const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
+    if (!auxMateriaId || Number.isNaN(auxMateriaId)) return;
+
+    if (votacionSlotModalMessage) {
+        votacionSlotModalMessage.className = 'message info';
+        votacionSlotModalMessage.textContent = accion === 'crear' ? 'Registrando voto...' : 'Eliminando voto...';
+        votacionSlotModalMessage.style.display = 'block';
+    }
+
+    const payload = {
+        dia_semana: votacionPanelSlotSeleccionado.dia_semana,
+        hora_inicio: votacionPanelSlotSeleccionado.hora_inicio,
+        hora_fin: votacionPanelSlotSeleccionado.hora_fin,
+    };
+
+    const method = accion === 'crear' ? 'POST' : 'DELETE';
+
+    try {
+        const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/votos`, {
+            method,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            if (votacionSlotModalMessage) {
+                votacionSlotModalMessage.className = 'message error';
+                votacionSlotModalMessage.textContent = data.message || 'No se pudo procesar el voto';
+                votacionSlotModalMessage.style.display = 'block';
+            }
+            return;
+        }
+
+        if (typeof data.max_votos === 'number') {
+            votacionPanelMaxVotos = data.max_votos;
+        }
+        if (typeof data.votos_usados === 'number') {
+            votacionPanelVotosUsados = data.votos_usados;
+        }
+
+        const key = `${votacionPanelSlotSeleccionado.dia_semana}|${votacionPanelSlotSeleccionado.hora_inicio}`;
+        if (accion === 'crear') {
+            votacionPanelMisVotosSet.add(key);
+        } else {
+            votacionPanelMisVotosSet.delete(key);
+        }
+
+        if (typeof cerrarModal === 'function') {
+            cerrarModal(votacionSlotModal);
+        } else if (votacionSlotModal) {
+            votacionSlotModal.classList.remove('show');
+            votacionSlotModal.setAttribute('aria-hidden', 'true');
+        }
+
+        await cargarDisponibilidadVotacion(auxMateriaId);
+    } catch (error) {
+        console.error('Error al enviar voto:', error);
+        if (votacionSlotModalMessage) {
+            votacionSlotModalMessage.className = 'message error';
+            votacionSlotModalMessage.textContent = 'Error de conexión. Intenta nuevamente.';
+            votacionSlotModalMessage.style.display = 'block';
+        }
+    }
+}
+
+if (btnVotacionSlotConfirm) {
+    btnVotacionSlotConfirm.addEventListener('click', () => {
+        enviarVotoActual('crear');
+    });
+}
+
+if (btnVotacionSlotDelete) {
+    btnVotacionSlotDelete.addEventListener('click', () => {
+        enviarVotoActual('eliminar');
     });
 }
 

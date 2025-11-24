@@ -20,11 +20,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    pointer-events: none; /* No bloquear clicks sobre la celda/clases */
+    pointer-events: auto; /* No bloquear clicks sobre la celda/clases */
     z-index: 1; /* Debajo de las clase-card (z-index: 5) */
     border: 1px solid rgba(15, 23, 42, 0.18);
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    overflow: hidden; /* Evitar desbordes visuales, especialmente en móviles */
 }
 
 .votacion-slot-card .votacion-slot-main {
@@ -106,8 +107,22 @@
 }
 
 .votacion-slot-card.votacion-estado-recomendada {
-    background: rgba(16, 185, 129, 0.12);
+    background: rgba(16, 185, 129, 0.18);
     border: 1.5px solid #16A34A;
+}
+
+/* Destacar mucho más la disponibilidad de slots recomendados */
+.votacion-slot-card.votacion-estado-recomendada .votacion-slot-disponibilidad {
+    background: #0B0B1A;
+    border-color: #0B0B1A;
+    color: #F9FAFB;
+}
+
+.votacion-slot-card.votacion-estado-recomendada .votacion-slot-disponibilidad-label,
+.votacion-slot-card.votacion-estado-recomendada .votacion-slot-disponibilidad-data,
+.votacion-slot-card.votacion-estado-recomendada .votacion-slot-fraccion,
+.votacion-slot-card.votacion-estado-recomendada .votacion-slot-porcentaje {
+    color: #F9FAFB;
 }
 
 .votacion-slot-card.votacion-estado-neutral {

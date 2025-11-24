@@ -12,6 +12,8 @@ import {
   iniciarVotacion,
   finalizarVotacion,
   getDisponibilidadVotacion,
+  emitirVotoVotacion,
+  eliminarVotoVotacion,
 } from '../controllers/auxiliarMatriculas.controller.js';
 
 const router = Router();
@@ -56,6 +58,20 @@ router.get(
   verifyToken,
   requireRole(1, 2),
   getDisponibilidadVotacion,
+);
+
+router.post(
+  '/auxiliar-materias/:auxMateriaId/votacion/votos',
+  verifyToken,
+  requireRole(1),
+  emitirVotoVotacion,
+);
+
+router.delete(
+  '/auxiliar-materias/:auxMateriaId/votacion/votos',
+  verifyToken,
+  requireRole(1),
+  eliminarVotoVotacion,
 );
 
 router.post('/matriculacion/inscribirse', verifyToken, requireRole(1, 2), inscribirsePorCodigo);

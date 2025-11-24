@@ -104,7 +104,7 @@ export const register = async (req, res) => {
                 rol_id: rows[0].rol_id 
             },
             JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         // Enviar token como cookie httpOnly
@@ -112,7 +112,7 @@ export const register = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 3600000 // 1 hora
+            maxAge: 24 * 60 * 60 * 1000 // 1 día
         });
 
         res.status(201).json({
@@ -179,7 +179,7 @@ export const login = async (req, res) => {
                 rol_id: user.rol_id 
             },
             JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         // Enviar token como cookie httpOnly
@@ -187,7 +187,7 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 3600000 // 1 hora
+            maxAge: 24 * 60 * 60 * 1000 // 1 día
         });
 
         res.json({
