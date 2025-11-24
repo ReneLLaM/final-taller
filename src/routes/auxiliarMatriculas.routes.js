@@ -14,6 +14,7 @@ import {
   getDisponibilidadVotacion,
   emitirVotoVotacion,
   eliminarVotoVotacion,
+  actualizarAulaVotacion,
 } from '../controllers/auxiliarMatriculas.controller.js';
 
 const router = Router();
@@ -51,6 +52,13 @@ router.post(
   verifyToken,
   requireRole(2),
   finalizarVotacion,
+);
+
+router.post(
+  '/auxiliar-materias/:auxMateriaId/votacion/aula',
+  verifyToken,
+  requireRole(2),
+  actualizarAulaVotacion,
 );
 
 router.get(

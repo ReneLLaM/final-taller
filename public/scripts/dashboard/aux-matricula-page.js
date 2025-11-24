@@ -16,6 +16,12 @@
     votacionGrid: document.getElementById('auxMatVotacionGrid'),
     votacionResultadosSection: document.getElementById('auxMatVotacionResultadosSection'),
     votacionResultadosBody: document.getElementById('auxMatVotacionResultadosBody'),
+    votacionAulaModal: document.getElementById('auxMatAulaModal'),
+    votacionAulaModalTexto: document.getElementById('auxMatAulaModalTexto'),
+    votacionAulaModalMessage: document.getElementById('auxMatAulaModalMessage'),
+    votacionAulaInput: document.getElementById('auxMatAulaInput'),
+    votacionAulaRecomendada: document.getElementById('auxMatAulaRecomendada'),
+    votacionAulaGuardarBtn: document.getElementById('auxMatAulaGuardarBtn'),
   };
 
   const state = {
@@ -31,10 +37,108 @@
   };
 
   let estudiantePendienteEliminar = null;
+  let votacionAulaSlotActual = null;
 
   function nombreDiaLocal(dia) {
     const nombres = [null, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return nombres[dia] || 'Día';
+  }
+
+  function abrirModalAdministrarAula(slotInfo) {
+    const modal = els.votacionAulaModal;
+    if (!modal) return;
+
+    votacionAulaSlotActual = slotInfo;
+
+    const { dia, rango, aulaActual, aulaSugerida } = slotInfo;
+    const diaNombre = nombreDiaLocal(dia);
+
+    if (els.votacionAulaModalTexto) {
+      els.votacionAulaModalTexto.textContent = `${diaNombre} · ${rango}`;
+    }
+
+    if (els.votacionAulaInput) {
+      els.votacionAulaInput.value = aulaActual || aulaSugerida || '';
+    }
+
+    if (els.votacionAulaRecomendada) {
+      if (aulaSugerida) {
+        els.votacionAulaRecomendada.textContent = `Recomendada según capacidad: ${aulaSugerida}`;
+      } else {
+        els.votacionAulaRecomendada.textContent = '';
+      }
+    }
+
+    if (els.votacionAulaModalMessage) {
+      els.votacionAulaModalMessage.style.display = 'none';
+      els.votacionAulaModalMessage.textContent = '';
+    }
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function cerrarModalAdministrarAula() {
+    const modal = els.votacionAulaModal;
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    votacionAulaSlotActual = null;
+  }
+
+  function setAulaModalMessage(type, text) {
+    const el = els.votacionAulaModalMessage;
+    if (!el) return;
+    if (!text) {
+      el.style.display = 'none';
+      return;
+    }
+    el.textContent = text;
+    el.className = `message ${type}`;
+    el.style.display = 'block';
+  }
+
+  async function guardarAulaDesdeModal() {
+    if (!state.auxMateriaId || !votacionAulaSlotActual || !els.votacionAulaInput) return;
+
+    const nuevaAula = els.votacionAulaInput.value.trim();
+    if (!nuevaAula) {
+      setAulaModalMessage('error', 'Debes ingresar un aula válida.');
+      return;
+    }
+
+    const { dia, horaInicio, horaFin } = votacionAulaSlotActual;
+
+    try {
+      setAulaModalMessage('info', 'Actualizando aula para este horario...');
+
+      const res = await fetch(`/api/auxiliar-materias/${state.auxMateriaId}/votacion/aula`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dia_semana: dia,
+          hora_inicio: horaInicio,
+          hora_fin: horaFin,
+          aula: nuevaAula,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAulaModalMessage('error', data.message || 'No se pudo actualizar el aula.');
+        return;
+      }
+
+      setAulaModalMessage('success', data.message || 'Aula actualizada para este horario.');
+
+      await cargarVotacionSoloLectura(state.auxMateriaId, { mostrarAdministrar: true });
+      cerrarModalAdministrarAula();
+      setDetalleMessage('success', 'Se actualizó el aula para el horario seleccionado.');
+    } catch (err) {
+      console.error('Error al actualizar aula de auxiliatura:', err);
+      setAulaModalMessage('error', 'Error de conexión al actualizar el aula.');
+    }
   }
 
   function escapeHtml(text) {
@@ -139,7 +243,8 @@
     });
   }
 
-  async function cargarVotacionSoloLectura(auxMateriaId) {
+  async function cargarVotacionSoloLectura(auxMateriaId, options = {}) {
+    const mostrarAdministrar = options.mostrarAdministrar === true;
     if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
 
     if (els.votacionGrid.childElementCount === 0) {
@@ -182,7 +287,7 @@
 
       els.votacionHorarioWrapper.hidden = false;
 
-      renderVotacionResultadosAux(data);
+      renderVotacionResultadosAux(data, mostrarAdministrar);
 
       disponibilidad.forEach((item) => {
         const dia = parseInt(item.dia_semana, 10);
@@ -256,7 +361,7 @@
     }
   }
 
-  function renderVotacionResultadosAux(payload) {
+  function renderVotacionResultadosAux(payload, mostrarAdministrar) {
     const section = els.votacionResultadosSection;
     const tbody = els.votacionResultadosBody;
     if (!section || !tbody) return;
@@ -321,6 +426,10 @@
       const barWidth = Math.round((votosSlot * 100) / maxVotosSlot);
       const aula = item.aula_sugerida || '—';
 
+      const adminCell = mostrarAdministrar
+        ? `<button type="button" class="btn btn-secondary" data-aux-aula-admin="1" data-dia="${diaNum}" data-hora-inicio="${horaInicioStr}" data-hora-fin="${horaFinStr}" data-aula-actual="${escapeHtml(aula)}" data-aula-sugerida="${escapeHtml(item.aula_sugerida || '')}">Administrar</button>`
+        : '&mdash;';
+
       return `
         <tr>
           <td>${escapeHtml(rango)}</td>
@@ -333,6 +442,7 @@
           <td class="admin-chart-bar-number">${porcentajeVotos}%</td>
           <td class="admin-chart-bar-number">${votosSlot}</td>
           <td>${escapeHtml(aula)}</td>
+          <td>${adminCell}</td>
         </tr>
       `;
     }).join('');
@@ -447,11 +557,11 @@
 
       // Mostrar estado de votación en modo solo lectura debajo del detalle
       if (els.votacionSection) {
-        if (!votacion || !votacion.activa) {
+        if (!votacion) {
           els.votacionSection.hidden = false;
           if (els.votacionEstadoTexto) {
             els.votacionEstadoTexto.textContent =
-              'La votación aún no está activa para esta auxiliatura. Cuando la inicies, aquí podrás ver cuántos votos tiene cada horario.';
+              'La votación aún no está creada para esta auxiliatura. Cuando la inicies, aquí podrás ver cuántos votos tiene cada horario.';
           }
           if (els.votacionHorarioWrapper) {
             els.votacionHorarioWrapper.hidden = true;
@@ -463,13 +573,20 @@
             els.votacionResultadosSection.hidden = true;
             els.votacionResultadosBody.innerHTML = '';
           }
-        } else {
+        } else if (votacion.activa) {
           els.votacionSection.hidden = false;
           if (els.votacionEstadoTexto) {
             els.votacionEstadoTexto.textContent =
               'La votación está activa. Debajo se muestra el horario con el total de votos por bloque. Esta vista es solo de consulta; no puedes emitir votos aquí.';
           }
-          await cargarVotacionSoloLectura(state.auxMateriaId);
+          await cargarVotacionSoloLectura(state.auxMateriaId, { mostrarAdministrar: false });
+        } else {
+          els.votacionSection.hidden = false;
+          if (els.votacionEstadoTexto) {
+            els.votacionEstadoTexto.textContent =
+              'La votación fue finalizada. Debajo se muestran los horarios ganadores y el aula asignada para la auxiliatura.';
+          }
+          await cargarVotacionSoloLectura(state.auxMateriaId, { mostrarAdministrar: true });
         }
       }
 
@@ -731,6 +848,45 @@
             confirmEls.message.textContent = '';
           }
         }
+      });
+    }
+
+    if (els.votacionResultadosBody) {
+      els.votacionResultadosBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-aux-aula-admin]');
+        if (!btn) return;
+
+        const dia = parseInt(btn.getAttribute('data-dia'), 10) || 0;
+        const horaInicio = btn.getAttribute('data-hora-inicio') || '';
+        const horaFin = btn.getAttribute('data-hora-fin') || '';
+        const rango = `${horaInicio || '--:--'} - ${horaFin || '--:--'}`;
+        const aulaActual = btn.getAttribute('data-aula-actual') || '';
+        const aulaSugerida = btn.getAttribute('data-aula-sugerida') || '';
+
+        if (!dia || !horaInicio || !horaFin) return;
+
+        abrirModalAdministrarAula({
+          dia,
+          horaInicio,
+          horaFin,
+          rango,
+          aulaActual,
+          aulaSugerida,
+        });
+      });
+    }
+
+    if (els.votacionAulaModal) {
+      els.votacionAulaModal.addEventListener('click', (e) => {
+        if (e.target.matches('[data-close-modal]')) {
+          cerrarModalAdministrarAula();
+        }
+      });
+    }
+
+    if (els.votacionAulaGuardarBtn) {
+      els.votacionAulaGuardarBtn.addEventListener('click', () => {
+        guardarAulaDesdeModal();
       });
     }
 

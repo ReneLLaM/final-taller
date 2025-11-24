@@ -17,6 +17,310 @@ function rangesOverlap(start1, end1, start2, end2) {
   return start1 < end2 && start2 < end1;
 }
 
+async function getAuxiliarMateriaInfo(auxMateriaId) {
+  const { rows } = await pool.query(
+    `SELECT
+        am.id,
+        am.auxiliar_id,
+        am.materia_global_id,
+        am.grupo,
+        am.veces_por_semana,
+        am.horas_por_clase,
+        mg.nombre AS materia_nombre,
+        mg.sigla AS materia_sigla,
+        mg.color AS materia_color
+       FROM auxiliar_materias am
+       INNER JOIN materias_globales mg ON am.materia_global_id = mg.id
+       WHERE am.id = $1`,
+    [auxMateriaId],
+  );
+
+  return rows[0] || null;
+}
+
+async function ensureAuxiliarMateriaLocalMateria(auxMateria) {
+  const auxiliarId = auxMateria.auxiliar_id;
+  const sigla = auxMateria.materia_sigla;
+  const nombre = auxMateria.materia_nombre;
+  const color = auxMateria.materia_color || '#2196F3';
+  const grupo = auxMateria.grupo;
+
+  const { rows: existentes } = await pool.query(
+    `SELECT id, docente
+       FROM materias
+       WHERE usuario_id = $1 AND sigla = $2 AND grupo = $3
+       LIMIT 1`,
+    [auxiliarId, sigla, grupo],
+  );
+
+  if (existentes.length) {
+    return existentes[0];
+  }
+
+  const { rows: usuarioRows } = await pool.query(
+    'SELECT nombre_completo FROM usuarios WHERE id = $1',
+    [auxiliarId],
+  );
+
+  const docente = usuarioRows[0]?.nombre_completo || 'Auxiliar';
+
+  const { rows: insertRows } = await pool.query(
+    `INSERT INTO materias (nombre, sigla, docente, grupo, color, usuario_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, docente`,
+    [nombre, sigla, docente, grupo, color, auxiliarId],
+  );
+
+  return insertRows[0];
+}
+
+async function sugerirAulasParaGanadores(ganadores, totalEstudiantes) {
+  const mapa = new Map();
+  if (!ganadores || !ganadores.length) return mapa;
+
+  const { rows: aulasRows } = await pool.query('SELECT sigla, capacidad FROM aulas');
+  const aulas = aulasRows.map((r) => ({
+    sigla: r.sigla,
+    capacidad: typeof r.capacidad === 'number' ? r.capacidad : parseInt(r.capacidad, 10) || 0,
+  }));
+
+  const { rows: horariosRows } = await pool.query(
+    `SELECT dia_semana, hora_inicio, hora_fin, aula
+       FROM clases_horarios`,
+  );
+
+  const ocupacionPorDiaYAula = new Map();
+  horariosRows.forEach((row) => {
+    const dia = parseInt(row.dia_semana, 10);
+    const aula = row.aula;
+    if (!aula) return;
+    const key = `${dia}|${aula}`;
+    const inicio = timeToMinutes(row.hora_inicio);
+    const fin = timeToMinutes(row.hora_fin);
+    if (!ocupacionPorDiaYAula.has(key)) {
+      ocupacionPorDiaYAula.set(key, []);
+    }
+    ocupacionPorDiaYAula.get(key).push({ inicio, fin });
+  });
+
+  ganadores.forEach((slot) => {
+    const dia = parseInt(slot.dia_semana, 10) || 1;
+    const inicioSlot = timeToMinutes(slot.hora_inicio);
+    const finSlot = timeToMinutes(slot.hora_fin);
+
+    let mejorAdecuada = null;
+    let mejorLibreCualquiera = null;
+
+    aulas.forEach((aula) => {
+      const key = `${dia}|${aula.sigla}`;
+      const ocupaciones = ocupacionPorDiaYAula.get(key) || [];
+      const ocupada = ocupaciones.some((o) => rangesOverlap(inicioSlot, finSlot, o.inicio, o.fin));
+      if (ocupada) return;
+
+      const cap = aula.capacidad || 0;
+      if (!mejorLibreCualquiera || cap > mejorLibreCualquiera.capacidad) {
+        mejorLibreCualquiera = aula;
+      }
+
+      if (totalEstudiantes > 0 && cap >= totalEstudiantes) {
+        if (!mejorAdecuada || cap < mejorAdecuada.capacidad) {
+          mejorAdecuada = aula;
+        }
+      }
+    });
+
+    const seleccionada = mejorAdecuada || mejorLibreCualquiera || null;
+    if (seleccionada) {
+      const keySlot = `${dia}|${slot.hora_inicio}`;
+      mapa.set(keySlot, seleccionada.sigla);
+    }
+  });
+
+  return mapa;
+}
+
+async function crearClasesEInscripcionesDesdeVotacion(auxiliarId, auxMateriaId, votacionId) {
+  const auxMat = await getAuxiliarMateriaInfo(auxMateriaId);
+  if (!auxMat || auxMat.auxiliar_id !== auxiliarId) {
+    return { ganadores: [], clases_tipo2_ids: [], clases_tipo3_ids: [] };
+  }
+
+  const vecesPorSemana = auxMat.veces_por_semana ? parseInt(auxMat.veces_por_semana, 10) || 1 : 1;
+
+  const { rows: votosRows } = await pool.query(
+    `SELECT dia_semana, hora_inicio, hora_fin, COUNT(*)::int AS total_votos
+       FROM auxiliar_votos
+       WHERE votacion_id = $1
+       GROUP BY dia_semana, hora_inicio, hora_fin`,
+    [votacionId],
+  );
+
+  if (!votosRows.length || vecesPorSemana <= 0) {
+    return { ganadores: [], clases_tipo2_ids: [], clases_tipo3_ids: [] };
+  }
+
+  const slots = votosRows
+    .map((row) => {
+      const dia = parseInt(row.dia_semana, 10) || 1;
+      const horaInicioRaw = row.hora_inicio;
+      const horaFinRaw = row.hora_fin;
+      const horaInicioStr = typeof horaInicioRaw === 'string'
+        ? horaInicioRaw.substring(0, 5)
+        : horaInicioRaw?.toString().substring(0, 5);
+      const horaFinStr = typeof horaFinRaw === 'string'
+        ? horaFinRaw.substring(0, 5)
+        : horaFinRaw?.toString().substring(0, 5);
+      const totalVotos = typeof row.total_votos === 'number'
+        ? row.total_votos
+        : parseInt(row.total_votos, 10) || 0;
+
+      return {
+        dia_semana: dia,
+        hora_inicio: horaInicioStr,
+        hora_fin: horaFinStr,
+        total_votos: totalVotos,
+      };
+    })
+    .filter((s) => s.hora_inicio && s.hora_fin && s.total_votos > 0);
+
+  if (!slots.length) {
+    return { ganadores: [], clases_tipo2_ids: [], clases_tipo3_ids: [] };
+  }
+
+  slots.sort((a, b) => {
+    if (b.total_votos !== a.total_votos) return b.total_votos - a.total_votos;
+    if (a.dia_semana !== b.dia_semana) return a.dia_semana - b.dia_semana;
+    return String(a.hora_inicio).localeCompare(String(b.hora_inicio));
+  });
+
+  const ganadores = slots.slice(0, vecesPorSemana);
+
+  const { rows: estRows } = await pool.query(
+    `SELECT ame.estudiante_id
+       FROM auxiliar_matricula_estudiantes ame
+       INNER JOIN auxiliar_matriculaciones mat ON ame.matriculacion_id = mat.id
+       WHERE mat.auxiliar_materia_id = $1`,
+    [auxMateriaId],
+  );
+
+  const estudianteIds = estRows.map((r) => r.estudiante_id);
+  const totalEstudiantes = estudianteIds.length;
+
+  const aulasPorSlot = await sugerirAulasParaGanadores(ganadores, totalEstudiantes);
+
+  const materiaLocal = await ensureAuxiliarMateriaLocalMateria(auxMat);
+  const idMateria = materiaLocal.id;
+  const docente = materiaLocal.docente;
+
+  const clasesTipo2Ids = [];
+  const clasesTipo3Ids = [];
+
+  for (const slot of ganadores) {
+    const keySlot = `${slot.dia_semana}|${slot.hora_inicio}`;
+    const aulaAsignada = aulasPorSlot.get(keySlot) || 'SIN-AULA';
+
+    const { rows: clasesExistentes } = await pool.query(
+      `SELECT id, tipo_clase
+         FROM clases
+         WHERE id_materia = $1
+           AND sigla = $2
+           AND grupo = $3
+           AND dia_semana = $4
+           AND hora_inicio = $5
+           AND hora_fin = $6
+           AND tipo_clase IN (2, 3)`,
+      [idMateria, auxMat.materia_sigla, auxMat.grupo, slot.dia_semana, slot.hora_inicio, slot.hora_fin],
+    );
+
+    let clase2Id = null;
+    let clase3Id = null;
+
+    clasesExistentes.forEach((c) => {
+      if (c.tipo_clase === 2) clase2Id = c.id;
+      if (c.tipo_clase === 3) clase3Id = c.id;
+    });
+
+    if (clase2Id) {
+      await pool.query('UPDATE clases SET aula = $1 WHERE id = $2', [aulaAsignada, clase2Id]);
+    } else {
+      const { rows: insert2 } = await pool.query(
+        `INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, hora_fin, tipo_clase, aula)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 2, $8)
+           RETURNING id`,
+        [idMateria, auxMat.materia_sigla, docente, auxMat.grupo, slot.dia_semana, slot.hora_inicio, slot.hora_fin, aulaAsignada],
+      );
+      clase2Id = insert2[0].id;
+    }
+
+    if (clase3Id) {
+      await pool.query('UPDATE clases SET aula = $1 WHERE id = $2', [aulaAsignada, clase3Id]);
+    } else {
+      const { rows: insert3 } = await pool.query(
+        `INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, hora_fin, tipo_clase, aula)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 3, $8)
+           RETURNING id`,
+        [idMateria, auxMat.materia_sigla, docente, auxMat.grupo, slot.dia_semana, slot.hora_inicio, slot.hora_fin, aulaAsignada],
+      );
+      clase3Id = insert3[0].id;
+    }
+
+    if (clase2Id) clasesTipo2Ids.push(clase2Id);
+    if (clase3Id) clasesTipo3Ids.push(clase3Id);
+  }
+
+  // Inscribir estudiantes en clases tipo 2
+  for (const estudianteId of estudianteIds) {
+    for (const claseId of clasesTipo2Ids) {
+      // eslint-disable-next-line no-await-in-loop
+      await pool.query(
+        `INSERT INTO inscripciones (id_usuario, id_clase)
+           VALUES ($1, $2)
+           ON CONFLICT (id_usuario, id_clase) DO NOTHING`,
+        [estudianteId, claseId],
+      );
+    }
+  }
+
+  // Inscribir auxiliar en clases tipo 3
+  for (const claseId of clasesTipo3Ids) {
+    // eslint-disable-next-line no-await-in-loop
+    await pool.query(
+      `INSERT INTO inscripciones (id_usuario, id_clase)
+         VALUES ($1, $2)
+         ON CONFLICT (id_usuario, id_clase) DO NOTHING`,
+      [auxiliarId, claseId],
+    );
+  }
+
+  return { ganadores, clases_tipo2_ids: clasesTipo2Ids, clases_tipo3_ids: clasesTipo3Ids };
+}
+
+async function limpiarInscripcionesTipo2DeAuxiliatura(auxiliarId, materiaSigla, grupo, estudianteId) {
+  if (!auxiliarId || !materiaSigla || !grupo || !estudianteId) return;
+
+  const { rows: clasesRows } = await pool.query(
+    `SELECT c.id
+       FROM clases c
+       INNER JOIN materias m ON c.id_materia = m.id
+       WHERE m.usuario_id = $1
+         AND m.sigla = $2
+         AND c.grupo = $3
+         AND c.tipo_clase = 2`,
+    [auxiliarId, materiaSigla, grupo],
+  );
+
+  if (!clasesRows.length) return;
+
+  const claseIds = clasesRows.map((r) => r.id);
+
+  await pool.query(
+    `DELETE FROM inscripciones
+       WHERE id_usuario = $1
+         AND id_clase = ANY($2::int[])`,
+    [estudianteId, claseIds],
+  );
+}
+
 export const getMatriculacionDetalle = async (req, res) => {
   try {
     if (!req.user) {
@@ -116,6 +420,73 @@ export const getMatriculacionDetalle = async (req, res) => {
   }
 };
 
+export const actualizarAulaVotacion = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
+    const auxiliarId = req.user.userId ?? req.user.id ?? req.userId;
+    const auxMateriaId = parseInt(req.params.auxMateriaId, 10);
+
+    if (!auxMateriaId || Number.isNaN(auxMateriaId)) {
+      return res.status(400).json({ message: 'Materia inválida' });
+    }
+
+    const { dia_semana, hora_inicio, hora_fin, aula } = req.body || {};
+    const dia = parseInt(dia_semana, 10);
+    const horaInicio = hora_inicio ? String(hora_inicio).substring(0, 5) : '';
+    const horaFin = hora_fin ? String(hora_fin).substring(0, 5) : '';
+    const aulaTrim = aula ? String(aula).trim() : '';
+
+    if (!dia || Number.isNaN(dia) || !horaInicio || !horaFin || !aulaTrim) {
+      return res.status(400).json({ message: 'Parámetros inválidos para actualizar aula' });
+    }
+
+    const auxMatInfo = await getAuxiliarMateriaInfo(auxMateriaId);
+    if (!auxMatInfo) {
+      return res.status(404).json({ message: 'Auxiliatura no encontrada' });
+    }
+
+    if (auxMatInfo.auxiliar_id !== auxiliarId) {
+      return res.status(403).json({ message: 'No estás autorizado para administrar esta auxiliatura' });
+    }
+
+    const materiaLocal = await ensureAuxiliarMateriaLocalMateria(auxMatInfo);
+
+    const { rows: updated } = await pool.query(
+      `UPDATE clases
+         SET aula = $1
+       WHERE id_materia = $2
+         AND sigla = $3
+         AND grupo = $4
+         AND dia_semana = $5
+         AND hora_inicio = $6
+         AND hora_fin = $7
+         AND tipo_clase IN (2, 3)
+       RETURNING id, tipo_clase, aula`,
+      [aulaTrim, materiaLocal.id, auxMatInfo.materia_sigla, auxMatInfo.grupo, dia, horaInicio, horaFin],
+    );
+
+    if (!updated.length) {
+      return res.status(404).json({
+        message: 'No se encontraron clases de auxiliatura (tipo 2 o 3) para este horario. Asegúrate de haber finalizado la votación.',
+      });
+    }
+
+    res.json({
+      message: 'Aula actualizada para este horario de auxiliatura',
+      clases: updated,
+    });
+  } catch (error) {
+    console.error('Error en actualizarAulaVotacion:', error);
+    res.status(500).json({
+      message: 'Error al actualizar aula de la auxiliatura',
+      error: error.message,
+    });
+  }
+};
+
 export const cerrarMatriculacion = async (req, res) => {
   try {
     if (!req.user) {
@@ -210,6 +581,12 @@ export const desinscribirsePorCodigo = async (req, res) => {
 
     if (!deleted.length) {
       return res.status(400).json({ message: 'No estabas inscrito en esta auxiliatura' });
+    }
+
+    try {
+      await limpiarInscripcionesTipo2DeAuxiliatura(row.auxiliar_id, row.sigla, row.grupo, usuarioId);
+    } catch (cleanupError) {
+      console.error('Error al limpiar inscripciones tipo 2 al desinscribirse:', cleanupError);
     }
 
     res.json({
@@ -448,9 +825,10 @@ export const eliminarInscrito = async (req, res) => {
     }
 
     const { rows } = await pool.query(
-      `SELECT mat.id
+      `SELECT mat.id, am.auxiliar_id, mg.sigla, am.grupo
        FROM auxiliar_matriculaciones mat
        INNER JOIN auxiliar_materias am ON mat.auxiliar_materia_id = am.id
+       INNER JOIN materias_globales mg ON am.materia_global_id = mg.id
        WHERE am.id = $1 AND am.auxiliar_id = $2`,
       [auxMateriaId, auxiliarId],
     );
@@ -459,7 +837,8 @@ export const eliminarInscrito = async (req, res) => {
       return res.status(404).json({ message: 'Materia de auxiliar no encontrada o sin código activo' });
     }
 
-    const matriculacionId = rows[0].id;
+    const row = rows[0];
+    const matriculacionId = row.id;
 
     const { rows: deleted } = await pool.query(
       `DELETE FROM auxiliar_matricula_estudiantes
@@ -470,6 +849,12 @@ export const eliminarInscrito = async (req, res) => {
 
     if (!deleted.length) {
       return res.status(404).json({ message: 'El estudiante no estaba inscrito en esta auxiliatura' });
+    }
+
+    try {
+      await limpiarInscripcionesTipo2DeAuxiliatura(row.auxiliar_id, row.sigla, row.grupo, estudianteId);
+    } catch (cleanupError) {
+      console.error('Error al limpiar inscripciones tipo 2 al eliminar inscrito:', cleanupError);
     }
 
     res.json({ message: 'Estudiante eliminado de la lista de inscritos' });
@@ -520,9 +905,11 @@ export const getDisponibilidadVotacion = async (req, res) => {
 
     const materia = materiaRows[0];
 
-    if (!materia.votacion_id || !materia.votacion_activa) {
-      return res.status(400).json({ message: 'No hay una votación activa para esta auxiliatura' });
+    if (!materia.votacion_id) {
+      return res.status(400).json({ message: 'No hay una votación configurada para esta auxiliatura' });
     }
+
+    const votacionActiva = materia.votacion_activa === true;
 
     // Permisos:
     // - El auxiliar asignado siempre puede ver.
@@ -629,7 +1016,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
 
     let misVotos = [];
     let votosUsados = 0;
-    if (materia.votacion_id) {
+    if (materia.votacion_id && votacionActiva) {
       const { rows: votosRows } = await pool.query(
         `SELECT id, dia_semana, hora_inicio, hora_fin
          FROM auxiliar_votos
@@ -724,6 +1111,47 @@ export const getDisponibilidadVotacion = async (req, res) => {
           aula_sugerida: mejorAulaAdecuada ? mejorAulaAdecuada.sigla : null,
         });
       });
+    }
+
+    // Si ya existen clases de auxiliatura creadas (tipo 2 o 3) para esta materia,
+    // usar su aula como aula_sugerida para reflejar el aula realmente asignada.
+    try {
+      const auxMatInfo = await getAuxiliarMateriaInfo(auxMateriaId);
+      if (auxMatInfo) {
+        const materiaLocal = await ensureAuxiliarMateriaLocalMateria(auxMatInfo);
+        const { rows: clasesAuxMatRows } = await pool.query(
+          `SELECT dia_semana, hora_inicio, hora_fin, aula
+           FROM clases
+           WHERE id_materia = $1
+             AND sigla = $2
+             AND grupo = $3
+             AND tipo_clase IN (2, 3)`,
+          [materiaLocal.id, auxMatInfo.materia_sigla, auxMatInfo.grupo],
+        );
+
+        const aulasAsignadas = new Map();
+        clasesAuxMatRows.forEach((row) => {
+          const diaRow = parseInt(row.dia_semana, 10);
+          const horaRaw = row.hora_inicio;
+          const horaStr = typeof horaRaw === 'string'
+            ? horaRaw.substring(0, 5)
+            : horaRaw?.toString().substring(0, 5);
+          if (!diaRow || !horaStr) return;
+          const key = `${diaRow}|${horaStr}`;
+          aulasAsignadas.set(key, row.aula);
+        });
+
+        if (aulasAsignadas.size > 0) {
+          slots.forEach((s) => {
+            const key = `${s.dia_semana}|${s.hora_inicio}`;
+            if (aulasAsignadas.has(key)) {
+              s.aula_sugerida = aulasAsignadas.get(key);
+            }
+          });
+        }
+      }
+    } catch (aulaError) {
+      console.error('Error al obtener aulas de clases de auxiliatura:', aulaError);
     }
 
     // Elegir como "recomendadas" solo hasta 'veces_por_semana' bloques donde
@@ -838,8 +1266,9 @@ export const getDisponibilidadVotacion = async (req, res) => {
       max_votos: vecesPorSemana,
       votos_usados: votosUsados,
       mis_votos: misVotos,
-      puede_votar: esEstudianteMatriculado && !esAuxiliarDeLaMateria,
+      puede_votar: esEstudianteMatriculado && !esAuxiliarDeLaMateria && votacionActiva,
       es_auxiliar_de_la_materia: esAuxiliarDeLaMateria,
+      votacion_activa: votacionActiva,
       materia_nombre: materia.materia_nombre,
       materia_sigla: materia.materia_sigla,
       grupo: materia.grupo,
@@ -946,6 +1375,13 @@ export const finalizarVotacion = async (req, res) => {
       [votacionId],
     );
 
+    let resumenClases = null;
+    try {
+      resumenClases = await crearClasesEInscripcionesDesdeVotacion(auxiliarId, auxMateriaId, votacionId);
+    } catch (errGen) {
+      console.error('Error al generar clases de auxiliatura desde votación:', errGen);
+    }
+
     try {
       const io = getIO();
       io.emit('votacion:actualizada', {
@@ -960,6 +1396,7 @@ export const finalizarVotacion = async (req, res) => {
     res.json({
       message: 'Votación finalizada para esta auxiliatura',
       votacion: updated[0],
+      resumen_clases: resumenClases,
     });
   } catch (error) {
     console.error('Error en finalizarVotacion:', error);
