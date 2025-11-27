@@ -279,7 +279,12 @@ function syncDashboardLayoutWithSection(sectionParam) {
     const container = document.querySelector('.dashboard-container');
     if (!container) return;
     const section = sectionParam ?? seccionActual ?? new URLSearchParams(window.location.search).get('section');
-    // En el panel de auxiliar queremos menos espacio arriba del horario
+    const visibleSections = ['horario','auxiliaturas','votacion-panel','panel-auxiliar', null];
+    if (visibleSections.includes(section)) {
+        container.style.display = '';
+    } else {
+        container.style.display = 'none';
+    }
     if (section === 'panel-auxiliar') {
         container.style.paddingTop = '40px';
     } else {
@@ -458,6 +463,7 @@ window.addEventListener('popstate', () => {
     seccionActual = section;
     updateBreadcrumbPath(section);
     actualizarHeaderVotacion();
+    syncDashboardLayoutWithSection(section);
 });
 
 // Función para renderizar las clases en el grid
@@ -977,6 +983,28 @@ async function cargarDisponibilidadVotacion(auxMateriaId) {
         console.error('Error al cargar disponibilidad de votación:', error);
     }
 }
+
+window.recargarVotacionPanel = function (auxMateriaIdFromSocket) {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const sectionActual = params.get('section');
+        if (sectionActual !== 'votacion-panel') return;
+
+        const auxMateriaIdRaw = params.get('auxMateriaId');
+        const auxMateriaIdUrl = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
+
+        const targetId = auxMateriaIdFromSocket || auxMateriaIdUrl;
+        if (!targetId || Number.isNaN(targetId)) return;
+
+        if (auxMateriaIdUrl && !Number.isNaN(auxMateriaIdUrl) && targetId !== auxMateriaIdUrl) {
+            return;
+        }
+
+        cargarDisponibilidadVotacion(targetId);
+    } catch (e) {
+        console.warn('No se pudo recargar el panel de votación desde sockets:', e);
+    }
+};
 
 function renderizarVotacionDisponibilidad(payload) {
     const params = new URLSearchParams(window.location.search);

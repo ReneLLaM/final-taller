@@ -36,7 +36,6 @@
     const show = section === 'materias-globales';
 
     if (els.section) els.section.hidden = !show;
-    if (els.schedule) els.schedule.style.display = show ? 'none' : '';
 
     if (show) {
       if (typeof window.markActiveHeaderLink === 'function') {

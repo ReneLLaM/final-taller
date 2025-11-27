@@ -20,9 +20,6 @@
     const show = section === 'subir-horario';
 
     if (els.section) els.section.hidden = !show;
-    if (els.schedule) els.schedule.style.display = show ? 'none' : '';
-    const horarioWrapper = document.querySelector('.horario-wrapper');
-    if (horarioWrapper) horarioWrapper.style.display = show ? 'none' : '';
 
     if (show && typeof window.markActiveHeaderLink === 'function') {
       window.markActiveHeaderLink();

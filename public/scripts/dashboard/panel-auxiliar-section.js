@@ -574,4 +574,19 @@
       setTimeout(syncVisibilityWithSection, 80);
     };
   }
+
+  window.recargarPanelAuxiliar = function () {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get('section');
+      if (section !== 'panel-auxiliar') return;
+
+      cargarPanelAuxiliar().catch(err => {
+        console.error('Error al recargar panel auxiliar desde sockets:', err);
+      });
+    } catch (e) {
+      console.error('Error al preparar recarga del panel auxiliar desde sockets:', e);
+    }
+  };
+
 })();

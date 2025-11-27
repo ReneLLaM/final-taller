@@ -526,6 +526,16 @@ export const cerrarMatriculacion = async (req, res) => {
       message: 'Matriculación cerrada. Ya no se aceptan nuevas inscripciones.',
       matriculacion: updated[0],
     });
+
+    try {
+      const io = getIO();
+      io.emit('matriculacion:actualizada', {
+        auxiliar_materia_id: auxMateriaId,
+        accion: 'cerrada',
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de matriculación (cerrar):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en cerrarMatriculacion:', error);
     res.status(500).json({
@@ -598,6 +608,17 @@ export const desinscribirsePorCodigo = async (req, res) => {
         color: row.color,
       },
     });
+
+    try {
+      const io = getIO();
+      io.emit('matriculacion:actualizada', {
+        auxiliar_materia_id: row.auxiliar_materia_id,
+        accion: 'desinscripcion',
+        estudiante_id: usuarioId,
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de matriculación (desinscribirse):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en desinscribirsePorCodigo:', error);
     res.status(500).json({
@@ -711,6 +732,16 @@ export const generarCodigoMatriculacion = async (req, res) => {
     }
 
     res.status(200).json({ message: 'Código de matriculación listo', matriculacion });
+
+    try {
+      const io = getIO();
+      io.emit('matriculacion:actualizada', {
+        auxiliar_materia_id: auxMateriaId,
+        accion: 'generado',
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de matriculación (generar):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en generarCodigoMatriculacion:', error);
     if (error.code === '23505') {
@@ -801,6 +832,17 @@ export const inscribirsePorCodigo = async (req, res) => {
       },
       inscripcion: insertRows[0],
     });
+
+    try {
+      const io = getIO();
+      io.emit('matriculacion:actualizada', {
+        auxiliar_materia_id: row.auxiliar_materia_id,
+        accion: 'inscripcion',
+        estudiante_id: usuarioId,
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de matriculación (inscribirse):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en inscribirsePorCodigo:', error);
     res.status(500).json({
@@ -858,6 +900,17 @@ export const eliminarInscrito = async (req, res) => {
     }
 
     res.json({ message: 'Estudiante eliminado de la lista de inscritos' });
+
+    try {
+      const io = getIO();
+      io.emit('matriculacion:actualizada', {
+        auxiliar_materia_id: auxMateriaId,
+        accion: 'eliminado_por_auxiliar',
+        estudiante_id: estudianteId,
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de matriculación (eliminar inscrito):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en eliminarInscrito:', error);
     res.status(500).json({
@@ -1049,16 +1102,27 @@ export const getDisponibilidadVotacion = async (req, res) => {
         let aulasAdecuadas = 0;
         let capacidadMaxLibre = 0;
         let mejorAulaAdecuada = null;
+        const aulasDetalleSlot = [];
 
         aulas.forEach((aula) => {
           const key = `${dia}|${aula.sigla}`;
           const ocupaciones = ocupacionPorDiaYAula.get(key) || [];
           const ocupada = ocupaciones.some((o) => rangesOverlap(inicioSlot, finSlot, o.inicio, o.fin));
-          if (!ocupada) {
+          const cap = aula.capacidad || 0;
+          const capacidadSuficiente = totalEstudiantes > 0 && cap >= totalEstudiantes;
+          const disponible = !ocupada;
+
+          aulasDetalleSlot.push({
+            sigla: aula.sigla,
+            capacidad: cap,
+            disponible,
+            capacidad_suficiente: capacidadSuficiente,
+          });
+
+          if (disponible) {
             aulasLibres += 1;
-            const cap = aula.capacidad || 0;
             capacidadMaxLibre = Math.max(capacidadMaxLibre, cap);
-            if (totalEstudiantes > 0 && cap >= totalEstudiantes) {
+            if (capacidadSuficiente) {
               aulasAdecuadas += 1;
               if (!mejorAulaAdecuada || cap < mejorAulaAdecuada.capacidad) {
                 mejorAulaAdecuada = aula;
@@ -1109,6 +1173,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
           estudiantes_disponibles: estudiantesDisponibles,
           porcentaje_disponibles: porcentajeDisponibles,
           aula_sugerida: mejorAulaAdecuada ? mejorAulaAdecuada.sigla : null,
+          aulas_detalle: aulasDetalleSlot,
         });
       });
     }
@@ -1255,6 +1320,7 @@ export const getDisponibilidadVotacion = async (req, res) => {
         porcentaje_disponibles: s.porcentaje_disponibles,
         votos_slot: votosSlot,
         aula_sugerida: s.aula_sugerida,
+        aulas_detalle: s.aulas_detalle,
         estado,
       };
     });
@@ -1513,6 +1579,15 @@ export const emitirVotoVotacion = async (req, res) => {
       votos_usados: votosUsados,
       voto: insertRows[0],
     });
+
+    try {
+      const io = getIO();
+      io.emit('votacion:disponibilidad-actualizada', {
+        auxiliar_materia_id: auxMateriaId,
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de votación (emitir voto):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en emitirVotoVotacion:', error);
     res.status(500).json({
@@ -1604,6 +1679,15 @@ export const eliminarVotoVotacion = async (req, res) => {
       max_votos: maxVotos,
       votos_usados: votosUsados,
     });
+
+    try {
+      const io = getIO();
+      io.emit('votacion:disponibilidad-actualizada', {
+        auxiliar_materia_id: auxMateriaId,
+      });
+    } catch (socketError) {
+      console.error('Error emitiendo evento de votación (eliminar voto):', socketError.message);
+    }
   } catch (error) {
     console.error('Error en eliminarVotoVotacion:', error);
     res.status(500).json({

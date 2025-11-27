@@ -252,7 +252,7 @@
         <div id="auxMatAulaModalMessage" class="message" style="display:none;"></div>
         <div class="form-group">
           <label for="auxMatAulaInput">Aula asignada</label>
-          <input id="auxMatAulaInput" type="text">
+          <select id="auxMatAulaInput"></select>
           <small id="auxMatAulaRecomendada"></small>
         </div>
       </div>
@@ -265,5 +265,7 @@
 
   <script src="../../scripts/shared/load-header.js"></script>
   <script src="../../scripts/dashboard/aux-matricula-page.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="../../scripts/dashboard/socket-client.js"></script>
 </body>
 </html>

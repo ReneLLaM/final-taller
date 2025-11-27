@@ -72,9 +72,6 @@
     if (els.section) {
       els.section.hidden = !show;
     }
-    if (els.schedule) {
-      els.schedule.style.display = show ? 'none' : '';
-    }
     if (show) {
       // Marcar header como activo
       if (typeof window.markActiveHeaderLink === 'function') {

@@ -198,14 +198,50 @@ export const deleteAuxiliarMateria = async (req, res) => {
     try {
         const { auxiliarId, id } = req.params;
 
-        const { rowCount } = await pool.query(
+        const { rows } = await pool.query(`
+            SELECT am.id, am.auxiliar_id, mg.sigla, am.grupo
+            FROM auxiliar_materias am
+            INNER JOIN materias_globales mg ON am.materia_global_id = mg.id
+            WHERE am.id = $1 AND am.auxiliar_id = $2
+        `, [id, auxiliarId]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Asignación no encontrada para este auxiliar' });
+        }
+
+        const row = rows[0];
+
+        // Eliminar inscripciones del auxiliar a clases tipo 3 de esta auxiliatura
+        try {
+            const { rows: materiasRows } = await pool.query(
+                'SELECT id FROM materias WHERE usuario_id = $1 AND sigla = $2 AND grupo = $3 LIMIT 1',
+                [row.auxiliar_id, row.sigla, row.grupo]
+            );
+
+            if (materiasRows.length > 0) {
+                const materiaId = materiasRows[0].id;
+
+                const { rows: clasesRows } = await pool.query(
+                    'SELECT id FROM clases WHERE id_materia = $1 AND tipo_clase = 3',
+                    [materiaId]
+                );
+
+                if (clasesRows.length > 0) {
+                    const claseIds = clasesRows.map(c => c.id);
+                    await pool.query(
+                        'DELETE FROM inscripciones WHERE id_usuario = $1 AND id_clase = ANY($2::int[])',
+                        [row.auxiliar_id, claseIds]
+                    );
+                }
+            }
+        } catch (cleanupError) {
+            console.error('Error al limpiar inscripciones de clases tipo 3 al eliminar auxiliar_materia:', cleanupError);
+        }
+
+        await pool.query(
             'DELETE FROM auxiliar_materias WHERE id = $1 AND auxiliar_id = $2',
             [id, auxiliarId]
         );
-
-        if (rowCount === 0) {
-            return res.status(404).json({ message: 'Asignación no encontrada para este auxiliar' });
-        }
 
         res.json({ message: 'Asignación eliminada correctamente' });
     } catch (error) {

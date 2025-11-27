@@ -419,6 +419,13 @@ body.rol-admin .horario-section {
     padding-top: 35px;
 }
 
+.votacion-resultados {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 35px;
+}
+
 .aux-matricula-inscritos-title {
     margin: 0;
     font-size: 18px;

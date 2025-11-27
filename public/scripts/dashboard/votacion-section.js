@@ -103,8 +103,6 @@
       els.section.hidden = !show;
       els.section.style.display = show ? '' : 'none';
     }
-    const dashboard = document.querySelector('.dashboard-container');
-    if (dashboard) dashboard.style.display = show ? 'none' : '';
     if (show && typeof window.markActiveHeaderLink === 'function') {
       window.markActiveHeaderLink();
     }

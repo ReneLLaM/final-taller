@@ -27,128 +27,16 @@
   const state = {
     auxMateriaId: null,
     cargandoDetalle: false,
+    auxVotacionDisponibilidad: [],
   };
 
-  const confirmEls = {
-    modal: document.getElementById('confirmRemoveAuxStudentModal'),
-    text: document.getElementById('confirmRemoveAuxStudentText'),
-    message: document.getElementById('confirmRemoveAuxStudentMessage'),
-    confirmBtn: document.getElementById('btnConfirmRemoveAuxStudent'),
-  };
-
-  let estudiantePendienteEliminar = null;
-  let votacionAulaSlotActual = null;
-
-  function nombreDiaLocal(dia) {
-    const nombres = [null, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return nombres[dia] || 'Día';
-  }
-
-  function abrirModalAdministrarAula(slotInfo) {
-    const modal = els.votacionAulaModal;
-    if (!modal) return;
-
-    votacionAulaSlotActual = slotInfo;
-
-    const { dia, rango, aulaActual, aulaSugerida } = slotInfo;
-    const diaNombre = nombreDiaLocal(dia);
-
-    if (els.votacionAulaModalTexto) {
-      els.votacionAulaModalTexto.textContent = `${diaNombre} · ${rango}`;
-    }
-
-    if (els.votacionAulaInput) {
-      els.votacionAulaInput.value = aulaActual || aulaSugerida || '';
-    }
-
-    if (els.votacionAulaRecomendada) {
-      if (aulaSugerida) {
-        els.votacionAulaRecomendada.textContent = `Recomendada según capacidad: ${aulaSugerida}`;
-      } else {
-        els.votacionAulaRecomendada.textContent = '';
-      }
-    }
-
-    if (els.votacionAulaModalMessage) {
-      els.votacionAulaModalMessage.style.display = 'none';
-      els.votacionAulaModalMessage.textContent = '';
-    }
-
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
-  }
-
-  function cerrarModalAdministrarAula() {
-    const modal = els.votacionAulaModal;
-    if (!modal) return;
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
-    votacionAulaSlotActual = null;
-  }
-
-  function setAulaModalMessage(type, text) {
-    const el = els.votacionAulaModalMessage;
-    if (!el) return;
-    if (!text) {
-      el.style.display = 'none';
-      return;
-    }
-    el.textContent = text;
-    el.className = `message ${type}`;
-    el.style.display = 'block';
-  }
-
-  async function guardarAulaDesdeModal() {
-    if (!state.auxMateriaId || !votacionAulaSlotActual || !els.votacionAulaInput) return;
-
-    const nuevaAula = els.votacionAulaInput.value.trim();
-    if (!nuevaAula) {
-      setAulaModalMessage('error', 'Debes ingresar un aula válida.');
-      return;
-    }
-
-    const { dia, horaInicio, horaFin } = votacionAulaSlotActual;
-
-    try {
-      setAulaModalMessage('info', 'Actualizando aula para este horario...');
-
-      const res = await fetch(`/api/auxiliar-materias/${state.auxMateriaId}/votacion/aula`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dia_semana: dia,
-          hora_inicio: horaInicio,
-          hora_fin: horaFin,
-          aula: nuevaAula,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAulaModalMessage('error', data.message || 'No se pudo actualizar el aula.');
-        return;
-      }
-
-      setAulaModalMessage('success', data.message || 'Aula actualizada para este horario.');
-
-      await cargarVotacionSoloLectura(state.auxMateriaId, { mostrarAdministrar: true });
-      cerrarModalAdministrarAula();
-      setDetalleMessage('success', 'Se actualizó el aula para el horario seleccionado.');
-    } catch (err) {
-      console.error('Error al actualizar aula de auxiliatura:', err);
-      setAulaModalMessage('error', 'Error de conexión al actualizar el aula.');
-    }
-  }
-
-  function escapeHtml(text) {
-    if (text === null || text === undefined) return '';
-    return String(text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
 
   function setDetalleMessage(type, text) {
@@ -195,52 +83,196 @@
     }).join('');
   }
 
-  // Construir un grid de horario para mostrar el resultado de la votación en modo solo lectura
-  function construirGridVotacionIfNeeded() {
-    if (!els.votacionGrid || els.votacionGrid.childElementCount > 0) return;
+  const confirmEls = {
+    modal: document.getElementById('confirmRemoveAuxStudentModal'),
+    text: document.getElementById('confirmRemoveAuxStudentText'),
+    message: document.getElementById('confirmRemoveAuxStudentMessage'),
+    confirmBtn: document.getElementById('btnConfirmRemoveAuxStudent'),
+  };
 
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  let estudiantePendienteEliminar = null;
+  let votacionAulaSlotActual = null;
 
-    const headerRow = document.createElement('div');
-    headerRow.className = 'schedule-row header-row';
+  function nombreDiaLocal(dia) {
+    const nombres = [null, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return nombres[dia] || 'Día';
+  }
 
-    const emptyCell = document.createElement('div');
-    emptyCell.className = 'time-column header-cell';
-    headerRow.appendChild(emptyCell);
+  async function guardarAulaDesdeModal() {
+    const modal = els.votacionAulaModal;
+    const selectEl = els.votacionAulaInput;
+    const messageEl = els.votacionAulaModalMessage;
 
-    dias.forEach((diaNombre, index) => {
-      const cell = document.createElement('div');
-      cell.className = 'day-header';
-      cell.dataset.dia = String(index + 1);
-      cell.textContent = diaNombre;
-      headerRow.appendChild(cell);
-    });
+    if (!modal || !selectEl || !votacionAulaSlotActual || !state.auxMateriaId) return;
 
-    els.votacionGrid.appendChild(headerRow);
+    const aula = (selectEl.value || '').trim();
+    if (!aula) {
+      if (messageEl) {
+        messageEl.textContent = 'Selecciona un aula para guardar.';
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+      }
+      return;
+    }
 
-    const bloquesInicioHoras = [7, 9, 11, 14, 16, 18, 20];
+    if (messageEl) {
+      messageEl.style.display = 'none';
+      messageEl.textContent = '';
+    }
 
-    bloquesInicioHoras.forEach((hInicio) => {
-      const row = document.createElement('div');
-      row.className = 'schedule-row';
+    const payload = {
+      dia_semana: votacionAulaSlotActual.dia,
+      hora_inicio: votacionAulaSlotActual.horaInicio,
+      hora_fin: votacionAulaSlotActual.horaFin,
+      aula,
+    };
 
-      const timeCell = document.createElement('div');
-      timeCell.className = 'time-column';
-      const hFin = hInicio + 2;
-      const label = `${String(hInicio).padStart(2, '0')}:00 - ${String(hFin).padStart(2, '0')}:00`;
-      timeCell.textContent = label;
-      row.appendChild(timeCell);
-
-      for (let dia = 1; dia <= 6; dia += 1) {
-        const cell = document.createElement('div');
-        cell.className = 'schedule-cell';
-        cell.dataset.dia = String(dia);
-        cell.dataset.hora = `${String(hInicio).padStart(2, '0')}:00`;
-        row.appendChild(cell);
+    try {
+      if (messageEl) {
+        messageEl.textContent = 'Guardando aula...';
+        messageEl.className = 'message info';
+        messageEl.style.display = 'block';
       }
 
-      els.votacionGrid.appendChild(row);
-    });
+      const res = await fetch(`/api/auxiliar-materias/${state.auxMateriaId}/votacion/aula`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (messageEl) {
+          messageEl.textContent = data.message || 'No se pudo actualizar el aula para este horario.';
+          messageEl.className = 'message error';
+          messageEl.style.display = 'block';
+        }
+        return;
+      }
+
+      if (messageEl) {
+        messageEl.textContent = data.message || 'Aula actualizada para este horario de auxiliatura.';
+        messageEl.className = 'message success';
+        messageEl.style.display = 'block';
+      }
+
+      await cargarDetalleMateria();
+
+      setTimeout(() => {
+        cerrarModalAdministrarAula();
+      }, 600);
+    } catch (err) {
+      console.error('Error al actualizar aula de auxiliatura:', err);
+      if (messageEl) {
+        messageEl.textContent = 'Error de conexión al actualizar el aula';
+        messageEl.className = 'message error';
+        messageEl.style.display = 'block';
+      }
+    }
+  }
+
+  function abrirModalAdministrarAula(slotInfo) {
+    const modal = els.votacionAulaModal;
+    if (!modal) return;
+
+    votacionAulaSlotActual = slotInfo;
+
+    const { dia, rango, aulaActual, aulaSugerida, totalEstudiantes, aulasDetalle } = slotInfo;
+    const diaNombre = nombreDiaLocal(dia);
+
+    if (els.votacionAulaModalTexto) {
+      els.votacionAulaModalTexto.textContent = `${diaNombre} · ${rango}`;
+    }
+
+    const selectEl = els.votacionAulaInput;
+    if (selectEl) {
+      const selectedValor = aulaActual || aulaSugerida || '';
+      const detalle = Array.isArray(aulasDetalle) ? aulasDetalle.slice() : [];
+      const total = typeof totalEstudiantes === 'number' ? totalEstudiantes : 0;
+
+      selectEl.innerHTML = '';
+
+      const placeholderOpt = document.createElement('option');
+      placeholderOpt.value = '';
+      placeholderOpt.textContent = 'Selecciona un aula';
+      placeholderOpt.disabled = true;
+      placeholderOpt.selected = !selectedValor;
+      selectEl.appendChild(placeholderOpt);
+
+      if (selectedValor && !detalle.some((a) => a.sigla === selectedValor)) {
+        const optActual = document.createElement('option');
+        optActual.value = selectedValor;
+        optActual.textContent = `${selectedValor} (asignada actualmente)`;
+        selectEl.appendChild(optActual);
+      }
+
+      detalle.sort((a, b) => {
+        const grpA = !a.disponible ? 2 : (a.capacidad_suficiente ? 0 : 1);
+        const grpB = !b.disponible ? 2 : (b.capacidad_suficiente ? 0 : 1);
+        if (grpA !== grpB) return grpA - grpB;
+        const capA = typeof a.capacidad === 'number' ? a.capacidad : 0;
+        const capB = typeof b.capacidad === 'number' ? b.capacidad : 0;
+        if (capA !== capB) return capB - capA;
+        return String(a.sigla || '').localeCompare(String(b.sigla || ''));
+      });
+
+      detalle.forEach((aula) => {
+        const opt = document.createElement('option');
+        opt.value = aula.sigla;
+        const partes = [`${aula.sigla}`, `cap. ${aula.capacidad}`];
+        if (!aula.disponible) {
+          partes.push('ocupada');
+          opt.disabled = true;
+        } else if (!aula.capacidad_suficiente && total > 0) {
+          partes.push('capacidad < inscritos');
+        } else if (aula.capacidad_suficiente) {
+          partes.push('recomendada');
+        }
+        opt.textContent = partes.join(' · ');
+
+        if (!aula.capacidad_suficiente && total > 0) {
+          opt.style.color = '#b91c1c';
+        }
+
+        selectEl.appendChild(opt);
+      });
+
+      if (selectedValor) {
+        selectEl.value = selectedValor;
+      }
+    }
+
+    if (els.votacionAulaRecomendada) {
+      if (aulaSugerida) {
+        let capTexto = '';
+        if (Array.isArray(aulasDetalle)) {
+          const match = aulasDetalle.find((a) => a.sigla === aulaSugerida);
+          if (match && typeof match.capacidad === 'number') {
+            capTexto = ` (cap. ${match.capacidad})`;
+          }
+        }
+        els.votacionAulaRecomendada.textContent = `Recomendada según capacidad: ${aulaSugerida}${capTexto}`;
+      } else {
+        els.votacionAulaRecomendada.textContent = '';
+      }
+    }
+
+    if (els.votacionAulaModalMessage) {
+      els.votacionAulaModalMessage.style.display = 'none';
+      els.votacionAulaModalMessage.textContent = '';
+    }
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function cerrarModalAdministrarAula() {
+    const modal = els.votacionAulaModal;
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    votacionAulaSlotActual = null;
   }
 
   async function cargarVotacionSoloLectura(auxMateriaId, options = {}) {
@@ -248,10 +280,9 @@
     if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
 
     if (els.votacionGrid.childElementCount === 0) {
-      construirGridVotacionIfNeeded();
+      return;
     }
 
-    // Limpiar posibles cards anteriores
     els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
 
     try {
@@ -273,6 +304,7 @@
       }
 
       const disponibilidad = data.disponibilidad;
+      state.auxVotacionDisponibilidad = disponibilidad;
       if (!disponibilidad.length) {
         if (els.votacionEstadoTexto) {
           els.votacionEstadoTexto.textContent = 'No hay bloques configurados para mostrar disponibilidad.';
@@ -555,7 +587,6 @@
         }
       }
 
-      // Mostrar estado de votación en modo solo lectura debajo del detalle
       if (els.votacionSection) {
         if (!votacion) {
           els.votacionSection.hidden = false;
@@ -800,16 +831,8 @@
 
         estudiantePendienteEliminar = id;
 
-        // Construir texto descriptivo con el nombre del estudiante
-        let nombre = '';
-        const row = btn.closest('tr');
-        if (row) {
-          const cells = row.querySelectorAll('td');
-          if (cells[1]) nombre = cells[1].textContent.trim();
-        }
-
         if (confirmEls.text) {
-          const base = nombre || 'este estudiante';
+          const base = 'este estudiante';
           confirmEls.text.textContent = `¿Deseas quitar a ${base} de esta auxiliatura?`;
         }
 
@@ -865,6 +888,27 @@
 
         if (!dia || !horaInicio || !horaFin) return;
 
+        let totalEstudiantes = null;
+        let aulasDetalle = [];
+        const dispo = Array.isArray(state.auxVotacionDisponibilidad) ? state.auxVotacionDisponibilidad : [];
+        const slot = dispo.find((item) => {
+          const slotDia = parseInt(item.dia_semana, 10) || 0;
+          const slotHora = typeof item.hora_inicio === 'string'
+            ? item.hora_inicio.substring(0, 5)
+            : item.hora_inicio;
+          return slotDia === dia && slotHora === horaInicio;
+        });
+        if (slot) {
+          if (typeof slot.total_estudiantes === 'number') {
+            totalEstudiantes = slot.total_estudiantes;
+          } else if (typeof slot.totalEstudiantes === 'number') {
+            totalEstudiantes = slot.totalEstudiantes;
+          }
+          if (Array.isArray(slot.aulas_detalle)) {
+            aulasDetalle = slot.aulas_detalle;
+          }
+        }
+
         abrirModalAdministrarAula({
           dia,
           horaInicio,
@@ -872,6 +916,8 @@
           rango,
           aulaActual,
           aulaSugerida,
+          totalEstudiantes,
+          aulasDetalle,
         });
       });
     }
@@ -892,7 +938,13 @@
 
     loadUserInfoBreadcrumbRight().catch(() => {});
 
-    // Fallback de navegación para el header en esta página independiente
+    window.recargarAuxMatDetalle = function () {
+      if (!state.auxMateriaId || state.cargandoDetalle) return;
+      cargarDetalleMateria().catch((err) => {
+        console.error('Error al recargar detalle de auxiliatura desde sockets:', err);
+      });
+    };
+
     if (typeof window.navigateToSection !== 'function') {
       window.navigateToSection = function (section) {
         const href = section ? `/pages/dashboard/principal.html?section=${section}` : '/pages/dashboard/principal.html';

@@ -745,7 +745,6 @@
     const show = section === 'horarios';
 
     if (els.section) els.section.hidden = !show;
-    if (els.schedule) els.schedule.style.display = show ? 'none' : '';
 
     if (show && !state.cargado) {
       cargarHorariosAdmin().catch(err => console.error('Error en admin horarios:', err));
