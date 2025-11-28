@@ -26,6 +26,7 @@
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
     overflow: hidden; /* Evitar desbordes visuales, especialmente en móviles */
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .votacion-slot-card .votacion-slot-main {
@@ -136,14 +137,52 @@
 }
 .votacion-slot-card.votacion-slot-mio {
     border-color: #16A34A;
-    background: rgba(22, 163, 74, 0.16);
-    box-shadow: 0 8px 22px rgba(22, 163, 74, 0.45);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.20), rgba(22, 163, 74, 0.36));
+    box-shadow: 0 10px 26px rgba(22, 163, 74, 0.55);
+    transform: translateY(-2px);
 }
 
 .votacion-slot-card.votacion-slot-mio .votacion-slot-votar {
     color: #065F46;
     font-weight: 700;
+}
+
+.votacion-slot-card.votacion-slot-anim {
+    animation: votacion-slot-pulse 0.65s ease-out;
+}
+
+.votacion-slot-card.votacion-slot-anim-mio {
+    animation: votacion-slot-pulse-mio 0.75s ease-out;
+}
+
+@keyframes votacion-slot-pulse {
+    0% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+    35% {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+}
+
+@keyframes votacion-slot-pulse-mio {
+    0% {
+        transform: translateY(-1px) scale(1);
+        box-shadow: 0 10px 26px rgba(22, 163, 74, 0.55);
+    }
+    35% {
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.65);
+    }
+    100% {
+        transform: translateY(-2px) scale(1);
+        box-shadow: 0 10px 26px rgba(22, 163, 74, 0.55);
+    }
 }
 
 .votacion-slot-main .votacion-slot-votos-resumen {

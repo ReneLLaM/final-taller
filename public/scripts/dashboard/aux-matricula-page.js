@@ -304,6 +304,20 @@
       }
 
       const disponibilidad = data.disponibilidad;
+
+      const prevDispo = Array.isArray(state.auxVotacionDisponibilidad) ? state.auxVotacionDisponibilidad : [];
+      const prevVotosMap = new Map();
+      prevDispo.forEach((prevItem) => {
+        const prevDia = parseInt(prevItem.dia_semana, 10);
+        const prevHora = typeof prevItem.hora_inicio === 'string'
+          ? prevItem.hora_inicio.substring(0, 5)
+          : prevItem.hora_inicio;
+        if (!prevDia || !prevHora) return;
+        const keyPrev = `${prevDia}|${prevHora}`;
+        const prevVotos = typeof prevItem.votos_slot === 'number' ? prevItem.votos_slot : 0;
+        prevVotosMap.set(keyPrev, prevVotos);
+      });
+
       state.auxVotacionDisponibilidad = disponibilidad;
       if (!disponibilidad.length) {
         if (els.votacionEstadoTexto) {
@@ -337,6 +351,9 @@
         const porc = item.porcentaje_disponibles;
         const aulasCantidad = item.aulas_disponibles ?? 0;
         const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+
+        const key = `${dia}|${horaInicio}`;
+        const prevVotos = prevVotosMap.get(key);
 
         const card = document.createElement('div');
         card.className = 'votacion-slot-card';
@@ -377,6 +394,10 @@
             </div>
           </div>
         `;
+
+        if (prevVotosMap.size > 0 && prevVotos !== undefined && prevVotos !== votosSlot) {
+          card.classList.add('votacion-slot-anim');
+        }
 
         cell.appendChild(card);
       });
@@ -728,6 +749,22 @@
       }
 
       await cargarDetalleMateria();
+
+      if (!votacionActiva && els.votacionSection) {
+        try {
+          els.votacionSection.hidden = false;
+          els.votacionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+          try {
+            const rect = els.votacionSection.getBoundingClientRect();
+            const top = rect.top + window.pageYOffset - 80;
+            window.scrollTo({ top, behavior: 'smooth' });
+          } catch (e2) {
+            // Ignorar errores de scroll en navegadores antiguos
+          }
+        }
+      }
+
       setDetalleMessage('success', data.message || `Votación ${votacionActiva ? 'finalizada' : 'iniciada'} correctamente.`);
     } catch (err) {
       console.error('Error al cambiar el estado de la votación:', err);

@@ -554,6 +554,7 @@ let votacionPanelMisVotosSet = new Set();
 let votacionPanelSlotSeleccionado = null;
 let votacionPanelPuedeVotar = true;
 let votacionPanelEsAuxiliarMateria = false;
+let votacionPanelPrevDisponibilidad = [];
 
 const votacionPanelHeaderEl = document.getElementById('votacionPanelHeader');
 const votacionPanelHeaderTitleEl = document.getElementById('votacionPanelHeaderTitle');
@@ -1013,6 +1014,19 @@ function renderizarVotacionDisponibilidad(payload) {
         return;
     }
 
+    const prevDispo = Array.isArray(votacionPanelPrevDisponibilidad) ? votacionPanelPrevDisponibilidad : [];
+    const prevVotosMap = new Map();
+    prevDispo.forEach((prevItem) => {
+        const prevDia = parseInt(prevItem.dia_semana, 10);
+        const prevHora = typeof prevItem.hora_inicio === 'string'
+            ? prevItem.hora_inicio.substring(0, 5)
+            : prevItem.hora_inicio;
+        if (!prevDia || !prevHora) return;
+        const keyPrev = `${prevDia}|${prevHora}`;
+        const prevVotos = typeof prevItem.votos_slot === 'number' ? prevItem.votos_slot : 0;
+        prevVotosMap.set(keyPrev, prevVotos);
+    });
+
     // Limpiar cards anteriores
     document.querySelectorAll('.votacion-slot-card').forEach(card => card.remove());
 
@@ -1020,6 +1034,7 @@ function renderizarVotacionDisponibilidad(payload) {
 
     if (!disponibilidad.length) {
         console.log('No hay disponibilidad de votación para renderizar');
+        votacionPanelPrevDisponibilidad = disponibilidad;
         return;
     }
 
@@ -1074,8 +1089,18 @@ function renderizarVotacionDisponibilidad(payload) {
             porcentajeTexto = `${porc}%`;
         }
 
+        const prevVotos = prevVotosMap.get(key);
+
         if (yaVotado && !noDisponible) {
             card.classList.add('votacion-slot-mio');
+        }
+
+        if (prevVotosMap.size > 0 && prevVotos !== undefined && prevVotos !== votosSlot) {
+            if (yaVotado && !noDisponible) {
+                card.classList.add('votacion-slot-anim-mio');
+            } else {
+                card.classList.add('votacion-slot-anim');
+            }
         }
 
         card.innerHTML = `
@@ -1124,6 +1149,8 @@ function renderizarVotacionDisponibilidad(payload) {
 
         cell.appendChild(card);
     });
+
+    votacionPanelPrevDisponibilidad = disponibilidad;
 }
 
 function renderizarVotacionResultadosPanel(payload) {
