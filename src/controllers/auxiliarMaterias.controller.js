@@ -56,9 +56,13 @@ export const getMisAuxiliarMaterias = async (req, res) => {
                 mg.color,
                 am.grupo,
                 am.veces_por_semana,
-                am.horas_por_clase
+                am.horas_por_clase,
+                COALESCE(av.activa, FALSE) AS votacion_activa
             FROM auxiliar_materias am
             INNER JOIN materias_globales mg ON am.materia_global_id = mg.id
+            LEFT JOIN auxiliar_votaciones av
+                ON av.auxiliar_materia_id = am.id
+                AND av.activa = TRUE
             WHERE am.auxiliar_id = $1
             ORDER BY mg.nombre, am.grupo
         `, [auxiliarId]);
@@ -79,7 +83,8 @@ export const getMisAuxiliarMaterias = async (req, res) => {
                 mg.color,
                 c.grupo,
                 COUNT(*) AS veces_por_semana,
-                AVG(EXTRACT(EPOCH FROM (c.hora_fin - c.hora_inicio)) / 3600.0) AS horas_por_clase
+                AVG(EXTRACT(EPOCH FROM (c.hora_fin - c.hora_inicio)) / 3600.0) AS horas_por_clase,
+                FALSE AS votacion_activa
             FROM clases c
             INNER JOIN inscripciones i ON c.id = i.id_clase
             INNER JOIN materias m ON c.id_materia = m.id

@@ -279,10 +279,6 @@
     const mostrarAdministrar = options.mostrarAdministrar === true;
     if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
 
-    if (els.votacionGrid.childElementCount === 0) {
-      return;
-    }
-
     els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
 
     try {
@@ -304,19 +300,6 @@
       }
 
       const disponibilidad = data.disponibilidad;
-
-      const prevDispo = Array.isArray(state.auxVotacionDisponibilidad) ? state.auxVotacionDisponibilidad : [];
-      const prevVotosMap = new Map();
-      prevDispo.forEach((prevItem) => {
-        const prevDia = parseInt(prevItem.dia_semana, 10);
-        const prevHora = typeof prevItem.hora_inicio === 'string'
-          ? prevItem.hora_inicio.substring(0, 5)
-          : prevItem.hora_inicio;
-        if (!prevDia || !prevHora) return;
-        const keyPrev = `${prevDia}|${prevHora}`;
-        const prevVotos = typeof prevItem.votos_slot === 'number' ? prevItem.votos_slot : 0;
-        prevVotosMap.set(keyPrev, prevVotos);
-      });
 
       state.auxVotacionDisponibilidad = disponibilidad;
       if (!disponibilidad.length) {
@@ -351,9 +334,6 @@
         const porc = item.porcentaje_disponibles;
         const aulasCantidad = item.aulas_disponibles ?? 0;
         const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
-
-        const key = `${dia}|${horaInicio}`;
-        const prevVotos = prevVotosMap.get(key);
 
         const card = document.createElement('div');
         card.className = 'votacion-slot-card';
@@ -394,10 +374,6 @@
             </div>
           </div>
         `;
-
-        if (prevVotosMap.size > 0 && prevVotos !== undefined && prevVotos !== votosSlot) {
-          card.classList.add('votacion-slot-anim');
-        }
 
         cell.appendChild(card);
       });
@@ -619,7 +595,7 @@
             els.votacionHorarioWrapper.hidden = true;
           }
           if (els.votacionGrid) {
-            els.votacionGrid.innerHTML = '';
+            els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
           }
           if (els.votacionResultadosSection && els.votacionResultadosBody) {
             els.votacionResultadosSection.hidden = true;
@@ -826,17 +802,44 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const idStr = params.get('auxMateriaId');
-    const id = idStr ? parseInt(idStr, 10) : NaN;
+    (async () => {
+      try {
+        const authRes = await fetch('/api/protected', {
+          method: 'GET',
+          credentials: 'include',
+        });
 
-    if (!id || Number.isNaN(id)) {
-      setDetalleMessage('error', 'No se indicó una auxiliatura válida. Vuelve al Panel auxiliar.');
-      if (els.detalleSection) els.detalleSection.hidden = true;
-    } else {
-      state.auxMateriaId = id;
-      cargarDetalleMateria().catch(err => console.error('Error al cargar detalle de auxiliatura:', err));
-    }
+        if (!authRes.ok) {
+          window.location.href = '/pages/auth/login.html';
+          return;
+        }
+
+        const authData = await authRes.json().catch(() => ({}));
+        const user = authData.user;
+
+        if (!user || user.rol_id !== 2) {
+          window.location.href = '/pages/auth/login.html';
+          return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const idStr = params.get('auxMateriaId');
+        const id = idStr ? parseInt(idStr, 10) : NaN;
+
+        if (!id || Number.isNaN(id)) {
+          setDetalleMessage('error', 'No se indicó una auxiliatura válida. Vuelve al Panel auxiliar.');
+          if (els.detalleSection) els.detalleSection.hidden = true;
+        } else {
+          state.auxMateriaId = id;
+          cargarDetalleMateria().catch(err => console.error('Error al cargar detalle de auxiliatura:', err));
+        }
+
+        loadUserInfoBreadcrumbRight().catch(() => {});
+      } catch (err) {
+        console.error('Error al verificar autenticación en aux-matricula-page:', err);
+        window.location.href = '/pages/auth/login.html';
+      }
+    })();
 
     if (els.detalleGenerarBtn) {
       els.detalleGenerarBtn.addEventListener('click', () => {
@@ -972,8 +975,6 @@
         guardarAulaDesdeModal();
       });
     }
-
-    loadUserInfoBreadcrumbRight().catch(() => {});
 
     window.recargarAuxMatDetalle = function () {
       if (!state.auxMateriaId || state.cargandoDetalle) return;

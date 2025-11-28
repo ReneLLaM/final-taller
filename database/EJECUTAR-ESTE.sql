@@ -278,7 +278,7 @@ INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, 
 (1, 'SIS101', 'H.PEÑARANDA', 'G3', 5, '09:00', '11:00', 1, 'B205'),
 (2, 'FIS200', 'R.GUTIERREZ', 'G6', 2, '07:00', '09:00', 1, 'E301'),
 (2, 'FIS200', 'R.GUTIERREZ', 'G1', 2, '09:00', '11:00', 1, 'E301'),
-(2, 'FIS200', 'Rene Llanos', 'G1', 3, '09:00', '11:00', 2, 'C101'),
+-- (2, 'FIS200', 'Rene Llanos', 'G1', 3, '09:00', '11:00', 2, 'C101'),
 
 (2, 'FIS200', 'R.GUTIERREZ', 'G6', 4, '11:00', '13:00', 1, 'E301'),
 (3, 'SIS308', 'E.ESPINOZA', 'G2', 1, '14:00', '16:00', 1, 'B008'),
@@ -287,17 +287,17 @@ INSERT INTO clases (id_materia, sigla, docente, grupo, dia_semana, hora_inicio, 
 (4, 'SIS310', 'M.RAMIREZ', 'G6', 5, '14:00', '16:00', 1, 'C001'),
 (5, 'MAT103', 'E.ZAMBRANA', 'G6', 4, '11:00', '13:00', 1, 'C001'),
 (5, 'MAT103', 'E.ZAMBRANA', 'G6', 5, '12:00', '13:00', 1, 'C001'),
-(5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 2, 'E301'),
-(5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 2, 'E301'),
+-- (5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 2, 'E301'),
+-- (5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 2, 'E301'),
 (6, 'MAT102', 'O.VELASCO', 'G8', 1, '16:00', '18:00', 1, 'C003'),
-(6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003'),
+(6, 'MAT102', 'O.VELASCO', 'G6', 4, '16:00', '18:00', 1, 'C003');
 -- Auxiliaturas que dicta el auxiliar (tipo 3)
 -- Copiamos exactamente las auxiliaturas del estudiante (tipo 2) pero marcadas como tipo 3
 -- FIS200 G1: 1 vez por semana
-(2, 'FIS200', 'Rene Llanos', 'G1', 3, '09:00', '11:00', 3, 'C101'),
+-- (2, 'FIS200', 'Rene Llanos', 'G1', 3, '09:00', '11:00', 3, 'C101'),
 -- MAT103 G1: 2 veces por semana
-(5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 3, 'E301'),
-(5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 3, 'E301');
+-- (5, 'MAT103', 'Rene Llanos', 'G1', 4, '16:00', '18:00', 3, 'E301'),
+-- (5, 'MAT103', 'Rene Llanos', 'G1', 5, '16:00', '18:00', 3, 'E301');
 
 -- 6.1 Sincronizar materias_globales con las materias creadas para el usuario de prueba
 INSERT INTO materias_globales (nombre, sigla, color)
