@@ -290,6 +290,18 @@ function syncDashboardLayoutWithSection(sectionParam) {
     } else {
         container.style.paddingTop = '';
     }
+
+    if (section !== 'votacion-panel') {
+        if (votacionResultadosSectionEl && votacionResultadosBodyEl) {
+            votacionResultadosSectionEl.hidden = true;
+            votacionResultadosBodyEl.innerHTML = '';
+        }
+        document.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
+        if (votacionPanelHeaderEl) {
+            votacionPanelHeaderEl.hidden = true;
+            votacionPanelHeaderEl.style.display = 'none';
+        }
+    }
 }
 
 function puedeGestionarHorario(sectionParam) {
@@ -1195,6 +1207,29 @@ function renderizarVotacionResultadosPanel(payload) {
 
     const top = ordenados.slice(0, topNBase);
 
+    const vecesPorSemana = typeof payload.veces_por_semana === 'number'
+        ? payload.veces_por_semana
+        : (typeof payload.max_votos === 'number' ? payload.max_votos : 1);
+
+    const candidatosGanadores = conVotos.slice().sort((a, b) => {
+        const votosA = typeof a.votos_slot === 'number' ? a.votos_slot : 0;
+        const votosB = typeof b.votos_slot === 'number' ? b.votos_slot : 0;
+        if (votosB !== votosA) return votosB - votosA;
+        if (a.dia_semana !== b.dia_semana) return a.dia_semana - b.dia_semana;
+        return String(a.hora_inicio).localeCompare(String(b.hora_inicio));
+    });
+
+    const ganadoresBase = candidatosGanadores.slice(0, Math.max(1, vecesPorSemana));
+    const ganadorKeys = new Set();
+    ganadoresBase.forEach((g) => {
+        const diaKey = parseInt(g.dia_semana, 10) || 0;
+        const horaKey = typeof g.hora_inicio === 'string'
+            ? g.hora_inicio.substring(0, 5)
+            : g.hora_inicio;
+        if (!diaKey || !horaKey) return;
+        ganadorKeys.add(`${diaKey}|${horaKey}`);
+    });
+
     const totalVotosGlobal = top.reduce((sum, item) => {
         const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
         return sum + v;
@@ -1226,8 +1261,12 @@ function renderizarVotacionResultadosPanel(payload) {
         const barWidth = Math.round((votosSlot * 100) / maxVotosSlot);
         const aula = item.aula_sugerida || '—';
 
+        const key = `${diaNum}|${horaInicioStr}`;
+        const esGanador = ganadorKeys.has(key);
+        const rowClass = esGanador ? ' class="votacion-resultado-ganador"' : '';
+
         return `
-          <tr>
+          <tr${rowClass}>
             <td>${escapeHtml(rango)}</td>
             <td>${escapeHtml(diaNombre)}</td>
             <td>

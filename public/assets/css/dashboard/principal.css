@@ -465,6 +465,17 @@ body.rol-admin .horario-section {
     padding-top: 35px;
 }
 
+.votacion-resultados table tbody tr.votacion-resultado-ganador,
+#auxMatVotacionResultadosSection .users-table tbody tr.votacion-resultado-ganador {
+    background: #ECFDF5;
+}
+
+.votacion-resultados table tbody tr.votacion-resultado-ganador td,
+#auxMatVotacionResultadosSection .users-table tbody tr.votacion-resultado-ganador td {
+    color: #065F46;
+    font-weight: 600;
+}
+
 .aux-matricula-inscritos-title {
     margin: 0;
     font-size: 18px;

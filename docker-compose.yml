@@ -21,7 +21,7 @@ services:
     depends_on:
       - myDB
     ports:
-      - 8080:80
+      - 5050:80
     environment:
       - PGADMIN_DEFAULT_EMAIL=rene@gmail.com
       - PGADMIN_DEFAULT_PASSWORD=123456

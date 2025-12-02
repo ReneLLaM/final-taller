@@ -28,7 +28,29 @@
     auxMateriaId: null,
     cargandoDetalle: false,
     auxVotacionDisponibilidad: [],
+    votacionActiva: false,
+    tieneVotacion: false,
   };
+
+  async function handleLogoutLocal() {
+    try {
+      const res = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        window.location.href = '/pages/auth/login.html';
+        return;
+      }
+    } catch (err) {
+      console.error('Error al cerrar sesión desde aux-matricula-page:', err);
+    }
+    window.location.href = '/pages/auth/login.html';
+  }
+
+  if (typeof window !== 'undefined' && typeof window.handleLogout !== 'function') {
+    window.handleLogout = handleLogoutLocal;
+  }
 
   function escapeHtml(str) {
     return String(str)
@@ -278,9 +300,6 @@
   async function cargarVotacionSoloLectura(auxMateriaId, options = {}) {
     const mostrarAdministrar = options.mostrarAdministrar === true;
     if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
-
-    els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => card.remove());
-
     try {
       const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/disponibilidad`, {
         method: 'GET',
@@ -316,6 +335,17 @@
 
       els.votacionHorarioWrapper.hidden = false;
 
+      const existingCards = new Map();
+      els.votacionGrid.querySelectorAll('.votacion-slot-card').forEach((card) => {
+        const cell = card.closest('.schedule-cell');
+        if (!cell) return;
+        const diaAttr = cell.getAttribute('data-dia');
+        const horaAttr = cell.getAttribute('data-hora');
+        if (!diaAttr || !horaAttr) return;
+        const key = `${diaAttr}|${horaAttr}`;
+        existingCards.set(key, card);
+      });
+
       renderVotacionResultadosAux(data, mostrarAdministrar);
 
       disponibilidad.forEach((item) => {
@@ -325,8 +355,17 @@
           : item.hora_inicio;
         if (!dia || !horaInicio) return;
 
+        const key = `${dia}|${horaInicio}`;
+
         const cell = els.votacionGrid.querySelector(`.schedule-cell[data-dia="${dia}"][data-hora="${horaInicio}"]`);
         if (!cell) return;
+
+        let card = existingCards.get(key);
+        if (!card) {
+          card = document.createElement('div');
+          cell.appendChild(card);
+        }
+        existingCards.delete(key);
 
         const estado = item.estado || 'neutral';
         const totalEst = item.total_estudiantes ?? null;
@@ -335,7 +374,6 @@
         const aulasCantidad = item.aulas_disponibles ?? 0;
         const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
 
-        const card = document.createElement('div');
         card.className = 'votacion-slot-card';
         if (estado === 'recomendada') {
           card.classList.add('votacion-estado-recomendada');
@@ -374,8 +412,12 @@
             </div>
           </div>
         `;
+      });
 
-        cell.appendChild(card);
+      existingCards.forEach((card) => {
+        if (card && card.parentElement) {
+          card.parentElement.removeChild(card);
+        }
       });
     } catch (err) {
       console.error('Error al cargar votación en modo solo lectura:', err);
@@ -426,6 +468,29 @@
 
     const top = ordenados.slice(0, topNBase);
 
+    const vecesPorSemana = typeof payload.veces_por_semana === 'number'
+      ? payload.veces_por_semana
+      : (typeof payload.max_votos === 'number' ? payload.max_votos : 1);
+
+    const candidatosGanadores = conVotos.slice().sort((a, b) => {
+      const votosA = typeof a.votos_slot === 'number' ? a.votos_slot : 0;
+      const votosB = typeof b.votos_slot === 'number' ? b.votos_slot : 0;
+      if (votosB !== votosA) return votosB - votosA;
+      if (a.dia_semana !== b.dia_semana) return a.dia_semana - b.dia_semana;
+      return String(a.hora_inicio).localeCompare(String(b.hora_inicio));
+    });
+
+    const ganadoresBase = candidatosGanadores.slice(0, Math.max(1, vecesPorSemana));
+    const ganadorKeys = new Set();
+    ganadoresBase.forEach((g) => {
+      const diaKey = parseInt(g.dia_semana, 10) || 0;
+      const horaKey = typeof g.hora_inicio === 'string'
+        ? g.hora_inicio.substring(0, 5)
+        : g.hora_inicio;
+      if (!diaKey || !horaKey) return;
+      ganadorKeys.add(`${diaKey}|${horaKey}`);
+    });
+
     const totalVotosGlobal = top.reduce((sum, item) => {
       const v = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
       return sum + v;
@@ -455,12 +520,16 @@
       const barWidth = Math.round((votosSlot * 100) / maxVotosSlot);
       const aula = item.aula_sugerida || '—';
 
+      const key = `${diaNum}|${horaInicioStr}`;
+      const esGanador = ganadorKeys.has(key);
+      const rowClass = esGanador ? ' class="votacion-resultado-ganador"' : '';
+
       const adminCell = mostrarAdministrar
         ? `<button type="button" class="btn btn-secondary" data-aux-aula-admin="1" data-dia="${diaNum}" data-hora-inicio="${horaInicioStr}" data-hora-fin="${horaFinStr}" data-aula-actual="${escapeHtml(aula)}" data-aula-sugerida="${escapeHtml(item.aula_sugerida || '')}">Administrar</button>`
         : '&mdash;';
 
       return `
-        <tr>
+        <tr${rowClass}>
           <td>${escapeHtml(rango)}</td>
           <td>${escapeHtml(diaNombre)}</td>
           <td>
@@ -547,6 +616,9 @@
       const auxMat = data.auxiliarMateria || {};
       const matriculacion = data.matriculacion || null;
       const votacion = data.votacion || null;
+
+      state.tieneVotacion = !!votacion;
+      state.votacionActiva = !!(votacion && votacion.activa);
 
       if (els.detalleTitulo) {
         const base = auxMat.materia_nombre || 'Auxiliatura';
@@ -975,6 +1047,14 @@
         guardarAulaDesdeModal();
       });
     }
+
+    window.refrescarAuxMatVotacion = function () {
+      if (!state.auxMateriaId) return;
+      const mostrarAdministrar = state.tieneVotacion && !state.votacionActiva;
+      cargarVotacionSoloLectura(state.auxMateriaId, { mostrarAdministrar }).catch((err) => {
+        console.error('Error al refrescar votación de auxiliatura desde sockets:', err);
+      });
+    };
 
     window.recargarAuxMatDetalle = function () {
       if (!state.auxMateriaId || state.cargandoDetalle) return;

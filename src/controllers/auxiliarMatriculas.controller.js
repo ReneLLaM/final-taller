@@ -321,6 +321,76 @@ async function limpiarInscripcionesTipo2DeAuxiliatura(auxiliarId, materiaSigla, 
   );
 }
 
+async function limpiarClasesEInscripcionesAuxiliatura(auxiliarId, auxMateriaId) {
+  const auxMat = await getAuxiliarMateriaInfo(auxMateriaId);
+  if (!auxMat || auxMat.auxiliar_id !== auxiliarId) {
+    return;
+  }
+
+  const materiaLocal = await ensureAuxiliarMateriaLocalMateria(auxMat);
+
+  const { rows: clasesRows } = await pool.query(
+    `SELECT id
+       FROM clases
+       WHERE id_materia = $1
+         AND sigla = $2
+         AND grupo = $3
+         AND tipo_clase IN (2, 3)`,
+    [materiaLocal.id, auxMat.materia_sigla, auxMat.grupo],
+  );
+
+  if (!clasesRows.length) return;
+
+  const claseIds = clasesRows.map((r) => r.id);
+
+  await pool.query(
+    `DELETE FROM inscripciones
+       WHERE id_clase = ANY($1::int[])`,
+    [claseIds],
+  );
+
+  await pool.query(
+    `DELETE FROM clases
+       WHERE id = ANY($1::int[])`,
+    [claseIds],
+  );
+}
+
+async function inscribirEstudianteEnClasesTipo2DeAuxiliatura(auxiliarId, auxMateriaId, estudianteId) {
+  if (!auxiliarId || !auxMateriaId || !estudianteId) return;
+
+  const auxMat = await getAuxiliarMateriaInfo(auxMateriaId);
+  if (!auxMat || auxMat.auxiliar_id !== auxiliarId) {
+    return;
+  }
+
+  const materiaLocal = await ensureAuxiliarMateriaLocalMateria(auxMat);
+
+  const { rows: clasesRows } = await pool.query(
+    `SELECT id
+       FROM clases
+       WHERE id_materia = $1
+         AND sigla = $2
+         AND grupo = $3
+         AND tipo_clase = 2`,
+    [materiaLocal.id, auxMat.materia_sigla, auxMat.grupo],
+  );
+
+  if (!clasesRows.length) return;
+
+  const claseIds = clasesRows.map((r) => r.id);
+
+  for (const claseId of claseIds) {
+    // eslint-disable-next-line no-await-in-loop
+    await pool.query(
+      `INSERT INTO inscripciones (id_usuario, id_clase)
+         VALUES ($1, $2)
+         ON CONFLICT (id_usuario, id_clase) DO NOTHING`,
+      [estudianteId, claseId],
+    );
+  }
+}
+
 export const getMatriculacionDetalle = async (req, res) => {
   try {
     if (!req.user) {
@@ -832,6 +902,21 @@ export const inscribirsePorCodigo = async (req, res) => {
       },
       inscripcion: insertRows[0],
     });
+
+    try {
+      const { rows: votRows } = await pool.query(
+        `SELECT id, activa, fecha_cierre
+           FROM auxiliar_votaciones
+           WHERE auxiliar_materia_id = $1`,
+        [row.auxiliar_materia_id],
+      );
+
+      if (votRows.length && votRows[0].id && votRows[0].activa === false && votRows[0].fecha_cierre) {
+        await inscribirEstudianteEnClasesTipo2DeAuxiliatura(row.auxiliar_id, row.auxiliar_materia_id, usuarioId);
+      }
+    } catch (postInsError) {
+      console.error('Error al inscribir estudiante en clases tipo 2 después de matricularse:', postInsError);
+    }
 
     try {
       const io = getIO();
@@ -1371,6 +1456,12 @@ export const iniciarVotacion = async (req, res) => {
 
     if (!matRows.length) {
       return res.status(404).json({ message: 'Materia de auxiliar no encontrada' });
+    }
+
+    try {
+      await limpiarClasesEInscripcionesAuxiliatura(auxiliarId, auxMateriaId);
+    } catch (cleanupError) {
+      console.error('Error al limpiar clases e inscripciones de auxiliatura al iniciar votación:', cleanupError);
     }
 
     const { rows } = await pool.query(

@@ -77,7 +77,9 @@
       const auxMateriaIdRaw = paramsDetalle.get('auxMateriaId');
       const auxMateriaId = auxMateriaIdRaw ? parseInt(auxMateriaIdRaw, 10) : NaN;
       if (auxMateriaId && !Number.isNaN(auxMateriaId) && payloadId === auxMateriaId) {
-        if (typeof window.recargarAuxMatDetalle === 'function') {
+        if (typeof window.refrescarAuxMatVotacion === 'function') {
+          window.refrescarAuxMatVotacion();
+        } else if (typeof window.recargarAuxMatDetalle === 'function') {
           window.recargarAuxMatDetalle();
         }
       }
