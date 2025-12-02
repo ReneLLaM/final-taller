@@ -284,10 +284,17 @@
 }
 
 /* Para administradores ocultamos solo el horario de estudiante, no todo el contenedor */
-body.rol-admin .horario-section {
-    display: none;
-}
-
+ .horario-section {
+     display: none;
+ }
+ body.rol-estudiante .horario-section,
+ body.rol-auxiliar .horario-section {
+     display: block;
+ }
+ body.rol-admin .horario-section {
+     display: none;
+ }
+ 
 /* ============================================
    PANEL DEL AUXILIAR
    ============================================ */
