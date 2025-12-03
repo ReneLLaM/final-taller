@@ -227,15 +227,19 @@ export const deleteAuxiliarMateria = async (req, res) => {
                 const materiaId = materiasRows[0].id;
 
                 const { rows: clasesRows } = await pool.query(
-                    'SELECT id FROM clases WHERE id_materia = $1 AND tipo_clase = 3',
+                    'SELECT id FROM clases WHERE id_materia = $1 AND tipo_clase IN (2, 3)',
                     [materiaId]
                 );
 
                 if (clasesRows.length > 0) {
                     const claseIds = clasesRows.map(c => c.id);
                     await pool.query(
-                        'DELETE FROM inscripciones WHERE id_usuario = $1 AND id_clase = ANY($2::int[])',
-                        [row.auxiliar_id, claseIds]
+                        'DELETE FROM inscripciones WHERE id_clase = ANY($1::int[])',
+                        [claseIds]
+                    );
+                    await pool.query(
+                        'DELETE FROM clases WHERE id = ANY($1::int[])',
+                        [claseIds]
                     );
                 }
             }
