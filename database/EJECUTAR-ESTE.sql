@@ -20,6 +20,53 @@ DROP TABLE IF EXISTS materias CASCADE;
 DROP TABLE IF EXISTS aulas CASCADE;
 DROP TABLE IF EXISTS materias_globales CASCADE;
 DROP TABLE IF EXISTS carreras CASCADE;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    nombre_completo VARCHAR(255),
+    carrera VARCHAR(255),
+    cu VARCHAR(8),
+    correo VARCHAR(255),
+    contrasenia VARCHAR(255),
+    rol_id INT,
+    FOREIGN KEY (rol_id) REFERENCES roles(id)
+);
+
+INSERT INTO roles (nombre)
+SELECT 'estudiante'
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nombre = 'estudiante');
+
+INSERT INTO roles (nombre)
+SELECT 'auxiliar'
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nombre = 'auxiliar');
+
+INSERT INTO roles (nombre)
+SELECT 'administrador'
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nombre = 'administrador');
+
+INSERT INTO usuarios (nombre_completo, carrera, cu, correo, contrasenia, rol_id)
+SELECT 'Estudiante Base', NULL, NULL, 'estudiante@gmail.com',
+       crypt('123456', gen_salt('bf'::text)),
+       (SELECT id FROM roles WHERE nombre = 'estudiante')
+WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE correo = 'estudiante@gmail.com');
+
+INSERT INTO usuarios (nombre_completo, carrera, cu, correo, contrasenia, rol_id)
+SELECT 'Auxiliar Base', NULL, NULL, 'auxiliar@gmail.com',
+       crypt('123456', gen_salt('bf'::text)),
+       (SELECT id FROM roles WHERE nombre = 'auxiliar')
+WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE correo = 'auxiliar@gmail.com');
+
+INSERT INTO usuarios (nombre_completo, carrera, cu, correo, contrasenia, rol_id)
+SELECT 'Administrador Base', NULL, NULL, 'admin@gmail.com',
+       crypt('123456', gen_salt('bf'::text)),
+       (SELECT id FROM roles WHERE nombre = 'administrador')
+WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE correo = 'admin@gmail.com');
 
 -- 1. TABLA DE CARRERAS (lista oficial)
 CREATE TABLE carreras (

@@ -6,16 +6,28 @@ services:
     container_name: my-database
     restart: always
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       - POSTGRES_USER=taller
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=taller-db
     volumes:
       - ./postgres:/var/lib/postgresql/data
-      - ./database/00-init-core.sql:/docker-entrypoint-initdb.d/00-init-core.sql:ro
       - ./database/EJECUTAR-ESTE.sql:/docker-entrypoint-initdb.d/10-EJECUTAR-ESTE.sql:ro
   
+  app:
+    build: .
+    container_name: taller-app
+    restart: always
+    depends_on:
+      - myDB
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=myDB
+
   pdAdmin:
     image: dpage/pgadmin4
     container_name: pgadmin4
@@ -23,7 +35,7 @@ services:
     depends_on:
       - myDB
     ports:
-      - 5050:80
+      - "5050:80"
     environment:
       - PGADMIN_DEFAULT_EMAIL=rene@gmail.com
       - PGADMIN_DEFAULT_PASSWORD=123456
