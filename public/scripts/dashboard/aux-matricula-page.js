@@ -300,6 +300,18 @@
   async function cargarVotacionSoloLectura(auxMateriaId, options = {}) {
     const mostrarAdministrar = options.mostrarAdministrar === true;
     if (!els.votacionHorarioWrapper || !els.votacionGrid) return;
+    const prevDispo = Array.isArray(state.auxVotacionDisponibilidad) ? state.auxVotacionDisponibilidad : [];
+    const prevVotosMap = new Map();
+    prevDispo.forEach((prevItem) => {
+      const prevDia = parseInt(prevItem.dia_semana, 10);
+      const prevHora = typeof prevItem.hora_inicio === 'string'
+        ? prevItem.hora_inicio.substring(0, 5)
+        : prevItem.hora_inicio;
+      if (!prevDia || !prevHora) return;
+      const keyPrev = `${prevDia}|${prevHora}`;
+      const prevVotos = typeof prevItem.votos_slot === 'number' ? prevItem.votos_slot : 0;
+      prevVotosMap.set(keyPrev, prevVotos);
+    });
     try {
       const res = await fetch(`/api/auxiliar-materias/${auxMateriaId}/votacion/disponibilidad`, {
         method: 'GET',
@@ -320,7 +332,6 @@
 
       const disponibilidad = data.disponibilidad;
 
-      state.auxVotacionDisponibilidad = disponibilidad;
       if (!disponibilidad.length) {
         if (els.votacionEstadoTexto) {
           els.votacionEstadoTexto.textContent = 'No hay bloques configurados para mostrar disponibilidad.';
@@ -373,6 +384,7 @@
         const porc = item.porcentaje_disponibles;
         const aulasCantidad = item.aulas_disponibles ?? 0;
         const votosSlot = typeof item.votos_slot === 'number' ? item.votos_slot : 0;
+        const prevVotos = prevVotosMap.get(key);
 
         card.className = 'votacion-slot-card';
         if (estado === 'recomendada') {
@@ -381,6 +393,10 @@
           card.classList.add('votacion-estado-no-disponible');
         } else {
           card.classList.add('votacion-estado-neutral');
+        }
+
+        if (prevVotosMap.size > 0 && prevVotos !== undefined && prevVotos !== votosSlot) {
+          card.classList.add('votacion-slot-anim');
         }
 
         const votosResumenTexto = `${votosSlot} voto${votosSlot === 1 ? '' : 's'}`;
@@ -413,6 +429,8 @@
           </div>
         `;
       });
+
+      state.auxVotacionDisponibilidad = disponibilidad;
 
       existingCards.forEach((card) => {
         if (card && card.parentElement) {

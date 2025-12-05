@@ -212,6 +212,11 @@ async function crearClasesEInscripcionesDesdeVotacion(auxiliarId, auxMateriaId, 
   const idMateria = materiaLocal.id;
   const docente = materiaLocal.docente;
 
+  const archivoKey = 'AUX-VOTACIONES';
+  const hojaKey = `AUX-${auxMateriaId}`;
+  const materiaHorario = `${auxMat.materia_sigla || ''} ${auxMat.grupo || ''}`.trim() || auxMat.materia_nombre || null;
+  const docenteHorario = docente || null;
+
   const clasesTipo2Ids = [];
   const clasesTipo3Ids = [];
 
@@ -266,6 +271,23 @@ async function crearClasesEInscripcionesDesdeVotacion(auxiliarId, auxMateriaId, 
 
     if (clase2Id) clasesTipo2Ids.push(clase2Id);
     if (clase3Id) clasesTipo3Ids.push(clase3Id);
+
+    await pool.query(
+      `INSERT INTO clases_horarios
+        (archivo, hoja, fila, dia_semana, hora_inicio, hora_fin, aula, materia, docente)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        archivoKey,
+        hojaKey,
+        auxMateriaId,
+        slot.dia_semana,
+        slot.hora_inicio,
+        slot.hora_fin,
+        aulaAsignada,
+        materiaHorario,
+        docenteHorario,
+      ],
+    );
   }
 
   // Inscribir estudiantes en clases tipo 2
@@ -353,6 +375,19 @@ async function limpiarClasesEInscripcionesAuxiliatura(auxiliarId, auxMateriaId) 
     `DELETE FROM clases
        WHERE id = ANY($1::int[])`,
     [claseIds],
+  );
+}
+
+async function limpiarHorariosAuxiliaturaEnClasesHorarios(auxMateriaId) {
+  if (!auxMateriaId) return;
+
+  const hojaKey = `AUX-${auxMateriaId}`;
+
+  await pool.query(
+    `DELETE FROM clases_horarios
+       WHERE archivo = $1
+         AND hoja = $2`,
+    ['AUX-VOTACIONES', hojaKey],
   );
 }
 
@@ -1462,6 +1497,12 @@ export const iniciarVotacion = async (req, res) => {
       await limpiarClasesEInscripcionesAuxiliatura(auxiliarId, auxMateriaId);
     } catch (cleanupError) {
       console.error('Error al limpiar clases e inscripciones de auxiliatura al iniciar votación:', cleanupError);
+    }
+
+    try {
+      await limpiarHorariosAuxiliaturaEnClasesHorarios(auxMateriaId);
+    } catch (cleanupError2) {
+      console.error('Error al limpiar horarios de clases_horarios al iniciar votación:', cleanupError2);
     }
 
     const { rows } = await pool.query(
