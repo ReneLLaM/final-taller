@@ -1,105 +1,27 @@
 # Taller de Especialidad – Sistema de Gestión de Horarios y Auxiliaturas
 
-Este proyecto implementa un sistema completo de gestión académica con:
+Este proyecto implementa un sistema de gestión académica con:
 
 - Backend en Node.js + Express
 - Base de datos PostgreSQL (Docker)
 - Frontend en HTML/CSS/JS (carpeta `public`)
-- Autenticación con JWT, gestión de roles (estudiante, auxiliar, administrador) y manejo de horarios/auxiliaturas.
+- Autenticación con JWT y manejo de horarios/auxiliaturas.
 
-La consigna de entrega se organiza en **3 carpetas principales**, más esta carpeta de proyecto.
-
----
-
-## 1. Estructura de la entrega
-
-Dentro de la carpeta `ENTREGA/` se encuentran las 3 carpetas pedidas en la guía:
-
-1. **`ENTREGA/01-CODIGO-FUENTE/` — Código fuente**
-
-   Contiene el **código fuente del sistema** listo para abrirse en un IDE o clonar a otra máquina:
-
-   - `src/` → backend (controladores, rutas, middlewares, socket, etc.)
-   - `public/` → frontend (páginas HTML, CSS, JS del dashboard y auth)
-   - `database/` → scripts SQL (`EJECUTAR-ESTE.sql`, `taller-db.sql`, etc.)
-   - `docker-compose.yml` → define el contenedor de PostgreSQL + pgAdmin
-   - `package.json` y `package-lock.json` → dependencias Node
-   - Opcional: `.env.example` con variables de entorno de ejemplo
-
-   Esta carpeta representa el **código fuente oficial** del sistema.
-
-2. **`ENTREGA/02-SOFTWARE-Y-DOCUMENTACION/` — Software, instaladores, componentes y README**
-
-   Carpeta que agrupa **todo el software necesario y la documentación de instalación**:
-
-   - Copia completa del proyecto (sin archivos `.md` originales), incluyendo:
-     - `src/`, `public/`, `database/`, `scripts/`, `docker-compose.yml`, etc.
-     - Carpetas como `node_modules/`, `postgres/`, `pgadmin/` (si se generaron).
-   - Subcarpeta `instaladores/`:
-     - `ENLACES-INSTALADORES.txt` → enlaces oficiales a Node.js, Docker Desktop, etc.
-     - `proyecto-codigo-fuente.zip` → ZIP con el contenido de `01-CODIGO-FUENTE/`.
-   - Subcarpeta `componentes/`:
-     - `LEEME-COMPONENTES.txt` → referencia a los scripts SQL y componentes usados.
-   - Archivo **`README-INSTALACION.md`**:
-     - Documento principal de **gestión e instalación** donde se explican:
-       - Requisitos de software
-       - Configuración de `.env`
-       - Uso de `docker-compose up -d`
-       - Ejecución de `EJECUTAR-ESTE.sql` y scripts adicionales
-       - Arranque del servidor (`npm install`, `npm run dev` / `npm start`)
-       - Cómo detener servicios y notas para la evaluación
-
-   Esta carpeta responde al punto **"todo el software (instaladores) componentes README"** de la consigna.
-
-3. **`ENTREGA/03-MAQUINA-VIRTUAL/` — Máquina virtual (.ova)**
-
-   Carpeta reservada para colocar el archivo de máquina virtual:
-
-   - Debe contener el archivo `.ova` proporcionado para la evaluación.
-   - El contenido interno de la VM **no se modifica** desde este proyecto; solo se referencia como parte de la entrega.
+Este README se centra solo en **cómo instalar, inicializar la base de datos y ejecutar el sistema**.
 
 ---
 
-## 2. Estructura del proyecto (carpeta actual)
-
-En la raíz del proyecto se encuentran, entre otros:
-
-- `src/` → código backend (controladores, rutas, middlewares, configuración de Socket.IO, etc.)
-- `public/` → frontend (páginas de autenticación, dashboard, estilos y scripts de secciones)
-- `database/` → scripts SQL para creación de tablas, roles, horarios, etc.
-- `docker-compose.yml` → servicio `myDB` (PostgreSQL) y `pgAdmin`.
-- `package.json` → scripts de Node:
-  - `npm run dev` → desarrollo
-  - `npm start` → ejecución normal
-- `ENTREGA/` → carpeta con las 3 carpetas de entrega descritas arriba.
-
----
-
-## 3. Resumen rápido de instalación y ejecución
-
-> **IMPORTANTE:** Los pasos detallados están en `ENTREGA/02-SOFTWARE-Y-DOCUMENTACION/README-INSTALACION.md`. Aquí solo se resume el flujo principal.
-
-### 3.1 Requisitos
+## 1. Requisitos
 
 - Windows 10+ (o SO compatible con Docker)
 - Node.js LTS (18.x o similar)
 - Docker Desktop
 
-### 3.2 Levantar base de datos (Docker)
+---
 
-1. Abrir una terminal en la raíz del proyecto o en `ENTREGA/01-CODIGO-FUENTE/`.
-2. Ejecutar:
+## 2. Configurar variables de entorno
 
-   ```powershell
-   docker-compose up -d
-   ```
-
-3. Abrir pgAdmin (por ejemplo `http://localhost:5050`) y conectarse a la BD `taller-db`.
-4. Ejecutar el script `database/EJECUTAR-ESTE.sql` para crear tablas y relaciones.
-
-### 3.3 Configurar variables de entorno
-
-1. Crear un archivo `.env` en la raíz del proyecto (o en `01-CODIGO-FUENTE`), por ejemplo:
+1. En la raíz del proyecto, crear un archivo `.env` (si no existe) con valores como:
 
    ```env
    DB_USER=taller
@@ -112,33 +34,88 @@ En la raíz del proyecto se encuentran, entre otros:
    JWT_REFRESH_SECRET=otra-clave-segura
    ```
 
-### 3.4 Instalar dependencias e iniciar servidor
-
-1. Instalar dependencias Node:
-
-   ```powershell
-   npm install
-   ```
-
-2. Iniciar el servidor en desarrollo:
-
-   ```powershell
-   npm run dev
-   ```
-
-3. Abrir el navegador en:
-
-   - `http://localhost:3000/` → redirige a la pantalla de login.
+2. Guardar el archivo `.env`.
 
 ---
 
-## 4. Notas finales
+## 3. Inicializar la base de datos con Docker
 
-- Para instrucciones detalladas de **gestión e instalación**, revisar:
-  - `ENTREGA/02-SOFTWARE-Y-DOCUMENTACION/README-INSTALACION.md`
-- Para la entrega final, se pueden empaquetar las carpetas:
-  - `ENTREGA/01-CODIGO-FUENTE/`
-  - `ENTREGA/02-SOFTWARE-Y-DOCUMENTACION/`
-  - `ENTREGA/03-MAQUINA-VIRTUAL/`
+La base de datos PostgreSQL se levanta con `docker-compose.yml` y, en su **primera inicialización**, ejecuta automáticamente el script `database/EJECUTAR-ESTE.sql`, que crea todas las tablas necesarias (incluida `usuarios`).
 
-Este README resume la organización general del proyecto y cómo se ajusta a la consigna de las 3 carpetas.
+### 3.1 Primera vez o reinicio limpio
+
+Si es la primera vez que levantas la base de datos, o quieres empezar desde cero:
+
+1. Asegúrate de que no haya contenedores viejos corriendo:
+
+   ```powershell
+   docker-compose down
+   ```
+
+2. (Opcional pero recomendado) Borra el contenido de la carpeta `postgres/` para que Postgres se inicialice desde cero y ejecute de nuevo el script:
+
+   - Cerrar el servidor y detener Docker.
+   - Eliminar la carpeta `postgres` o vaciar su contenido.
+
+3. Levantar la base de datos y pgAdmin:
+
+   ```powershell
+   docker-compose up -d
+   ```
+
+Al crear el contenedor y la carpeta de datos por primera vez, Postgres ejecutará automáticamente `EJECUTAR-ESTE.sql` y dejará la base de datos lista.
+
+### 3.2 Verificar que la base de datos está creada
+
+1. Abrir pgAdmin (por ejemplo `http://localhost:5050`).
+2. Conectarse al servidor Postgres y a la base de datos `taller-db`.
+3. Comprobar que existen tablas como `usuarios`, `roles`, `auxiliar_materias`, `auxiliar_votaciones`, etc.
+
+---
+
+## 4. Instalar dependencias Node
+
+En la raíz del proyecto:
+
+```powershell
+npm install
+```
+
+Esto descargará las dependencias definidas en `package.json`.
+
+---
+
+## 5. Ejecutar el servidor
+
+Con la base de datos levantada y el `.env` configurado:
+
+### 5.1 Modo desarrollo
+
+```powershell
+npm run dev
+```
+
+### 5.2 Modo normal
+
+```powershell
+npm start
+```
+
+Luego abrir en el navegador:
+
+- `http://localhost:3000/` → redirige a la pantalla de login.
+
+Desde ahí se puede probar todo el flujo de autenticación, dashboard y gestión de horarios/auxiliaturas.
+
+---
+
+## 6. Detener servicios
+
+- Para detener el servidor Node: `Ctrl + C` en la terminal.
+- Para detener los contenedores Docker:
+
+  ```powershell
+  docker-compose down
+  ```
+
+Con estos pasos, el proyecto queda listo para ser levantado y probado sin necesidad de ejecutar manualmente los scripts SQL.
